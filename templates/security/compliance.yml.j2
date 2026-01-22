@@ -1,0 +1,49 @@
+# Compliance Configuration for {{ project_name }}
+# Environment: {{ env | default('production') }}
+
+compliance:
+  framework: "enterprise"
+  
+standards:
+  - name: "SOC2"
+    type: "security"
+    controls:
+      - "access_control"
+      - "encryption"
+      - "audit_logging"
+  
+  - name: "ISO27001"
+    type: "information_security"
+    controls:
+      - "risk_management"
+      - "incident_response"
+  
+  - name: "GDPR"
+    type: "privacy"
+    controls:
+      - "data_protection"
+      - "consent_management"
+
+data_classification:
+  levels:
+    - level: "public"
+      protection: "basic"
+    - level: "internal"
+      protection: "standard"
+    - level: "confidential"
+      protection: "enhanced"
+    - level: "restricted"
+      protection: "maximum"
+
+audit_requirements:
+  log_all_access: true
+  log_retention_days: 2555
+  immutable_logs: true
+  real_time_monitoring: true
+
+risk_management:
+  frequency: "quarterly"
+  assessment_types:
+    - "vulnerability_scanning"
+    - "penetration_testing"
+    - "risk_assessment"

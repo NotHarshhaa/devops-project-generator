@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ project_name }}
+  labels:
+    app: {{ project_name }}
+    version: v1
+spec:
+  replicas: {% if env == 'production' %}3{% elif env == 'staging' %}2{% else %}1{% endif %}
+  selector:
+    matchLabels:
+      app: {{ project_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ project_name }}
+        version: v1
+      annotations:
+        {% if security == 'standard' or security == 'strict' %}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+        {% endif %}
+    spec:
+      containers:
+      - name: {{ project_name }}
+        image: {{ project_name }}:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: ENV
+          value: "{{ env | default('production') }}"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ project_name }}-secrets
+              key: database-url
+        - name: REDIS_URL
+          value: "redis://{{ project_name }}-redis:6379/0"
+        - name: LOG_LEVEL
+          value: "info"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        {% if has_health_checks %}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        {% endif %}
+        {% if security == 'standard' or security == 'strict' %}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        {% endif %}
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        - name: logs-volume
+          mountPath: /app/logs
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ project_name }}-config
+      - name: logs-volume
+        emptyDir: {}
+      {% if security == 'strict' %}
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      {% endif %}
+      imagePullSecrets:
+      - name: registry-secret
+      {% if has_metrics %}
+      - name: prometheus-secret
+      {% endif %}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ project_name }}
+  labels:
+    app: {{ project_name }}
+  annotations:
+    {% if has_metrics %}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+    {% endif %}
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ project_name }}

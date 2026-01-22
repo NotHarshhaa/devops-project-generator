@@ -1,0 +1,85 @@
+output "vpc_id" {
+  description = "ID of the VPC"
+  value       = aws_vpc.main.id
+}
+
+output "vpc_cidr_block" {
+  description = "CIDR block of the VPC"
+  value       = aws_vpc.main.cidr_block
+}
+
+output "public_subnet_ids" {
+  description = "IDs of the public subnets"
+  value       = aws_subnet.public[*].id
+}
+
+output "private_subnet_ids" {
+  description = "IDs of the private subnets"
+  value       = aws_subnet.private[*].id
+}
+
+output "internet_gateway_id" {
+  description = "ID of the Internet Gateway"
+  value       = aws_internet_gateway.main.id
+}
+
+{% if has_kubernetes %}
+output "eks_cluster_name" {
+  description = "Name of the EKS cluster"
+  value       = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  description = "Endpoint of the EKS cluster"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_certificate_authority_data" {
+  description = "Certificate authority data of the EKS cluster"
+  value       = module.eks.cluster_certificate_authority_data
+}
+
+output "ecr_repository_url" {
+  description = "URL of the ECR repository"
+  value       = aws_ecr_repository.app.repository_url
+}
+{% endif %}
+
+{% if deploy != 'kubernetes' %}
+output "load_balancer_dns_name" {
+  description = "DNS name of the load balancer"
+  value       = aws_lb.main.dns_name
+}
+
+output "load_balancer_url" {
+  description = "URL of the load balancer"
+  value       = "http://${aws_lb.main.dns_name}"
+}
+{% endif %}
+
+output "db_instance_endpoint" {
+  description = "RDS instance endpoint"
+  value       = aws_db_instance.main.endpoint
+}
+
+output "db_instance_port" {
+  description = "RDS instance port"
+  value       = aws_db_instance.main.port
+}
+
+output "s3_bucket_name" {
+  description = "Name of the S3 bucket"
+  value       = aws_s3_bucket.app_data.id
+}
+
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group"
+  value       = aws_cloudwatch_log_group.app.name
+}
+
+{% if has_metrics %}
+output "sns_topic_arn" {
+  description = "ARN of the SNS topic for alerts"
+  value       = aws_sns_topic.alerts.arn
+}
+{% endif %}

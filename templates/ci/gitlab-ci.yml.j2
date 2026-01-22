@@ -1,0 +1,117 @@
+stages:
+  - test
+  - build
+  - deploy
+  - infra
+
+variables:
+  PROJECT_NAME: "{{ project_name }}"
+  DOCKER_DRIVER: overlay2
+
+# Test stage
+test:
+  stage: test
+  image: python:3.9
+  services:
+    - postgres:13
+  variables:
+    POSTGRES_DB: test_db
+    POSTGRES_USER: test_user
+    POSTGRES_PASSWORD: test_pass
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install -r app/sample-app/requirements.txt
+    - pip install pytest pytest-cov flake8
+  script:
+    - flake8 app/sample-app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+    - flake8 app/sample-app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - pytest app/sample-app/ --cov=app/sample-app --cov-report=xml
+  coverage: '/TOTAL.+?(\d+\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - coverage.xml
+    expire_in: 1 week
+
+{% if has_docker %}
+# Build stage
+build:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA ./containers/
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - main
+    - develop
+{% endif %}
+
+{% if has_kubernetes %}
+# Deploy stage
+deploy-dev:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl config use-context $KUBE_CONTEXT_DEV
+    - kubectl apply -f k8s/base/
+    - kubectl apply -k k8s/overlays/dev/
+    - kubectl rollout status deployment/{{ project_name }}-dev
+  environment:
+    name: development
+    url: https://dev.{{ project_name }}.com
+  only:
+    - develop
+
+deploy-prod:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl config use-context $KUBE_CONTEXT_PROD
+    - kubectl apply -f k8s/base/
+    - kubectl apply -k k8s/overlays/prod/
+    - kubectl rollout status deployment/{{ project_name }}-prod
+  environment:
+    name: production
+    url: https://{{ project_name }}.com
+  when: manual
+  only:
+    - main
+{% endif %}
+
+{% if has_infra and infra == 'terraform' %}
+# Infrastructure stage
+terraform-plan:
+  stage: infra
+  image: hashicorp/terraform:latest
+  script:
+    - cd infra/terraform
+    - terraform init
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - infra/terraform/tfplan
+    expire_in: 1 hour
+  only:
+    - main
+
+terraform-apply:
+  stage: infra
+  image: hashicorp/terraform:latest
+  script:
+    - cd infra/terraform
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - terraform-plan
+  when: manual
+  only:
+    - main
+{% endif %}

@@ -1,0 +1,46 @@
+# Security Policy for {{ project_name }}
+# Environment: {{ env | default('production') }}
+
+policy:
+  name: "{{ project_name }}-security-policy"
+  version: "1.0"
+  
+authentication:
+  methods:
+    - jwt
+    - oauth2
+  jwt:
+    algorithm: "HS256"
+    token_expiry: "1h"
+    refresh_token_expiry: "7d"
+  
+authorization:
+  rbac:
+    enabled: true
+    default_role: "viewer"
+    roles:
+      - name: "admin"
+        permissions: ["*"]
+      - name: "editor"
+        permissions: ["read", "write"]
+      - name: "viewer"
+        permissions: ["read"]
+
+encryption:
+  at_rest:
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+  in_transit:
+    tls_version: "1.3"
+    cipher_suites:
+      - "TLS_AES_256_GCM_SHA384"
+
+audit:
+  enabled: true
+  log_all_access: true
+  retention_days: 365
+
+compliance:
+  standards:
+    - "SOC2"
+    - "ISO27001"

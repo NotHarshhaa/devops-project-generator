@@ -1,0 +1,172 @@
+# CI/CD Pipelines
+
+This directory contains the CI/CD pipeline configurations for **{{ project_name }}**.
+
+## Pipeline Configuration
+
+{% if ci == 'github-actions' %}
+### GitHub Actions
+- **File**: `pipelines/github-actions.yml`
+- **Triggers**: Push to `main` and `develop` branches, pull requests
+- **Stages**:
+  - Test (linting, unit tests, coverage)
+  {% if has_docker %}- Build (Docker image building and pushing){% endif %}
+  {% if has_kubernetes %}- Deploy (Kubernetes deployments){% endif %}
+  {% if has_infra and infra == 'terraform' %}- Infrastructure (Terraform){% endif %}
+
+**Required Secrets**:
+{% if has_docker %}
+- `DOCKER_USERNAME`: Docker Hub username
+- `DOCKER_PASSWORD`: Docker Hub password
+{% endif %}
+{% if has_kubernetes %}
+- `KUBE_CONFIG_DEV`: Kubernetes config for development
+- `KUBE_CONFIG_PROD`: Kubernetes config for production
+{% endif %}
+{% if has_infra and infra == 'terraform' %}
+- `AWS_ACCESS_KEY_ID`: AWS access key
+- `AWS_SECRET_ACCESS_KEY`: AWS secret key
+{% endif %}
+{% endif %}
+
+{% if ci == 'gitlab-ci' %}
+### GitLab CI
+- **File**: `.gitlab-ci.yml`
+- **Triggers**: Push to `main` and `develop` branches
+- **Stages**:
+  - Test (linting, unit tests, coverage)
+  {% if has_docker %}- Build (Docker image building and pushing){% endif %}
+  {% if has_kubernetes %}- Deploy (Kubernetes deployments){% endif %}
+  {% if has_infra and infra == 'terraform' %}- Infrastructure (Terraform){% endif %}
+
+**Required Variables**:
+{% if has_docker %}
+- `CI_REGISTRY_USER`: Container registry username
+- `CI_REGISTRY_PASSWORD`: Container registry password
+{% endif %}
+{% if has_kubernetes %}
+- `KUBE_CONTEXT_DEV`: Kubernetes context for development
+- `KUBE_CONTEXT_PROD`: Kubernetes context for production
+{% endif %}
+{% if has_infra and infra == 'terraform' %}
+- `AWS_ACCESS_KEY_ID`: AWS access key
+- `AWS_SECRET_ACCESS_KEY`: AWS secret key
+{% endif %}
+{% endif %}
+
+{% if ci == 'jenkins' %}
+### Jenkins
+- **File**: `Jenkinsfile`
+- **Triggers**: Webhook or manual
+- **Stages**:
+  - Test (linting, unit tests, coverage)
+  {% if has_docker %}- Build (Docker image building and pushing){% endif %}
+  {% if has_kubernetes %}- Deploy (Kubernetes deployments){% endif %}
+  {% if has_infra and infra == 'terraform' %}- Infrastructure (Terraform){% endif %}
+
+**Required Credentials**:
+{% if has_docker %}
+- `docker-registry`: Docker registry credentials
+{% endif %}
+{% if has_kubernetes %}
+- `kube-config-dev`: Kubernetes config for development
+- `kube-config-prod`: Kubernetes config for production
+{% endif %}
+{% if has_infra and infra == 'terraform' %}
+- `aws-access-key`: AWS access key
+- `aws-secret-key`: AWS secret key
+{% endif %}
+{% endif %}
+
+## Environment Strategy
+
+{% if is_multi_env %}
+This project uses a multi-environment strategy:
+- **Development**: Deployed from `develop` branch
+- **Staging**: Deployed from `staging` branch (if configured)
+- **Production**: Deployed from `main` branch
+{% else %}
+This project uses a single environment strategy.
+{% endif %}
+
+## Testing
+
+The pipeline includes:
+- **Code Quality**: Flake8 linting
+- **Unit Tests**: Pytest with coverage reporting
+- **Security**: {% if security == 'basic' %}Basic security checks{% elif security == 'standard' %}Standard security scanning{% else %}Strict security and compliance checks{% endif %}
+
+## Deployment
+
+{% if deploy == 'kubernetes' %}
+### Kubernetes Deployment
+- Uses Kustomize for environment-specific configurations
+- Base resources in `k8s/base/`
+- Environment overlays in `k8s/overlays/`
+- Health checks and rolling updates enabled
+{% elif deploy == 'docker' %}
+### Docker Deployment
+- Multi-stage Docker builds
+- Optimized for production
+- Health checks included
+{% else %}
+### VM Deployment
+- Script-based deployment
+- Supports multiple Linux distributions
+- Rollback capabilities
+{% endif %}
+
+## Monitoring
+
+{% if observability == 'logs' %}
+- **Logging**: Structured logging with ELK stack integration
+{% elif observability == 'logs-metrics' %}
+- **Logging**: Structured logging with ELK stack integration
+- **Metrics**: Prometheus metrics collection
+{% else %}
+- **Logging**: Structured logging with ELK stack integration
+- **Metrics**: Prometheus metrics collection
+- **Alerts**: AlertManager for critical issues
+{% endif %}
+
+## Security
+
+This pipeline implements **{{ security }}** security measures:
+{% if security == 'basic' %}
+- Dependency scanning
+- Basic security checks
+{% elif security == 'standard' %}
+- Dependency scanning
+- Container security scanning
+- Static code analysis
+{% else %}
+- Dependency scanning
+- Container security scanning
+- Static code analysis
+- Compliance checks
+- Policy enforcement
+{% endif %}
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Build Failures**: Check the logs for specific error messages
+2. **Test Failures**: Run tests locally to reproduce issues
+3. **Deployment Failures**: Verify Kubernetes/Docker configurations
+4. **Infrastructure Issues**: Check Terraform state and permissions
+
+### Manual Interventions
+
+Some stages require manual approval:
+- Production deployments
+- Infrastructure changes
+- Major version updates
+
+## Optimization
+
+The pipeline is optimized for:
+- **Speed**: Parallel execution where possible
+- **Reliability**: Proper error handling and rollbacks
+- **Security**: Minimal privilege principle
+- **Cost**: Efficient resource usage

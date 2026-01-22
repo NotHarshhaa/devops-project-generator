@@ -1,0 +1,148 @@
+pipeline {
+    agent any
+    
+    environment {
+        PROJECT_NAME = '{{ project_name }}'
+        DOCKER_REGISTRY = credentials('docker-registry')
+        {% if has_infra and infra == 'terraform' %}
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+        {% endif %}
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Test') {
+            agent {
+                docker {
+                    image 'python:3.9'
+                }
+            }
+            steps {
+                sh '''
+                    python -m pip install --upgrade pip
+                    pip install -r app/sample-app/requirements.txt
+                    pip install pytest pytest-cov flake8
+                    flake8 app/sample-app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+                    flake8 app/sample-app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+                    pytest app/sample-app/ --cov=app/sample-app --cov-report=xml
+                '''
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: '**/test-results.xml'
+                    publishCoverage adapters: [coberturaAdapter('coverage.xml')], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                }
+            }
+        }
+        
+        {% if has_docker %}
+        stage('Build') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
+            }
+            steps {
+                script {
+                    docker.withRegistry("https://registry.hub.docker.com", 'docker-registry') {
+                        def image = docker.build("${env.DOCKER_REGISTRY_USR}/${env.PROJECT_NAME}:${env.BUILD_NUMBER}", "./containers/")
+                        image.push()
+                        image.push('latest')
+                    }
+                }
+            }
+        }
+        {% endif %}
+        
+        {% if has_kubernetes %}
+        stage('Deploy Dev') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                script {
+                    withKubeConfig([credentialsId: 'kube-config-dev']) {
+                        sh '''
+                            kubectl apply -f k8s/base/
+                            kubectl apply -k k8s/overlays/dev/
+                            kubectl rollout status deployment/${PROJECT_NAME}-dev
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy Prod') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Deploy to production?', ok: 'Deploy'
+                script {
+                    withKubeConfig([credentialsId: 'kube-config-prod']) {
+                        sh '''
+                            kubectl apply -f k8s/base/
+                            kubectl apply -k k8s/overlays/prod/
+                            kubectl rollout status deployment/${PROJECT_NAME}-prod
+                        '''
+                    }
+                }
+            }
+        }
+        {% endif %}
+        
+        {% if has_infra and infra == 'terraform' %}
+        stage('Terraform Plan') {
+            steps {
+                dir('infra/terraform') {
+                    sh '''
+                        terraform init
+                        terraform plan -out=tfplan
+                    '''
+                }
+                archiveArtifacts artifacts: 'infra/terraform/tfplan', fingerprint: true
+            }
+        }
+        
+        stage('Terraform Apply') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Apply Terraform changes?', ok: 'Apply'
+                dir('infra/terraform') {
+                    unarchive mapping: { 'tfplan': 'tfplan' }
+                    sh 'terraform apply -auto-approve tfplan'
+                }
+            }
+        }
+        {% endif %}
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            slackSend(
+                channel: '#deployments',
+                color: 'good',
+                message: "✅ Pipeline succeeded for ${env.PROJECT_NAME} - ${env.BUILD_NUMBER}"
+            )
+        }
+        failure {
+            slackSend(
+                channel: '#deployments',
+                color: 'danger',
+                message: "❌ Pipeline failed for ${env.PROJECT_NAME} - ${env.BUILD_NUMBER}"
+            )
+        }
+    }
+}

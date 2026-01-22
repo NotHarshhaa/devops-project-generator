@@ -1,0 +1,176 @@
+# Metrics Configuration for {{ project_name }}
+# Environment: {{ env | default('production') }}
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          {% if has_alerts %}
+          - alertmanager:9093
+          {% endif %}
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Application metrics
+  - job_name: '{{ project_name }}'
+    static_configs:
+      - targets: 
+        {% if deploy == 'kubernetes' %}
+        - '{{ project_name }}:8000'
+        {% else %}
+        - 'app:8000'
+        {% endif %}
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  {% if has_kubernetes %}
+  # Kubernetes metrics
+  - job_name: 'kubernetes-apiservers'
+    kubernetes_sd_configs:
+      - role: endpoints
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
+
+  - job_name: 'kubernetes-nodes'
+    kubernetes_sd_configs:
+      - role: node
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+  {% endif %}
+
+  # Node Exporter (system metrics)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: 
+        {% if deploy == 'kubernetes' %}
+        - 'node-exporter:9100'
+        {% else %}
+        - 'localhost:9100'
+        {% endif %}
+    scrape_interval: 30s
+
+  # PostgreSQL metrics
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: 
+        {% if deploy == 'kubernetes' %}
+        - 'postgres-exporter:9187'
+        {% else %}
+        - 'localhost:9187'
+        {% endif %}
+    scrape_interval: 30s
+
+  # Redis metrics
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: 
+        {% if deploy == 'kubernetes' %}
+        - 'redis-exporter:9121'
+        {% else %}
+        - 'localhost:9121'
+        {% endif %}
+    scrape_interval: 30s
+
+  # Nginx metrics
+  - job_name: 'nginx-exporter'
+    static_configs:
+      - targets: 
+        {% if deploy == 'kubernetes' %}
+        - 'nginx-exporter:9113'
+        {% else %}
+        - 'localhost:9113'
+        {% endif %}
+    scrape_interval: 30s
+
+  {% if deploy != 'kubernetes' %}
+  # Docker metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['localhost:9323']
+    scrape_interval: 30s
+  {% endif %}
+
+  # Blackbox exporter (endpoint monitoring)
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - http://{% if env == 'production' %}{{ project_name }}.com{% elif env == 'staging' %}staging.{{ project_name }}.com{% else %}localhost:8000{% endif %}
+        - https://{% if env == 'production' %}{{ project_name }}.com{% elif env == 'staging' %}staging.{{ project_name }}.com{% else %}localhost:8000{% endif %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Blackbox exporter (ping)
+  - job_name: 'blackbox-icmp'
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    static_configs:
+      - targets:
+        {% if deploy == 'kubernetes' %}
+        - kubernetes.default.svc.cluster.local
+        {% else %}
+        - localhost
+        {% endif %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

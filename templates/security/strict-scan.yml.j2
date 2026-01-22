@@ -1,0 +1,237 @@
+# Strict Security Scanning Configuration for {{ project_name }}
+# Environment: {{ env | default('production') }}
+
+name: {{ project_name }} Enterprise Security Scan
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 1 * * *'  # Daily at 1 AM
+  workflow_dispatch:
+
+jobs:
+  comprehensive-security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better analysis
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install comprehensive security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit semgrep pip-audit
+        pip install -r app/sample-app/requirements.txt
+        
+        # Install additional security tools
+        npm install -g retire
+        npm install -g audit-ci
+        wget -O njsscan https://github.com/ajinabraham/njsscan/releases/download/v1.0.0/njsscan
+        chmod +x njsscan
+    
+    - name: Run comprehensive dependency scanning
+      run: |
+        # Safety scanning
+        safety check --json --output safety-report.json
+        safety check --db --json --output safety-db-report.json
+        
+        # pip-audit for CVE scanning
+        pip-audit --format=json --output=pip-audit-report.json
+        
+        # Retire.js for JavaScript dependencies (if any)
+        find . -name "package.json" -exec retire --outputformat json --outputpath retire-report.json {} \; || true
+    
+    - name: Run advanced static analysis
+      run: |
+        # Bandit with high confidence
+        bandit -r app/sample-app/ -f json -o bandit-report.json -ll
+        
+        # Semgrep with custom rules
+        semgrep --config=auto --config=security --json --output=semgrep-report.json app/sample-app/
+        
+        # Custom security rules
+        semgrep --config=custom-security-rules.yml app/sample-app/ || true
+        
+        # Node.js security scanning (if applicable)
+        find . -name "*.js" -exec ./njsscan --json --output=njsscan-report.json {} \; || true
+    
+    - name: Run container security analysis
+      if: ${{ has_docker }}
+      run: |
+        # Build container for scanning
+        docker build -t {{ project_name }}:scan ./containers/
+        
+        # Trivy comprehensive scan
+        trivy image --format json --output container-trivy-report.json \
+          --severity CRITICAL,HIGH,MEDIUM {{ project_name }}:scan
+        
+        # Grype for additional container scanning
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          anchore/grype:latest {{ project_name }}:scan -o json > grype-report.json || true
+        
+        # Docker security check
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy:latest image --severity CRITICAL,HIGH {{ project_name }}:scan
+    
+    - name: Run infrastructure security scanning
+      if: ${{ has_infra }}
+      run: |
+        # Terraform security scanning
+        if [ -d "infra/terraform" ]; then
+          docker run --rm -v "$(pwd):/work" tfsec/tfsec:latest \
+            /work/infra/terraform --format=json --output=tfsec-report.json || true
+        fi
+        
+        # Checkov for IaC security
+        docker run --rm -v "$(pwd):/work" bridgecrew/checkov:latest \
+          --directory /work/infra --output json --output-file-path checkov-report.json || true
+    
+    - name: Run secrets scanning
+      run: |
+        # GitLeaks for secrets detection
+        wget https://github.com/zricethezav/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
+        tar -xzf gitleaks_8.18.0_linux_x64.tar.gz
+        ./gitleaks detect --source . --report-path gitleaks-report.json --report-format json || true
+        
+        # TruffleHog for additional secrets scanning
+        docker run --rm -v "$(pwd):/work" trufflesecurity/trufflehog:latest \
+          git /work --json --output=trufflehog-report.json || true
+    
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: python
+        queries: security-extended,security-and-quality
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        upload: false
+        output: sarif-results
+    
+    - name: Run OWASP ZAP Baseline Scan
+      if: ${{ env == 'production' }}
+      run: |
+        # Start application for scanning
+        docker-compose up -d
+        sleep 30
+        
+        # ZAP baseline scan
+        docker run --rm -t owasp/zap2docker-stable \
+          zap-baseline.py -t http://localhost:8000 -J zap-report.json || true
+        
+        docker-compose down
+    
+    - name: Generate comprehensive security report
+      run: |
+        cat > comprehensive-security-report.md << 'EOF'
+        # Comprehensive Security Scan Report
+        
+        ## Executive Summary
+        This report contains the results of comprehensive security scanning for {{ project_name }}.
+        
+        ## Findings Summary
+        
+        ### Dependency Vulnerabilities
+        ```json
+        $(cat safety-report.json | jq -r '.vulnerabilities | length') vulnerabilities found
+        ```
+        
+        ### Static Analysis Issues
+        ```json
+        $(cat bandit-report.json | jq -r '.results | length') security issues found
+        ```
+        
+        ### Container Security
+        ```json
+        $(cat container-trivy-report.json | jq -r '.Results[0].Vulnerabilities | length') container vulnerabilities found
+        ```
+        
+        ### Infrastructure Security
+        ```json
+        $(cat tfsec-report.json | jq -r '.results | length' 2>/dev/null || echo "0") IaC issues found
+        ```
+        
+        ## Detailed Findings
+        
+        ### Critical Issues
+        $(cat safety-report.json | jq -r '.vulnerabilities[] | select(.vulnerability_id | contains("CVE")) | "- \(.package_name)@\(.analyzed_version): \(.advisory)"' 2>/dev/null || echo "None")
+        
+        ### High Severity Issues
+        $(cat bandit-report.json | jq -r '.results[] | select(.issue_severity == "HIGH") | "- \(.test_name): \(.issue_text)"' 2>/dev/null || echo "None")
+        
+        EOF
+    
+    - name: Upload all security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: enterprise-security-reports
+        path: |
+          safety-report.json
+          safety-db-report.json
+          pip-audit-report.json
+          retire-report.json
+          bandit-report.json
+          semgrep-report.json
+          njsscan-report.json
+          container-trivy-report.json
+          grype-report.json
+          tfsec-report.json
+          checkov-report.json
+          gitleaks-report.json
+          trufflehog-report.json
+          zap-report.json
+          comprehensive-security-report.json
+          comprehensive-security-report.md
+        retention-days: 90
+    
+    - name: Create Security Issue for Critical Findings
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const safety = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+            const criticalVulns = safety.vulnerabilities.filter(v => v.vulnerability_id.includes('CVE') && v.advisory.includes('Critical'));
+            
+            if (criticalVulns.length > 0) {
+              const body = `# Critical Security Vulnerabilities Found\n\n${criticalVulns.map(v => `- **${v.package_name}@${v.analyzed_version}**: ${v.advisory}`).join('\n')}\n\nPlease update dependencies immediately.`;
+              
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Critical Security Vulnerabilities Detected',
+                body: body,
+                labels: ['security', 'critical', 'automated']
+              });
+            }
+          } catch (error) {
+            console.log('Error processing security findings:', error);
+          }
+    
+    - name: Update Security Dashboard
+      if: ${{ github.event_name == 'schedule' }}
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const report = fs.readFileSync('comprehensive-security-report.md', 'utf8');
+            
+            // Update security dashboard or create summary
+            console.log('Security scan completed. Reports uploaded.');
+          } catch (error) {
+            console.log('Error updating security dashboard:', error);
+          }

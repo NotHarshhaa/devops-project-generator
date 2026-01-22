@@ -1,0 +1,100 @@
+# Standard Security Scanning Configuration for {{ project_name }}
+# Environment: {{ env | default('production') }}
+
+name: {{ project_name }} Comprehensive Security Scan
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit semgrep
+        pip install -r app/sample-app/requirements.txt
+    
+    - name: Run Safety (dependency check)
+      run: |
+        safety check --json --output safety-report.json
+        safety check --db --json --output safety-db-report.json
+    
+    - name: Run Bandit (static analysis)
+      run: bandit -r app/sample-app/ -f json -o bandit-report.json
+    
+    - name: Run Semgrep (SAST)
+      run: semgrep --config=auto --json --output=semgrep-report.json app/sample-app/
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'json'
+        output: 'trivy-report.json'
+    
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: python
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+    
+    - name: Container security scan
+      if: ${{ has_docker }}
+      run: |
+        docker build -t {{ project_name }}:scan ./containers/
+        trivy image --format json --output container-trivy-report.json {{ project_name }}:scan
+    
+    - name: Generate security summary
+      run: |
+        echo "# Security Scan Summary" > security-summary.md
+        echo "## Dependency Scanning" >> security-summary.md
+        cat safety-report.json | jq -r '.vulnerabilities[] | "- \(.package_name)@\(.analyzed_version): \(.vulnerability_id)"' >> security-summary.md || true
+        echo "## Static Analysis" >> security-summary.md
+        cat bandit-report.json | jq -r '.results[] | "- \(.test_name): \(.issue_text)"' >> security-summary.md || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          safety-db-report.json
+          bandit-report.json
+          semgrep-report.json
+          trivy-report.json
+          container-trivy-report.json
+          security-summary.md
+    
+    - name: Comment PR with security findings
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const summary = fs.readFileSync('security-summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+          } catch (error) {
+            console.log('No security summary found');
+          }

@@ -1,0 +1,255 @@
+# Alert Rules for {{ project_name }}
+# Environment: {{ env | default('production') }}
+
+groups:
+  - name: {{ project_name }}_alerts
+    rules:
+      # Application alerts
+      - alert: ApplicationDown
+        expr: up{job="{{ project_name }}"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: {{ project_name }}
+        annotations:
+          summary: "{{ project_name }} application is down"
+          description: "{{ project_name }} has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5..", job="{{ project_name }}"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: {{ project_name }}
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ '$' }}value errors per second."
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="{{ project_name }}"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: {{ project_name }}
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ '$' }}value seconds."
+
+      - alert: LowRequestRate
+        expr: rate(http_requests_total{job="{{ project_name }}"}[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: {{ project_name }}
+        annotations:
+          summary: "Low request rate detected"
+          description: "Request rate is {{ '$' }}value requests per second."
+
+      # Infrastructure alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ '$' }}value% on {{ '$' }}labels.instance."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ '$' }}value% on {{ '$' }}labels.instance."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Low disk space detected"
+          description: "Disk space is {{ '$' }}value% on {{ '$' }}labels.instance."
+
+      - alert: HighDiskIO
+        expr: irate(node_disk_io_time_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High disk I/O detected"
+          description: "Disk I/O is {{ '$' }}value% on {{ '$' }}labels.instance."
+
+      # Database alerts
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database has been down for more than 1 minute."
+
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "High number of PostgreSQL connections"
+          description: "PostgreSQL has {{ '$' }}value active connections."
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_statements_calls_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Slow PostgreSQL queries detected"
+          description: "PostgreSQL slow query rate is {{ '$' }}value queries per second."
+
+      # Redis alerts
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache has been down for more than 1 minute."
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is {{ '$' }}value%."
+
+      # Nginx alerts
+      - alert: NginxDown
+        expr: up{job="nginx-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: webserver
+        annotations:
+          summary: "Nginx is down"
+          description: "Nginx web server has been down for more than 1 minute."
+
+      - alert: NginxHighResponseTime
+        expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: webserver
+        annotations:
+          summary: "High Nginx response time"
+          description: "95th percentile Nginx response time is {{ '$' }}value seconds."
+
+      {% if has_kubernetes %}
+      # Kubernetes alerts
+      - alert: KubernetesPodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Pod is crash looping"
+          description: "Pod {{ '$' }}labels.namespace }}/{{ '$' }}labels.pod }} is crash looping."
+
+      - alert: KubernetesNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 10m
+        labels:
+          severity: critical
+          service: kubernetes
+        annotations:
+          summary: "Kubernetes node not ready"
+          description: "Node {{ '$' }}labels.node }} has been not ready for more than 10 minutes."
+
+      - alert: KubernetesPodNotReady
+        expr: kube_pod_status_ready{condition="true"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Pod not ready"
+          description: "Pod {{ '$' }}labels.namespace }}/{{ '$' }}labels.pod }} has been not ready for more than 5 minutes."
+
+      - alert: KubernetesHighPodRestartCount
+        expr: kube_pod_container_status_restarts_total > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "High pod restart count"
+          description: "Pod {{ '$' }}labels.namespace }}/{{ '$' }}labels.pod }} has restarted {{ '$' }}value times."
+      {% endif %}
+
+      # SSL certificate alerts
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ '$' }}labels.instance expires in {{ '$' }}value days."
+
+      - alert: SSLCertificateExpired
+        expr: probe_ssl_earliest_cert_expiry - time() <= 0
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "SSL certificate expired"
+          description: "SSL certificate for {{ '$' }}labels.instance has expired."
+
+      # Custom business alerts
+      - alert: UserLoginFailuresHigh
+        expr: rate(user_login_failures_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "High user login failures"
+          description: "User login failure rate is {{ '$' }}value failures per second."
+
+      - alert: DatabaseBackupFailed
+        expr: database_backup_success == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database backup failed"
+          description: "Last database backup failed."
+
+      - alert: NewRelicAPMError
+        expr: newrelic_apm_error_rate > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: apm
+        annotations:
+          summary: "High APM error rate"
+          description: "APM error rate is {{ '$' }}value%."

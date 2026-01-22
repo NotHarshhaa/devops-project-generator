@@ -1,0 +1,90 @@
+# Logging Configuration for {{ project_name }}
+# Environment: {{ env | default('production') }}
+
+version: '3.8'
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: {{ project_name }}-elasticsearch
+    environment:
+      - node.name={{ project_name }}-es-node
+      - cluster.name={{ project_name }}-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    logging: *default-logging
+    networks:
+      - {{ project_name }}-monitoring
+
+  # Logstash
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: {{ project_name }}-logstash
+    volumes:
+      - ./monitoring/logs/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./logs:/app/logs:ro
+    ports:
+      - "5044:5044"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    logging: *default-logging
+    networks:
+      - {{ project_name }}-monitoring
+    depends_on:
+      - elasticsearch
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: {{ project_name }}-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    logging: *default-logging
+    networks:
+      - {{ project_name }}-monitoring
+    depends_on:
+      - elasticsearch
+
+  # Filebeat (for log collection)
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: {{ project_name }}-filebeat
+    user: root
+    volumes:
+      - ./monitoring/logs/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./logs:/app/logs:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+    logging: *default-logging
+    networks:
+      - {{ project_name }}-monitoring
+    depends_on:
+      - elasticsearch
+
+volumes:
+  elasticsearch_data:
+
+networks:
+  {{ project_name }}-monitoring:
+    driver: bridge
