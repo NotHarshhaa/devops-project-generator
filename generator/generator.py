@@ -5,15 +5,18 @@ Core DevOps project generator
 import os
 import shutil
 import time
+import gc
+import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, Any, List, Optional, Set
+from concurrent.futures import ThreadPoolExecutor, as_completed, Future
 from functools import lru_cache
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateNotFound
 from rich.console import Console
 
 from .config import ProjectConfig, TemplateConfig
 
+logger = logging.getLogger(__name__)
 console = Console()
 
 
@@ -27,6 +30,10 @@ class DevOpsProjectGenerator:
         self.project_path = self.output_dir / config.project_name
         self._start_time = time.time()
         
+        # Performance tracking
+        self._template_cache: Dict[str, Any] = {}
+        self._rendered_files: Set[Path] = set()
+        
         # Setup optimized Jinja2 environment with caching
         template_path = Path(__file__).parent.parent / "templates"
         self.jinja_env = Environment(
@@ -34,8 +41,9 @@ class DevOpsProjectGenerator:
             autoescape=select_autoescape(["html", "xml"]),
             trim_blocks=True,
             lstrip_blocks=True,
-            cache_size=100,  # Cache up to 100 templates
+            cache_size=200,  # Increased cache size for better performance
             auto_reload=False,  # Disable auto-reload for performance
+            enable_async=False,  # Disable async for simplicity
         )
         
         # Pre-load commonly used templates
@@ -48,277 +56,222 @@ class DevOpsProjectGenerator:
             "Makefile.j2", 
             "gitignore.j2",
             "app/sample-app/main.py.j2",
-            "app/sample-app/requirements.txt.j2",
-            "scripts/setup.sh.j2",
-            "scripts/deploy.sh.j2",
+            "ci/pipelines/github-actions.yml.j2",
+            "ci/pipelines/gitlab-ci.yml.j2",
+            "infra/terraform/main.tf.j2",
+            "containers/Dockerfile.j2",
+            "k8s/deployment.yaml.j2",
+            "monitoring/prometheus.yml.j2",
+            "security/scan.yml.j2"
         ]
         
         for template_name in common_templates:
             try:
-                self.jinja_env.get_template(template_name)
-            except Exception:
-                pass  # Template doesn't exist, that's ok
+                template_path = Path(__file__).parent.parent / "templates" / template_name
+                if template_path.exists():
+                    self.jinja_env.get_template(template_name)
+                    logger.debug(f"Preloaded template: {template_name}")
+            except TemplateNotFound:
+                logger.debug(f"Template not found for preloading: {template_name}")
+            except Exception as e:
+                logger.warning(f"Error preloading template {template_name}: {str(e)}")
     
-    def generate(self) -> None:
-        """Generate the complete DevOps project"""
-        console.print(f"🏗️  Creating project structure for '{self.config.project_name}'...")
-        
-        # Create project directory structure efficiently
-        self._create_project_structure()
-        
-        # Prepare generation tasks
-        generation_tasks = []
-        
-        # Add component generation tasks
-        if self.config.has_ci():
-            generation_tasks.append(("CI/CD", self._generate_ci_cd))
-        
-        if self.config.has_infra():
-            generation_tasks.append(("Infrastructure", self._generate_infrastructure))
-        
-        generation_tasks.extend([
-            ("Deployment", self._generate_deployment),
-            ("Monitoring", self._generate_monitoring),
-            ("Security", self._generate_security),
-            ("Base Files", self._generate_base_files),
-        ])
-        
-        # Execute tasks concurrently where possible
-        self._execute_generation_tasks(generation_tasks)
-        
-        # Performance metrics
-        elapsed_time = time.time() - self._start_time
-        console.print(f"✅ Project generation completed in {elapsed_time:.2f}s!")
+    def _get_template_context(self) -> Dict[str, Any]:
+        """Get template context"""
+        return self.config.get_template_context()
     
-    def _execute_generation_tasks(self, tasks: List[tuple]) -> None:
-        """Execute generation tasks with optimized scheduling"""
-        # Separate I/O bound tasks for concurrent execution
-        io_tasks = []
-        cpu_tasks = []
+    def _render_template(self, template_path: str) -> str:
+        """Render a template with caching and error handling"""
+        # Check cache first
+        if template_path in self._template_cache:
+            cached_template = self._template_cache[template_path]
+            logger.debug(f"Using cached template: {template_path}")
+            return cached_template
         
-        for task_name, task_func in tasks:
-            if task_name in ["Monitoring", "Security", "Base Files"]:
-                io_tasks.append((task_name, task_func))
-            else:
-                cpu_tasks.append((task_name, task_func))
-        
-        # Execute CPU-intensive tasks sequentially
-        for task_name, task_func in cpu_tasks:
-            console.print(f"🔄 Generating {task_name}...")
-            task_func()
-        
-        # Execute I/O-bound tasks concurrently
-        if io_tasks:
-            with ThreadPoolExecutor(max_workers=3) as executor:
-                future_to_task = {
-                    executor.submit(task_func): task_name 
-                    for task_name, task_func in io_tasks
-                }
-                
-                for future in as_completed(future_to_task):
-                    task_name = future_to_task[future]
-                    try:
-                        future.result()
-                        console.print(f"✅ {task_name} generated")
-                    except Exception as e:
-                        console.print(f"[red]❌ Error in {task_name}: {str(e)}[/red]")
+        try:
+            template = self.jinja_env.get_template(template_path)
+            context = self._get_template_context()
+            rendered = template.render(**context)
+            
+            # Cache the result
+            self._template_cache[template_path] = rendered
+            logger.debug(f"Rendered and cached template: {template_path}")
+            
+            return rendered
+        except TemplateNotFound:
+            logger.error(f"Template not found: {template_path}")
+            raise
+        except Exception as e:
+            logger.error(f"Error rendering template {template_path}: {str(e)}")
+            raise
     
     def _create_project_structure(self) -> None:
-        """Create base project directory structure efficiently"""
-        # Create all directories in one batch operation
+        """Create the basic project directory structure with batch operations"""
+        logger.info("Creating project structure")
+        
+        # Define all directories to create
         directories = [
+            "app",
             "app/sample-app",
+            "ci",
             "ci/pipelines", 
+            "infra",
             "infra/environments",
+            "infra/modules",
+            "deploy",
             "containers",
+            "k8s",
             "k8s/base",
             "k8s/overlays",
+            "monitoring",
             "monitoring/logs",
-            "monitoring/metrics", 
+            "monitoring/metrics",
             "monitoring/alerts",
-            "security/secrets",
+            "security",
+            "security/policies",
             "security/scanning",
-            "scripts/automation",
+            "scripts",
+            "docs",
+            "tests"
         ]
         
-        # Batch create directories for better performance
-        for directory in directories:
-            dir_path = self.project_path / directory
-            dir_path.mkdir(parents=True, exist_ok=True)
-    
-    def _get_cached_template(self, template_path: str) -> Any:
-        """Get template with caching for better performance"""
+        # Batch create directories
+        created_dirs = []
         try:
-            return self.jinja_env.get_template(template_path)
-        except Exception:
-            return None
-    
-    def _generate_ci_cd(self) -> None:
-        """Generate CI/CD pipeline files"""
-        console.print("🔄 Generating CI/CD pipelines...")
-        
-        ci_templates = {
-            "github-actions": "github-actions.yml.j2",
-            "gitlab-ci": "gitlab-ci.yml.j2",
-            "jenkins": "jenkinsfile.j2",
-        }
-        
-        if self.config.ci in ci_templates:
-            template_name = ci_templates[self.config.ci]
-            self._render_template(
-                f"ci/{template_name}",
-                f"ci/pipelines/{self.config.ci}.yml",
-            )
-        
-        # Generate CI README
-        self._render_template("ci/README.md.j2", "ci/README.md")
-    
-    def _generate_infrastructure(self) -> None:
-        """Generate infrastructure as code files"""
-        console.print("🏗️  Generating infrastructure...")
-        
-        infra_templates = {
-            "terraform": "terraform/main.tf.j2",
-            "cloudformation": "cloudformation/template.yml.j2",
-        }
-        
-        if self.config.infra in infra_templates:
-            template_path = infra_templates[self.config.infra]
-            output_path = f"infra/{self.config.infra}"
+            for dir_path in directories:
+                full_path = self.project_path / dir_path
+                if not full_path.exists():
+                    full_path.mkdir(parents=True, exist_ok=True)
+                    created_dirs.append(full_path)
             
-            if self.config.infra == "terraform":
-                self._render_template(template_path, f"{output_path}/main.tf")
-                self._render_template("terraform/variables.tf.j2", f"{output_path}/variables.tf")
-                self._render_template("terraform/outputs.tf.j2", f"{output_path}/outputs.tf")
-            elif self.config.infra == "cloudformation":
-                self._render_template(template_path, f"{output_path}/template.yml")
-        
-        # Generate environment configs
-        for env in self.config.get_environments():
-            self._render_template(
-                f"infra/environment-{self.config.infra}.j2",
-                f"infra/environments/{env}.tf" if self.config.infra == "terraform" else f"infra/environments/{env}.yml",
-                env=env,
-            )
-    
-    def _generate_deployment(self) -> None:
-        """Generate deployment files"""
-        console.print("🚀 Generating deployment files...")
-        
-        if self.config.has_docker():
-            self._render_template("deploy/Dockerfile.j2", "containers/Dockerfile")
-            self._render_template("deploy/docker-compose.yml.j2", "containers/docker-compose.yml")
-        
-        if self.config.has_kubernetes():
-            self._render_template("deploy/k8s-deployment.yml.j2", "k8s/base/deployment.yml")
-            self._render_template("deploy/k8s-service.yml.j2", "k8s/base/service.yml")
+            logger.info(f"Created {len(created_dirs)} directories")
+            console.print(f"🏗️  Created {len(created_dirs)} directories")
             
-            # Generate environment overlays
-            for env in self.config.get_environments():
-                env_dir = f"k8s/overlays/{env}"
-                (self.project_path / env_dir).mkdir(exist_ok=True)
-                self._render_template(
-                    "deploy/k8s-overlay.yml.j2",
-                    f"{env_dir}/kustomization.yml",
-                    env=env,
-                )
-        
-        if self.config.deploy == "vm":
-            self._render_template("deploy/vm-deploy.sh.j2", "scripts/automation/vm-deploy.sh")
-    
-    def _generate_monitoring(self) -> None:
-        """Generate monitoring and observability files"""
-        console.print("📊 Generating monitoring...")
-        
-        # Always generate logs
-        self._render_template("monitoring/logging.yml.j2", "monitoring/logs/logging.yml")
-        
-        if self.config.has_metrics():
-            self._render_template("monitoring/metrics.yml.j2", "monitoring/metrics/metrics.yml")
-        
-        if self.config.has_alerts():
-            self._render_template("monitoring/alerts.yml.j2", "monitoring/alerts/alerts.yml")
-    
-    def _generate_security(self) -> None:
-        """Generate security files"""
-        console.print("🔒 Generating security...")
-        
-        sec_level = self.config.get_security_level()
-        
-        # Base security files
-        self._render_template(f"security/{sec_level}-secrets.yml.j2", "security/secrets/secrets.yml")
-        self._render_template(f"security/{sec_level}-scan.yml.j2", "security/scanning/scan.yml")
-        
-        if sec_level in ["standard", "strict"]:
-            self._render_template("security/security-policy.yml.j2", "security/security-policy.yml")
-        
-        if sec_level == "strict":
-            self._render_template("security/compliance.yml.j2", "security/compliance.yml")
-    
-    def _generate_base_files(self) -> None:
-        """Generate base project files with optimized file operations"""
-        console.print("📄 Generating base files...")
-        
-        # Define all file generations in a batch for better organization
-        file_generations = [
-            # Sample application
-            ("app/sample-app/main.py.j2", "app/sample-app/main.py"),
-            ("app/sample-app/requirements.txt.j2", "app/sample-app/requirements.txt"),
-            
-            # Scripts
-            ("scripts/setup.sh.j2", "scripts/setup.sh"),
-            ("scripts/deploy.sh.j2", "scripts/deploy.sh"),
-            
-            # Project files
-            ("Makefile.j2", "Makefile"),
-            ("README.md.j2", "README.md"),
-            ("gitignore.j2", ".gitignore"),
-        ]
-        
-        # Generate all files in batch
-        for template_path, output_path in file_generations:
-            self._render_template(template_path, output_path)
-        
-        # Make scripts executable in batch
-        script_files = [
-            "scripts/setup.sh",
-            "scripts/deploy.sh", 
-            "scripts/automation/vm-deploy.sh",
-        ]
-        
-        for script in script_files:
-            script_path = self.project_path / script
-            if script_path.exists():
-                try:
-                    os.chmod(script_path, 0o755)
-                except OSError as e:
-                    console.print(f"[yellow]⚠️  Could not make {script} executable: {str(e)}[/yellow]")
-    
-    def _render_template(self, template_path: str, output_path: str, **kwargs) -> None:
-        """Render a template to an output file with optimized performance"""
-        try:
-            # Use cached template for better performance
-            template = self._get_cached_template(template_path)
-            if template is None:
-                console.print(f"[yellow]⚠️  Template {template_path} not found, skipping {output_path}[/yellow]")
-                return
-            
-            # Merge template context with additional kwargs
-            context = self.config.get_template_context()
-            context.update(kwargs)
-            
-            # Render template
-            rendered_content = template.render(**context)
-            
-            # Ensure output directory exists
-            output_file = self.project_path / output_path
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Write file efficiently
-            with open(output_file, "w", encoding="utf-8", newline="\n") as f:
-                f.write(rendered_content)
-                
         except Exception as e:
-            console.print(f"[red]❌ Error rendering template {template_path}: {str(e)}[/red]")
-            console.print(f"[yellow]⚠️  Skipping {output_path} - template may have syntax errors[/yellow]")
-            # Don't raise the exception, just log and continue
+            logger.error(f"Error creating directories: {str(e)}")
+            # Clean up created directories on error
+            for dir_path in created_dirs:
+                try:
+                    if dir_path.exists():
+                        shutil.rmtree(dir_path)
+                except:
+                    pass
+            raise
+    
+    def _generate_component_files(self, component: str, templates: List[str]) -> List[Path]:
+        """Generate files for a specific component"""
+        generated_files = []
+        
+        for template_path in templates:
+            try:
+                # Convert template path to output path
+                output_path = self.project_path / template_path.replace('.j2', '')
+                
+                # Create parent directory if needed
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                # Render template
+                content = self._render_template(template_path)
+                
+                # Write file
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                
+                generated_files.append(output_path)
+                self._rendered_files.add(output_path)
+                logger.debug(f"Generated file: {output_path}")
+                
+            except Exception as e:
+                logger.error(f"Error generating {component} file {template_path}: {str(e)}")
+                console.print(f"[yellow]⚠️  Skipped {template_path}: {str(e)}[/yellow]")
+                continue
+        
+        return generated_files
+    
+    def _set_file_permissions(self) -> None:
+        """Set appropriate file permissions for scripts and executables"""
+        script_extensions = ['.sh', '.py', '.bat']
+        
+        for file_path in self._rendered_files:
+            if file_path.suffix in script_extensions:
+                try:
+                    # Make script executable
+                    current_permissions = file_path.stat().st_mode
+                    file_path.chmod(current_permissions | 0o755)
+                    logger.debug(f"Set executable permissions for: {file_path}")
+                except Exception as e:
+                    logger.warning(f"Could not set permissions for {file_path}: {str(e)}")
+    
+    def generate(self) -> None:
+        """Generate the complete DevOps project with optimized performance"""
+        logger.info(f"Starting project generation for {self.config.project_name}")
+        
+        try:
+            # Create project structure
+            self._create_project_structure()
+            
+            # Generate components concurrently
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                # Submit component generation tasks
+                futures = {}
+                
+                # CI/CD component
+                if self.config.ci and self.config.ci != "none":
+                    ci_templates = self.template_config.get_ci_templates(self.config.ci)
+                    futures["ci"] = executor.submit(self._generate_component_files, "CI/CD", ci_templates)
+                
+                # Infrastructure component
+                if self.config.infra and self.config.infra != "none":
+                    infra_templates = self.template_config.get_infra_templates(self.config.infra)
+                    futures["infra"] = executor.submit(self._generate_component_files, "Infrastructure", infra_templates)
+                
+                # Deployment component
+                deploy_templates = self.template_config.get_deploy_templates(self.config.deploy)
+                futures["deploy"] = executor.submit(self._generate_component_files, "Deployment", deploy_templates)
+                
+                # Monitoring component
+                obs_templates = self.template_config.get_observability_templates(self.config.observability)
+                futures["monitoring"] = executor.submit(self._generate_component_files, "Monitoring", obs_templates)
+                
+                # Security component
+                sec_templates = self.template_config.get_security_templates(self.config.security)
+                futures["security"] = executor.submit(self._generate_component_files, "Security", sec_templates)
+                
+                # Base files (always generated)
+                base_templates = self.template_config.get_base_templates()
+                futures["base"] = executor.submit(self._generate_component_files, "Base", base_templates)
+                
+                # Collect results with progress indication
+                completed_components = []
+                for component, future in futures.items():
+                    try:
+                        files = future.result(timeout=30)  # 30 second timeout per component
+                        completed_components.append((component, files))
+                        console.print(f"✅ {component.title()} generated ({len(files)} files)")
+                    except Exception as e:
+                        logger.error(f"Error in {component} generation: {str(e)}")
+                        console.print(f"[red]❌ {component.title()} failed: {str(e)}[/red]")
+            
+            # Set file permissions
+            self._set_file_permissions()
+            
+            # Performance cleanup
+            gc.collect()  # Force garbage collection
+            
+            # Report completion
+            elapsed_time = time.time() - self._start_time
+            logger.info(f"Project generation completed in {elapsed_time:.2f}s")
+            console.print(f"✅ Project generation completed in {elapsed_time:.2f}s!")
+            
+        except Exception as e:
+            logger.error(f"Project generation failed: {str(e)}", exc_info=True)
+            
+            # Clean up on failure
+            if self.project_path.exists():
+                try:
+                    shutil.rmtree(self.project_path)
+                    logger.info("Cleaned up failed project generation")
+                except:
+                    pass
+            
+            raise

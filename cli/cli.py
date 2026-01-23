@@ -9,23 +9,193 @@ import shutil
 import json
 import yaml
 import datetime
+import re
+import logging
+import time
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+from rich.traceback import install
+from rich.live import Live
+from rich.text import Text
 
 from generator import ProjectConfig, DevOpsProjectGenerator
+
+# Install rich traceback for better error display
+install(show_locals=True)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('devops-generator.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 app = typer.Typer(
     name="devops-project-generator",
     help="🚀 DevOps Project Generator - Scaffold production-ready DevOps repositories",
     no_args_is_help=True,
+    add_completion=False,
 )
 
 console = Console()
+
+
+def validate_project_name(name: str) -> str:
+    """Validate and sanitize project name"""
+    if not name:
+        raise typer.BadParameter("Project name cannot be empty")
+    
+    # Remove invalid characters and sanitize
+    sanitized = re.sub(r'[^\w\-_.]', '', name.strip())
+    
+    if not sanitized:
+        raise typer.BadParameter("Project name contains no valid characters")
+    
+    if len(sanitized) > 50:
+        raise typer.BadParameter("Project name too long (max 50 characters)")
+    
+    if sanitized[0] in ('-', '.', '_'):
+        raise typer.BadParameter("Project name cannot start with '-', '.', or '_'")
+    
+    return sanitized
+
+
+def validate_output_path(path: str) -> Path:
+    """Validate and normalize output path"""
+    try:
+        output_path = Path(path).resolve()
+        
+        # Check if parent directory exists and is writable
+        if not output_path.parent.exists():
+            try:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+            except PermissionError:
+                raise typer.BadParameter(f"Cannot create directory: {output_path.parent}")
+        
+        if not os.access(output_path.parent, os.W_OK):
+            raise typer.BadParameter(f"Directory not writable: {output_path.parent}")
+        
+        return output_path
+    except Exception as e:
+        raise typer.BadParameter(f"Invalid output path: {str(e)}")
+
+
+def handle_keyboard_interrupt(func):
+    """Decorator to handle keyboard interrupts gracefully"""
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except KeyboardInterrupt:
+            console.print("\n[yellow]⚠️  Operation cancelled by user[/yellow]")
+            logger.info("Operation cancelled by user")
+            raise typer.Exit(130)
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+            console.print(f"\n[red]❌ Unexpected error: {str(e)}[/red]")
+            console.print("[yellow]💡 Check the log file for details: devops-generator.log[/yellow]")
+            raise typer.Exit(1)
+    return wrapper
+
+
+def show_progress_spinner(description: str):
+    """Show a progress spinner for long operations"""
+    return Progress(
+        SpinnerColumn(),
+        TextColumn(description),
+        console=console,
+        transient=True,
+    )
+
+
+def show_success_message(title: str, message: str) -> None:
+    """Display a styled success message"""
+    console.print(Panel.fit(
+        f"[bold green]✅ {title}[/bold green]\n"
+        f"[dim]{message}[/dim]",
+        border_style="green",
+        padding=(1, 2)
+    ))
+
+
+def show_error_message(title: str, message: str) -> None:
+    """Display a styled error message"""
+    console.print(Panel.fit(
+        f"[bold red]❌ {title}[/bold red]\n"
+        f"[dim]{message}[/dim]",
+        border_style="red",
+        padding=(1, 2)
+    ))
+
+
+def show_warning_message(title: str, message: str) -> None:
+    """Display a styled warning message"""
+    console.print(Panel.fit(
+        f"[bold yellow]⚠️  {title}[/bold yellow]\n"
+        f"[dim]{message}[/dim]",
+        border_style="yellow",
+        padding=(1, 2)
+    ))
+
+
+def format_file_size(size_bytes: int) -> str:
+    """Format file size in human readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024.0:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.1f} TB"
+
+
+def format_duration(seconds: float) -> str:
+    """Format duration in human readable format"""
+    if seconds < 1:
+        return f"{int(seconds * 1000)}ms"
+    elif seconds < 60:
+        return f"{seconds:.2f}s"
+    elif seconds < 3600:
+        minutes = int(seconds // 60)
+        secs = seconds % 60
+        return f"{minutes}m {secs:.0f}s"
+    else:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        return f"{hours}h {minutes}m"
+
+
+def _calculate_project_stats(project_path: Path) -> Dict[str, Any]:
+    """Calculate project statistics"""
+    stats = {
+        "files": 0,
+        "directories": 0,
+        "size_bytes": 0,
+        "size_formatted": "0 B"
+    }
+    
+    if not project_path.exists():
+        return stats
+    
+    try:
+        for item in project_path.rglob("*"):
+            if item.is_file():
+                stats["files"] += 1
+                stats["size_bytes"] += item.stat().st_size
+            elif item.is_dir():
+                stats["directories"] += 1
+        
+        stats["size_formatted"] = format_file_size(stats["size_bytes"])
+    except Exception as e:
+        logger.warning(f"Error calculating project stats: {str(e)}")
+    
+    return stats
 
 
 @app.command()
@@ -69,6 +239,7 @@ def init(
         "devops-project",
         "--name",
         help="Project name",
+        callback=lambda ctx, param, value: validate_project_name(value) if value else value,
     ),
     output_dir: Optional[str] = typer.Option(
         ".",
@@ -82,60 +253,132 @@ def init(
     ),
 ) -> None:
     """Initialize a new DevOps project"""
-    
-    # Display welcome message
-    console.print(Panel.fit(
-        "[bold blue]🚀 DevOps Project Generator[/bold blue]\n"
-        "[dim]Scaffold production-ready DevOps repositories[/dim]",
-        border_style="blue"
-    ))
-    
-    # Get configuration
-    if interactive:
-        config = _interactive_mode()
-    else:
-        config = ProjectConfig(
-            ci=ci,
-            infra=infra,
-            deploy=deploy,
-            envs=envs,
-            observability=observability,
-            security=security,
-            project_name=project_name,
-        )
-    
-    # Validate configuration
-    if not config.validate():
-        console.print("[red]❌ Invalid configuration. Please check your options.[/red]")
-        console.print("[yellow]💡 Use 'devops-project-generator list-options' to see valid choices[/yellow]")
-        raise typer.Exit(1)
-    
-    # Check if project directory already exists
-    project_path = Path(output_dir) / config.project_name
-    if project_path.exists():
-        if not typer.confirm(f"[yellow]⚠️  Directory '{config.project_name}' already exists. Continue and overwrite?[/yellow]"):
-            console.print("[dim]Operation cancelled.[/dim]")
-            raise typer.Exit(0)
-        shutil.rmtree(project_path)
-    
-    # Generate project
-    generator = DevOpsProjectGenerator(config, output_dir)
-    
     try:
-        generator.generate()
+        # Validate output path
+        try:
+            output_path = validate_output_path(output_dir)
+        except typer.BadParameter as e:
+            console.print(f"[red]❌ {str(e)}[/red]")
+            raise typer.Exit(1)
         
-        console.print(f"\n[green]✅ DevOps project generated successfully![/green]")
-        console.print(f"\n[bold]Project location:[/bold] {project_path}")
-        console.print("\n[bold]🚀 Next steps:[/bold]")
-        console.print(f"  cd {config.project_name}")
-        console.print("  make help")
+        # Display welcome message
+        console.print(Panel.fit(
+            "[bold blue]🚀 DevOps Project Generator[/bold blue]\n"
+            "[dim]Scaffold production-ready DevOps repositories[/dim]",
+            border_style="blue"
+        ))
         
+        logger.info(f"Starting project generation: {project_name}")
+        
+        # Get configuration
+        try:
+            if interactive:
+                config = _interactive_mode()
+            else:
+                config = ProjectConfig(
+                    ci=ci,
+                    infra=infra,
+                    deploy=deploy,
+                    envs=envs,
+                    observability=observability,
+                    security=security,
+                    project_name=project_name,
+                )
+        except Exception as e:
+            logger.error(f"Configuration error: {str(e)}")
+            console.print(f"[red]❌ Configuration error: {str(e)}[/red]")
+            raise typer.Exit(1)
+        
+        # Validate configuration
+        if not config.validate():
+            console.print("[red]❌ Invalid configuration. Please check your options.[/red]")
+            console.print("[yellow]💡 Use 'devops-project-generator list-options' to see valid choices[/yellow]")
+            logger.error("Invalid configuration provided")
+            raise typer.Exit(1)
+        
+        # Check if project directory already exists
+        project_path = output_path / config.project_name
+        if project_path.exists():
+            console.print(f"[yellow]⚠️  Directory '{config.project_name}' already exists.[/yellow]")
+            if not typer.confirm("Continue and overwrite?"):
+                console.print("[dim]Operation cancelled.[/dim]")
+                logger.info("Operation cancelled by user due to existing directory")
+                raise typer.Exit(0)
+            
+            try:
+                shutil.rmtree(project_path)
+                logger.info(f"Removed existing directory: {project_path}")
+            except PermissionError:
+                console.print(f"[red]❌ Permission denied when removing existing directory[/red]")
+                console.print(f"[yellow]💡 Try removing {project_path} manually[/yellow]")
+                raise typer.Exit(1)
+            except Exception as e:
+                console.print(f"[red]❌ Error removing existing directory: {str(e)}[/red]")
+                logger.error(f"Error removing directory: {str(e)}")
+                raise typer.Exit(1)
+        
+        # Generate project
+        try:
+            start_time = time.time()
+            with show_progress_spinner("Generating DevOps project...") as progress:
+                task = progress.add_task("Initializing...", total=None)
+                
+                generator = DevOpsProjectGenerator(config, str(output_path))
+                generator.generate()
+            
+            generation_time = time.time() - start_time
+            
+            # Calculate project statistics
+            project_stats = _calculate_project_stats(project_path)
+            
+            # Display success message with statistics
+            success_msg = (
+                f"Generated {project_stats['files']} files across {project_stats['directories']} directories\n"
+                f"Project size: {project_stats['size_formatted']}\n"
+                f"Generation time: {format_duration(generation_time)}"
+            )
+            show_success_message("Project Generated Successfully!", success_msg)
+            
+            console.print(f"\n[bold]📍 Project location:[/bold] {project_path}")
+            console.print("\n[bold]🚀 Next steps:[/bold]")
+            console.print(f"  cd {config.project_name}")
+            console.print("  make help")
+            
+            logger.info(f"Project generated successfully: {project_path}")
+            
+        except KeyboardInterrupt:
+            show_warning_message("Generation Cancelled", "Project generation was cancelled by user")
+            logger.info("Generation cancelled by user")
+            # Clean up partial project if it exists
+            if project_path.exists():
+                try:
+                    shutil.rmtree(project_path)
+                    logger.info("Cleaned up partial project")
+                except:
+                    pass
+            raise typer.Exit(130)
+        except Exception as e:
+            logger.error(f"Error generating project: {str(e)}", exc_info=True)
+            show_error_message("Generation Failed", f"Failed to generate project: {str(e)}")
+            console.print("[yellow]💡 Check the log file for details: devops-generator.log[/yellow]")
+            
+            # Clean up partial project if it exists
+            if project_path.exists():
+                try:
+                    shutil.rmtree(project_path)
+                    logger.info("Cleaned up partial project due to error")
+                except:
+                    pass
+            raise typer.Exit(1)
+    
     except KeyboardInterrupt:
-        console.print("\n[yellow]⚠️  Generation cancelled by user[/yellow]")
-        raise typer.Exit(1)
+        console.print("\n[yellow]⚠️  Operation cancelled by user[/yellow]")
+        logger.info("Operation cancelled by user")
+        raise typer.Exit(130)
     except Exception as e:
-        console.print(f"\n[red]❌ Error generating project: {str(e)}[/red]")
-        console.print("[yellow]💡 Please check your configuration and try again[/yellow]")
+        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        console.print(f"\n[red]❌ Unexpected error: {str(e)}[/red]")
+        console.print("[yellow]💡 Check the log file for details: devops-generator.log[/yellow]")
         raise typer.Exit(1)
 
 
