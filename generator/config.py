@@ -5,6 +5,7 @@ Configuration management for DevOps Project Generator
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
 from pathlib import Path
+from functools import lru_cache
 
 
 @dataclass
@@ -19,25 +20,29 @@ class ProjectConfig:
     security: Optional[str] = None
     project_name: str = "devops-project"
     
-    # Valid options
+    # Valid options (class-level constants for better performance)
     VALID_CI_OPTIONS = ["github-actions", "gitlab-ci", "jenkins", "none"]
     VALID_INFRA_OPTIONS = ["terraform", "cloudformation", "none"]
     VALID_DEPLOY_OPTIONS = ["vm", "docker", "kubernetes"]
     VALID_OBS_OPTIONS = ["logs", "logs-metrics", "full"]
     VALID_SEC_OPTIONS = ["basic", "standard", "strict"]
     
+    # Cache for template context
+    _template_context: Optional[Dict[str, Any]] = None
+    
     def validate(self) -> bool:
-        """Validate configuration options"""
-        if self.ci and self.ci not in self.VALID_CI_OPTIONS:
-            return False
-        if self.infra and self.infra not in self.VALID_INFRA_OPTIONS:
-            return False
-        if self.deploy and self.deploy not in self.VALID_DEPLOY_OPTIONS:
-            return False
-        if self.observability and self.observability not in self.VALID_OBS_OPTIONS:
-            return False
-        if self.security and self.security not in self.VALID_SEC_OPTIONS:
-            return False
+        """Validate configuration options with improved error checking"""
+        validators = [
+            (self.ci, self.VALID_CI_OPTIONS, "CI/CD platform"),
+            (self.infra, self.VALID_INFRA_OPTIONS, "Infrastructure tool"),
+            (self.deploy, self.VALID_DEPLOY_OPTIONS, "Deployment method"),
+            (self.observability, self.VALID_OBS_OPTIONS, "Observability level"),
+            (self.security, self.VALID_SEC_OPTIONS, "Security level"),
+        ]
+        
+        for value, valid_options, option_name in validators:
+            if value and value not in valid_options:
+                return False
         return True
     
     def get_environments(self) -> List[str]:
@@ -79,23 +84,25 @@ class ProjectConfig:
         return self.security or "basic"
     
     def get_template_context(self) -> Dict[str, Any]:
-        """Get template context for Jinja2"""
-        return {
-            "project_name": self.project_name,
-            "ci": self.ci,
-            "infra": self.infra,
-            "deploy": self.deploy,
-            "environments": self.get_environments(),
-            "observability": self.observability,
-            "security": self.get_security_level(),
-            "has_ci": self.has_ci(),
-            "has_infra": self.has_infra(),
-            "has_docker": self.has_docker(),
-            "has_kubernetes": self.has_kubernetes(),
-            "has_metrics": self.has_metrics(),
-            "has_alerts": self.has_alerts(),
-            "is_multi_env": len(self.get_environments()) > 1,
-        }
+        """Get template context for Jinja2 with caching"""
+        if self._template_context is None:
+            self._template_context = {
+                "project_name": self.project_name,
+                "ci": self.ci,
+                "infra": self.infra,
+                "deploy": self.deploy,
+                "environments": self.get_environments(),
+                "observability": self.observability,
+                "security": self.get_security_level(),
+                "has_ci": self.has_ci(),
+                "has_infra": self.has_infra(),
+                "has_docker": self.has_docker(),
+                "has_kubernetes": self.has_kubernetes(),
+                "has_metrics": self.has_metrics(),
+                "has_alerts": self.has_alerts(),
+                "is_multi_env": len(self.get_environments()) > 1,
+            }
+        return self._template_context
 
 
 @dataclass

@@ -5,6 +5,7 @@ CLI interface for DevOps Project Generator
 
 import os
 import sys
+import shutil
 from pathlib import Path
 from typing import Optional, List
 import typer
@@ -72,19 +73,21 @@ def init(
         help="Output directory",
     ),
     interactive: bool = typer.Option(
-        True,
+        False,
         "--interactive/--no-interactive",
         help="Interactive mode",
     ),
 ) -> None:
     """Initialize a new DevOps project"""
     
+    # Display welcome message
     console.print(Panel.fit(
         "[bold blue]🚀 DevOps Project Generator[/bold blue]\n"
         "[dim]Scaffold production-ready DevOps repositories[/dim]",
         border_style="blue"
     ))
     
+    # Get configuration
     if interactive:
         config = _interactive_mode()
     else:
@@ -101,32 +104,36 @@ def init(
     # Validate configuration
     if not config.validate():
         console.print("[red]❌ Invalid configuration. Please check your options.[/red]")
+        console.print("[yellow]💡 Use 'devops-project-generator list-options' to see valid choices[/yellow]")
         raise typer.Exit(1)
+    
+    # Check if project directory already exists
+    project_path = Path(output_dir) / config.project_name
+    if project_path.exists():
+        if not typer.confirm(f"[yellow]⚠️  Directory '{config.project_name}' already exists. Continue and overwrite?[/yellow]"):
+            console.print("[dim]Operation cancelled.[/dim]")
+            raise typer.Exit(0)
+        shutil.rmtree(project_path)
     
     # Generate project
     generator = DevOpsProjectGenerator(config, output_dir)
     
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        task = progress.add_task("Generating DevOps project...", total=None)
+    try:
+        generator.generate()
         
-        try:
-            generator.generate()
-            progress.update(task, description="✅ Project generated successfully!")
-            
-            console.print("\n[green]✅ DevOps project generated successfully![/green]")
-            console.print(f"\n[bold]Project location:[/bold] {output_dir}/{config.project_name}")
-            console.print("\n[bold]Next steps:[/bold]")
-            console.print(f"  cd {config.project_name}")
-            console.print("  make help")
-            
-        except Exception as e:
-            progress.update(task, description="❌ Generation failed!")
-            console.print(f"\n[red]❌ Error generating project: {str(e)}[/red]")
-            raise typer.Exit(1)
+        console.print(f"\n[green]✅ DevOps project generated successfully![/green]")
+        console.print(f"\n[bold]Project location:[/bold] {project_path}")
+        console.print("\n[bold]🚀 Next steps:[/bold]")
+        console.print(f"  cd {config.project_name}")
+        console.print("  make help")
+        
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠️  Generation cancelled by user[/yellow]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"\n[red]❌ Error generating project: {str(e)}[/red]")
+        console.print("[yellow]💡 Please check your configuration and try again[/yellow]")
+        raise typer.Exit(1)
 
 
 def _interactive_mode() -> ProjectConfig:
@@ -305,7 +312,7 @@ def version() -> None:
     try:
         from . import __version__
     except ImportError:
-        __version__ = "1.0.0"
+        __version__ = "1.1.0"
     console.print(f"[bold blue]DevOps Project Generator[/bold blue] v{__version__}")
 
 

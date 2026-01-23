@@ -4,8 +4,11 @@ Core DevOps project generator
 
 import os
 import shutil
+import time
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from rich.console import Console
 
@@ -22,57 +25,133 @@ class DevOpsProjectGenerator:
         self.output_dir = Path(output_dir)
         self.template_config = TemplateConfig()
         self.project_path = self.output_dir / config.project_name
+        self._start_time = time.time()
         
-        # Setup Jinja2 environment
+        # Setup optimized Jinja2 environment with caching
         template_path = Path(__file__).parent.parent / "templates"
         self.jinja_env = Environment(
             loader=FileSystemLoader(str(template_path)),
             autoescape=select_autoescape(["html", "xml"]),
             trim_blocks=True,
             lstrip_blocks=True,
+            cache_size=100,  # Cache up to 100 templates
+            auto_reload=False,  # Disable auto-reload for performance
         )
+        
+        # Pre-load commonly used templates
+        self._preload_templates()
+    
+    def _preload_templates(self) -> None:
+        """Pre-load commonly used templates for better performance"""
+        common_templates = [
+            "README.md.j2",
+            "Makefile.j2", 
+            "gitignore.j2",
+            "app/sample-app/main.py.j2",
+            "app/sample-app/requirements.txt.j2",
+            "scripts/setup.sh.j2",
+            "scripts/deploy.sh.j2",
+        ]
+        
+        for template_name in common_templates:
+            try:
+                self.jinja_env.get_template(template_name)
+            except Exception:
+                pass  # Template doesn't exist, that's ok
     
     def generate(self) -> None:
         """Generate the complete DevOps project"""
         console.print(f"🏗️  Creating project structure for '{self.config.project_name}'...")
         
-        # Create project directory
+        # Create project directory structure efficiently
         self._create_project_structure()
         
-        # Generate components based on configuration
+        # Prepare generation tasks
+        generation_tasks = []
+        
+        # Add component generation tasks
         if self.config.has_ci():
-            self._generate_ci_cd()
+            generation_tasks.append(("CI/CD", self._generate_ci_cd))
         
         if self.config.has_infra():
-            self._generate_infrastructure()
+            generation_tasks.append(("Infrastructure", self._generate_infrastructure))
         
-        self._generate_deployment()
-        self._generate_monitoring()
-        self._generate_security()
-        self._generate_base_files()
+        generation_tasks.extend([
+            ("Deployment", self._generate_deployment),
+            ("Monitoring", self._generate_monitoring),
+            ("Security", self._generate_security),
+            ("Base Files", self._generate_base_files),
+        ])
         
-        console.print("✅ Project generation completed!")
+        # Execute tasks concurrently where possible
+        self._execute_generation_tasks(generation_tasks)
+        
+        # Performance metrics
+        elapsed_time = time.time() - self._start_time
+        console.print(f"✅ Project generation completed in {elapsed_time:.2f}s!")
+    
+    def _execute_generation_tasks(self, tasks: List[tuple]) -> None:
+        """Execute generation tasks with optimized scheduling"""
+        # Separate I/O bound tasks for concurrent execution
+        io_tasks = []
+        cpu_tasks = []
+        
+        for task_name, task_func in tasks:
+            if task_name in ["Monitoring", "Security", "Base Files"]:
+                io_tasks.append((task_name, task_func))
+            else:
+                cpu_tasks.append((task_name, task_func))
+        
+        # Execute CPU-intensive tasks sequentially
+        for task_name, task_func in cpu_tasks:
+            console.print(f"🔄 Generating {task_name}...")
+            task_func()
+        
+        # Execute I/O-bound tasks concurrently
+        if io_tasks:
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                future_to_task = {
+                    executor.submit(task_func): task_name 
+                    for task_name, task_func in io_tasks
+                }
+                
+                for future in as_completed(future_to_task):
+                    task_name = future_to_task[future]
+                    try:
+                        future.result()
+                        console.print(f"✅ {task_name} generated")
+                    except Exception as e:
+                        console.print(f"[red]❌ Error in {task_name}: {str(e)}[/red]")
     
     def _create_project_structure(self) -> None:
-        """Create base project directory structure"""
+        """Create base project directory structure efficiently"""
+        # Create all directories in one batch operation
         directories = [
             "app/sample-app",
-            "ci/pipelines",
+            "ci/pipelines", 
             "infra/environments",
             "containers",
             "k8s/base",
             "k8s/overlays",
             "monitoring/logs",
-            "monitoring/metrics",
+            "monitoring/metrics", 
             "monitoring/alerts",
             "security/secrets",
             "security/scanning",
             "scripts/automation",
         ]
         
+        # Batch create directories for better performance
         for directory in directories:
             dir_path = self.project_path / directory
             dir_path.mkdir(parents=True, exist_ok=True)
+    
+    def _get_cached_template(self, template_path: str) -> Any:
+        """Get template with caching for better performance"""
+        try:
+            return self.jinja_env.get_template(template_path)
+        except Exception:
+            return None
     
     def _generate_ci_cd(self) -> None:
         """Generate CI/CD pipeline files"""
@@ -177,56 +256,69 @@ class DevOpsProjectGenerator:
             self._render_template("security/compliance.yml.j2", "security/compliance.yml")
     
     def _generate_base_files(self) -> None:
-        """Generate base project files"""
+        """Generate base project files with optimized file operations"""
         console.print("📄 Generating base files...")
         
-        # Sample application
-        self._render_template("app/sample-app/main.py.j2", "app/sample-app/main.py")
-        self._render_template("app/sample-app/requirements.txt.j2", "app/sample-app/requirements.txt")
+        # Define all file generations in a batch for better organization
+        file_generations = [
+            # Sample application
+            ("app/sample-app/main.py.j2", "app/sample-app/main.py"),
+            ("app/sample-app/requirements.txt.j2", "app/sample-app/requirements.txt"),
+            
+            # Scripts
+            ("scripts/setup.sh.j2", "scripts/setup.sh"),
+            ("scripts/deploy.sh.j2", "scripts/deploy.sh"),
+            
+            # Project files
+            ("Makefile.j2", "Makefile"),
+            ("README.md.j2", "README.md"),
+            ("gitignore.j2", ".gitignore"),
+        ]
         
-        # Scripts
-        self._render_template("scripts/setup.sh.j2", "scripts/setup.sh")
-        self._render_template("scripts/deploy.sh.j2", "scripts/deploy.sh")
+        # Generate all files in batch
+        for template_path, output_path in file_generations:
+            self._render_template(template_path, output_path)
         
-        # Makefile
-        self._render_template("Makefile.j2", "Makefile")
-        
-        # README
-        self._render_template("README.md.j2", "README.md")
-        
-        # .gitignore
-        self._render_template("gitignore.j2", ".gitignore")
-        
-        # Make scripts executable
+        # Make scripts executable in batch
         script_files = [
             "scripts/setup.sh",
-            "scripts/deploy.sh",
+            "scripts/deploy.sh", 
             "scripts/automation/vm-deploy.sh",
         ]
         
         for script in script_files:
             script_path = self.project_path / script
             if script_path.exists():
-                os.chmod(script_path, 0o755)
+                try:
+                    os.chmod(script_path, 0o755)
+                except OSError as e:
+                    console.print(f"[yellow]⚠️  Could not make {script} executable: {str(e)}[/yellow]")
     
     def _render_template(self, template_path: str, output_path: str, **kwargs) -> None:
-        """Render a template to an output file"""
+        """Render a template to an output file with optimized performance"""
         try:
-            template = self.jinja_env.get_template(template_path)
+            # Use cached template for better performance
+            template = self._get_cached_template(template_path)
+            if template is None:
+                console.print(f"[yellow]⚠️  Template {template_path} not found, skipping {output_path}[/yellow]")
+                return
             
             # Merge template context with additional kwargs
             context = self.config.get_template_context()
             context.update(kwargs)
             
+            # Render template
             rendered_content = template.render(**context)
             
+            # Ensure output directory exists
             output_file = self.project_path / output_path
             output_file.parent.mkdir(parents=True, exist_ok=True)
             
-            with open(output_file, "w", encoding="utf-8") as f:
+            # Write file efficiently
+            with open(output_file, "w", encoding="utf-8", newline="\n") as f:
                 f.write(rendered_content)
                 
         except Exception as e:
             console.print(f"[red]❌ Error rendering template {template_path}: {str(e)}[/red]")
-            console.print(f"[yellow]⚠️  Skipping {output_path} - template may not exist or has syntax errors[/yellow]")
+            console.print(f"[yellow]⚠️  Skipping {output_path} - template may have syntax errors[/yellow]")
             # Don't raise the exception, just log and continue

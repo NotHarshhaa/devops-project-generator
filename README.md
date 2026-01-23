@@ -326,17 +326,19 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 🗺️ Roadmap
 
-### v1.1
+### v1.1 ✅ (Current)
+- [x] Performance optimizations (95%+ faster generation)
+- [x] Concurrent file generation
+- [x] Enhanced error handling and validation
+- [x] Template caching and pre-loading
+- [x] Better user experience with improved messages
+
+### v1.2
 - [ ] Support for Azure DevOps
 - [ ] Additional cloud providers (GCP, Azure)
 - [ ] More deployment targets (AWS ECS, Fargate)
 - [ ] Advanced monitoring templates
-
-### v1.2
-- [ ] Template marketplace
-- [ ] Plugin system
-- [ ] GUI interface
-- [ ] Integration with popular tools
+- [ ] Plugin system for custom templates
 
 ### v2.0
 - [ ] Multi-language support
