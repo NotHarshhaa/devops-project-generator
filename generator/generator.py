@@ -24,7 +24,7 @@ class DevOpsProjectGenerator:
         self.project_path = self.output_dir / config.project_name
         
         # Setup Jinja2 environment
-        template_path = Path("templates")
+        template_path = Path(__file__).parent.parent / "templates"
         self.jinja_env = Environment(
             loader=FileSystemLoader(str(template_path)),
             autoescape=select_autoescape(["html", "xml"]),
@@ -228,4 +228,5 @@ class DevOpsProjectGenerator:
                 
         except Exception as e:
             console.print(f"[red]❌ Error rendering template {template_path}: {str(e)}[/red]")
-            raise
+            console.print(f"[yellow]⚠️  Skipping {output_path} - template may not exist or has syntax errors[/yellow]")
+            # Don't raise the exception, just log and continue

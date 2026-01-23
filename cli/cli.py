@@ -143,7 +143,11 @@ def _interactive_mode() -> ProjectConfig:
     ci_table.add_row("none", "No CI/CD")
     console.print(ci_table)
     
-    ci = typer.prompt("Choose CI/CD platform", type=str)
+    while True:
+        ci = typer.prompt("Choose CI/CD platform", type=str).lower()
+        if ci in ProjectConfig.VALID_CI_OPTIONS:
+            break
+        console.print(f"[red]Invalid option. Please choose from: {', '.join(ProjectConfig.VALID_CI_OPTIONS)}[/red]")
     
     # Infrastructure selection
     infra_table = Table(title="Infrastructure Tools")
@@ -154,7 +158,11 @@ def _interactive_mode() -> ProjectConfig:
     infra_table.add_row("none", "No IaC")
     console.print(infra_table)
     
-    infra = typer.prompt("Choose infrastructure tool", type=str)
+    while True:
+        infra = typer.prompt("Choose infrastructure tool", type=str).lower()
+        if infra in ProjectConfig.VALID_INFRA_OPTIONS:
+            break
+        console.print(f"[red]Invalid option. Please choose from: {', '.join(ProjectConfig.VALID_INFRA_OPTIONS)}[/red]")
     
     # Deployment selection
     deploy_table = Table(title="Deployment Methods")
@@ -165,10 +173,18 @@ def _interactive_mode() -> ProjectConfig:
     deploy_table.add_row("kubernetes", "Kubernetes deployment")
     console.print(deploy_table)
     
-    deploy = typer.prompt("Choose deployment method", type=str)
+    while True:
+        deploy = typer.prompt("Choose deployment method", type=str).lower()
+        if deploy in ProjectConfig.VALID_DEPLOY_OPTIONS:
+            break
+        console.print(f"[red]Invalid option. Please choose from: {', '.join(ProjectConfig.VALID_DEPLOY_OPTIONS)}[/red]")
     
     # Environments
-    envs = typer.prompt("Choose environments (single, dev,stage,prod)", type=str)
+    while True:
+        envs = typer.prompt("Choose environments (single, dev,stage,prod)", type=str).lower()
+        if envs in ["single", "dev", "stage", "prod"] or "," in envs:
+            break
+        console.print("[red]Invalid environment format. Use 'single' or comma-separated values like 'dev,stage,prod'[/red]")
     
     # Observability
     obs_table = Table(title="Observability Levels")
@@ -179,7 +195,11 @@ def _interactive_mode() -> ProjectConfig:
     obs_table.add_row("full", "Logs + Metrics + Alerts")
     console.print(obs_table)
     
-    observability = typer.prompt("Choose observability level", type=str)
+    while True:
+        observability = typer.prompt("Choose observability level", type=str).lower()
+        if observability in ProjectConfig.VALID_OBS_OPTIONS:
+            break
+        console.print(f"[red]Invalid option. Please choose from: {', '.join(ProjectConfig.VALID_OBS_OPTIONS)}[/red]")
     
     # Security
     sec_table = Table(title="Security Levels")
@@ -190,7 +210,11 @@ def _interactive_mode() -> ProjectConfig:
     sec_table.add_row("strict", "Strict security controls")
     console.print(sec_table)
     
-    security = typer.prompt("Choose security level", type=str)
+    while True:
+        security = typer.prompt("Choose security level", type=str).lower()
+        if security in ProjectConfig.VALID_SEC_OPTIONS:
+            break
+        console.print(f"[red]Invalid option. Please choose from: {', '.join(ProjectConfig.VALID_SEC_OPTIONS)}[/red]")
     
     project_name = typer.prompt("Project name", default="devops-project")
     
@@ -278,7 +302,10 @@ def list_options() -> None:
 @app.command()
 def version() -> None:
     """Show version information"""
-    from . import __version__
+    try:
+        from . import __version__
+    except ImportError:
+        __version__ = "1.0.0"
     console.print(f"[bold blue]DevOps Project Generator[/bold blue] v{__version__}")
 
 

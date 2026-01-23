@@ -67,7 +67,7 @@ jobs:
         find . -name "*.js" -exec ./njsscan --json --output=njsscan-report.json {} \; || true
     
     - name: Run container security analysis
-      if: ${{ has_docker }}
+      if: ${{ '{{' }} has_docker {{ '}}' }}
       run: |
         # Build container for scanning
         docker build -t {{ project_name }}:scan ./containers/
@@ -85,7 +85,7 @@ jobs:
           aquasec/trivy:latest image --severity CRITICAL,HIGH {{ project_name }}:scan
     
     - name: Run infrastructure security scanning
-      if: ${{ has_infra }}
+      if: ${{ '{{' }} has_infra {{ '}}' }}
       run: |
         # Terraform security scanning
         if [ -d "infra/terraform" ]; then
@@ -121,7 +121,7 @@ jobs:
         output: sarif-results
     
     - name: Run OWASP ZAP Baseline Scan
-      if: ${{ env == 'production' }}
+      if: ${{ '{{' }} env == 'production' {{ '}}' }}
       run: |
         # Start application for scanning
         docker-compose up -d
@@ -197,7 +197,7 @@ jobs:
         retention-days: 90
     
     - name: Create Security Issue for Critical Findings
-      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      if: ${{ '{{' }} github.event_name == 'push' && github.ref == 'refs/heads/main' {{ '}}' }}
       uses: actions/github-script@v6
       with:
         script: |
@@ -222,7 +222,7 @@ jobs:
           }
     
     - name: Update Security Dashboard
-      if: ${{ github.event_name == 'schedule' }}
+      if: ${{ '{{' }} github.event_name == 'schedule' {{ '}}' }}
       uses: actions/github-script@v6
       with:
         script: |
