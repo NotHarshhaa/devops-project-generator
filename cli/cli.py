@@ -6,6 +6,9 @@ CLI interface for DevOps Project Generator
 import os
 import sys
 import shutil
+import json
+import yaml
+import datetime
 from pathlib import Path
 from typing import Optional, List
 import typer
@@ -1094,12 +1097,1048 @@ def _display_project_info(stats: dict, detailed: bool) -> None:
 
 
 @app.command()
+def template(
+    action: str = typer.Argument(
+        "list",
+        help="Action: list, create, customize, or export"
+    ),
+    template_name: Optional[str] = typer.Option(
+        None,
+        "--name",
+        help="Template name for create/customize actions"
+    ),
+    output_dir: Optional[str] = typer.Option(
+        None,
+        "--output",
+        help="Output directory for exported templates"
+    ),
+) -> None:
+    """Manage and customize project templates"""
+    if action == "list":
+        _list_available_templates()
+    elif action == "create":
+        if not template_name:
+            console.print("[red]❌ Template name required for create action[/red]")
+            console.print("[yellow]Usage: devops-project-generator template create --name <template-name>[/yellow]")
+            raise typer.Exit(1)
+        _create_custom_template(template_name)
+    elif action == "customize":
+        if not template_name:
+            console.print("[red]❌ Template name required for customize action[/red]")
+            console.print("[yellow]Usage: devops-project-generator template customize --name <template-name>[/yellow]")
+            raise typer.Exit(1)
+        _customize_template(template_name)
+    elif action == "export":
+        if not output_dir:
+            console.print("[red]❌ Output directory required for export action[/red]")
+            console.print("[yellow]Usage: devops-project-generator template export --output <directory>[/yellow]")
+            raise typer.Exit(1)
+        _export_templates(output_dir)
+    else:
+        console.print(f"[red]❌ Unknown action: {action}[/red]")
+        console.print("[yellow]Available actions: list, create, customize, export[/yellow]")
+        raise typer.Exit(1)
+
+
+def _list_available_templates() -> None:
+    """List all available templates"""
+    console.print(Panel.fit(
+        "[bold blue]📋 Available Templates[/bold blue]\n"
+        "[dim]Built-in templates for different DevOps configurations[/dim]",
+        border_style="blue"
+    ))
+    
+    template_categories = {
+        "CI/CD": {
+            "github-actions": "GitHub Actions workflows with multi-stage pipelines",
+            "gitlab-ci": "GitLab CI/CD with auto-deployment",
+            "jenkins": "Jenkins pipelines with Docker integration",
+            "azure-pipelines": "Azure DevOps pipelines with YAML"
+        },
+        "Infrastructure": {
+            "terraform": "Terraform modules for multi-cloud deployment",
+            "cloudformation": "AWS CloudFormation templates",
+            " pulumi": "Pulumi infrastructure as code",
+            "ansible": "Ansible playbooks for configuration management"
+        },
+        "Deployment": {
+            "kubernetes": "K8s manifests with Helm charts",
+            "docker": "Docker containers with compose files",
+            "serverless": "AWS Lambda and serverless functions",
+            "static": "Static site deployment with CDN"
+        },
+        "Monitoring": {
+            "prometheus": "Prometheus + Grafana monitoring stack",
+            "datadog": "Datadog APM and monitoring",
+            "elasticsearch": "ELK stack for logging and analytics",
+            "cloudwatch": "AWS CloudWatch monitoring"
+        },
+        "Security": {
+            "owasp": "OWASP security scanning and policies",
+            "vault": "HashiCorp Vault secrets management",
+            "cert-manager": "SSL certificate automation",
+            "istio": "Service mesh security policies"
+        }
+    }
+    
+    for category, templates in template_categories.items():
+        console.print(f"\n[bold]{category}:[/bold]")
+        table = Table()
+        table.add_column("Template", style="cyan")
+        table.add_column("Description")
+        
+        for name, description in templates.items():
+            table.add_row(name, description)
+        
+        console.print(table)
+
+
+def _create_custom_template(template_name: str) -> None:
+    """Create a new custom template"""
+    console.print(f"[blue]📝 Creating custom template: {template_name}[/blue]")
+    
+    template_dir = Path.home() / ".devops-generator" / "templates" / template_name
+    template_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create template structure
+    subdirs = ["ci", "infra", "deploy", "monitoring", "security", "app"]
+    for subdir in subdirs:
+        (template_dir / subdir).mkdir(exist_ok=True)
+    
+    # Create template metadata
+    metadata = {
+        "name": template_name,
+        "version": "1.0.0",
+        "description": f"Custom template: {template_name}",
+        "author": "Custom User",
+        "created": datetime.datetime.now().isoformat(),
+        "components": {
+            "ci": ["github-actions"],
+            "infra": ["terraform"],
+            "deploy": ["kubernetes"],
+            "monitoring": ["prometheus"],
+            "security": ["owasp"]
+        },
+        "variables": {
+            "project_name": "string",
+            "environment": "string",
+            "cloud_provider": "string",
+            "docker_registry": "string"
+        }
+    }
+    
+    metadata_file = template_dir / "template.yaml"
+    with open(metadata_file, "w", encoding="utf-8") as f:
+        yaml.dump(metadata, f, default_flow_style=False)
+    
+    # Create sample files
+    sample_files = {
+        "ci/github-actions.yml.j2": """# GitHub Actions Workflow for {{ project_name }}
+name: {{ environment }}-pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run tests
+      run: echo "Running tests for {{ project_name }}"
+  
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Deploy to {{ environment }}
+      run: echo "Deploying to {{ environment }}"
+
+""",
+        "infra/main.tf.j2": """# Terraform configuration for {{ project_name }}
+provider "{{ cloud_provider }}" {
+  region = var.region
+}
+
+variable "project_name" {
+  description = "Project name"
+  default = "{{ project_name }}"
+}
+
+variable "environment" {
+  description = "Environment"
+  default = "{{ environment }}"
+}
+
+# Add your infrastructure resources here
+""",
+        "deploy/k8s-deployment.yaml.j2": """# Kubernetes deployment for {{ project_name }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ project_name }}
+  namespace: {{ environment }}
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: {{ project_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ project_name }}
+    spec:
+      containers:
+      - name: {{ project_name }}
+        image: {{ docker_registry }}/{{ project_name }}:latest
+        ports:
+        - containerPort: 8080
+"""
+    }
+    
+    for file_path, content in sample_files.items():
+        full_path = template_dir / file_path
+        with open(full_path, "w", encoding="utf-8") as f:
+            f.write(content)
+    
+    console.print(f"[green]✅ Custom template created: {template_dir}[/green]")
+    console.print("[yellow]💡 Edit the template files to customize your project structure[/yellow]")
+
+
+def _customize_template(template_name: str) -> None:
+    """Customize an existing template"""
+    template_dir = Path.home() / ".devops-generator" / "templates" / template_name
+    
+    if not template_dir.exists():
+        console.print(f"[red]❌ Template '{template_name}' not found[/red]")
+        console.print(f"[yellow]Available templates in: {template_dir.parent}[/yellow]")
+        raise typer.Exit(1)
+    
+    console.print(f"[blue]🔧 Customizing template: {template_name}[/blue]")
+    
+    # Show template structure
+    console.print(f"\n[dim]Template structure:[/dim]")
+    for item in template_dir.rglob("*"):
+        if item.is_file():
+            relative_path = item.relative_to(template_dir)
+            console.print(f"  📄 {relative_path}")
+    
+    console.print(f"\n[yellow]💡 Edit files in: {template_dir}[/yellow]")
+    console.print("[dim]Use .j2 extension for Jinja2 templates[/dim]")
+
+
+def _export_templates(output_dir: str) -> None:
+    """Export built-in templates to a directory"""
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    console.print(f"[blue]📤 Exporting templates to: {output_path}[/blue]")
+    
+    # Get the built-in templates directory
+    builtin_templates = Path(__file__).parent.parent / "templates"
+    
+    if builtin_templates.exists():
+        import shutil
+        export_dir = output_path / "builtin-templates"
+        shutil.copytree(builtin_templates, export_dir, dirs_exist_ok=True)
+        console.print(f"[green]✅ Built-in templates exported to: {export_dir}[/green]")
+    else:
+        console.print("[yellow]⚠️  Built-in templates directory not found[/yellow]")
+    
+    # Export custom templates if they exist
+    custom_templates_dir = Path.home() / ".devops-generator" / "templates"
+    if custom_templates_dir.exists():
+        custom_export_dir = output_path / "custom-templates"
+        shutil.copytree(custom_templates_dir, custom_export_dir, dirs_exist_ok=True)
+        console.print(f"[green]✅ Custom templates exported to: {custom_export_dir}[/green]")
+
+
+@app.command()
+def backup(
+    action: str = typer.Argument(
+        "create",
+        help="Action: create, restore, or list"
+    ),
+    project_path: str = typer.Argument(
+        ".",
+        help="Path to the DevOps project"
+    ),
+    backup_file: Optional[str] = typer.Option(
+        None,
+        "--file",
+        help="Backup file path for restore action"
+    ),
+    include_config: bool = typer.Option(
+        True,
+        "--include-config/--no-config",
+        help="Include configuration files in backup"
+    ),
+    compress: bool = typer.Option(
+        True,
+        "--compress/--no-compress",
+        help="Compress backup file"
+    ),
+) -> None:
+    """Create and restore project backups"""
+    project_path = Path(project_path).resolve()
+    
+    if action == "create":
+        _create_backup(project_path, include_config, compress)
+    elif action == "restore":
+        if not backup_file:
+            console.print("[red]❌ Backup file required for restore action[/red]")
+            console.print("[yellow]Usage: devops-project-generator backup restore --file <backup-file>[/yellow]")
+            raise typer.Exit(1)
+        _restore_backup(project_path, backup_file)
+    elif action == "list":
+        _list_backups()
+    else:
+        console.print(f"[red]❌ Unknown action: {action}[/red]")
+        console.print("[yellow]Available actions: create, restore, list[/yellow]")
+        raise typer.Exit(1)
+
+
+def _create_backup(project_path: Path, include_config: bool, compress: bool) -> None:
+    """Create a backup of the project"""
+    if not project_path.exists():
+        console.print(f"[red]❌ Project path '{project_path}' does not exist[/red]")
+        raise typer.Exit(1)
+    
+    console.print(Panel.fit(
+        "[bold blue]💾 Creating Project Backup[/bold blue]\n"
+        "[dim]Archive project files and configuration[/dim]",
+        border_style="blue"
+    ))
+    
+    # Generate backup filename
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_name = f"{project_path.name}_backup_{timestamp}"
+    
+    if compress:
+        backup_file = project_path.parent / f"{backup_name}.tar.gz"
+    else:
+        backup_file = project_path.parent / f"{backup_name}.tar"
+    
+    console.print(f"[blue]📦 Creating backup: {backup_file.name}[/blue]")
+    
+    try:
+        import tarfile
+        
+        with tarfile.open(backup_file, "w:gz" if compress else "w") as tar:
+            # Add project files
+            for item in project_path.rglob("*"):
+                if item.is_file():
+                    # Skip certain files if not including config
+                    if not include_config and any(pattern in item.name for pattern in [".env", "secret", "key"]):
+                        continue
+                    
+                    arcname = str(item.relative_to(project_path.parent))
+                    tar.add(item, arcname=arcname)
+        
+        # Create backup metadata
+        backup_info = {
+            "project_name": project_path.name,
+            "created": datetime.datetime.now().isoformat(),
+            "size_bytes": backup_file.stat().st_size,
+            "include_config": include_config,
+            "compressed": compress,
+            "file_count": len(list(project_path.rglob("*"))),
+            "version": "1.2.0"
+        }
+        
+        metadata_file = backup_file.with_suffix(".json")
+        with open(metadata_file, "w", encoding="utf-8") as f:
+            json.dump(backup_info, f, indent=2)
+        
+        size_mb = backup_file.stat().st_size / (1024 * 1024)
+        console.print(f"[green]✅ Backup created successfully![/green]")
+        console.print(f"  File: {backup_file.name}")
+        console.print(f"  Size: {size_mb:.2f} MB")
+        console.print(f"  Files: {backup_info['file_count']}")
+        
+    except Exception as e:
+        console.print(f"[red]❌ Backup failed: {str(e)}[/red]")
+        raise typer.Exit(1)
+
+
+def _restore_backup(project_path: Path, backup_file: str) -> None:
+    """Restore a project from backup"""
+    backup_path = Path(backup_file)
+    
+    if not backup_path.exists():
+        console.print(f"[red]❌ Backup file '{backup_file}' does not exist[/red]")
+        raise typer.Exit(1)
+    
+    # Check for metadata file
+    metadata_file = backup_path.with_suffix(".json")
+    if metadata_file.exists():
+        with open(metadata_file, "r", encoding="utf-8") as f:
+            backup_info = json.load(f)
+        
+        console.print(Panel.fit(
+            f"[bold blue]🔄 Restoring Project Backup[/bold blue]\n"
+            f"[dim]Project: {backup_info.get('project_name', 'Unknown')}[/dim]\n"
+            f"[dim]Created: {backup_info.get('created', 'Unknown')}[/dim]",
+            border_style="blue"
+        ))
+    else:
+        console.print(Panel.fit(
+            "[bold blue]🔄 Restoring Project Backup[/bold blue]\n"
+            "[dim]Backup information not available[/dim]",
+            border_style="blue"
+        ))
+    
+    # Check if project directory already exists
+    if project_path.exists():
+        console.print(f"[yellow]⚠️  Project directory '{project_path.name}' already exists[/yellow]")
+        if not typer.confirm("Continue and overwrite?"):
+            console.print("[dim]Operation cancelled.[/dim]")
+            raise typer.Exit(0)
+        
+        # Remove existing directory
+        shutil.rmtree(project_path)
+    
+    console.print(f"[blue]📦 Restoring from: {backup_path.name}[/blue]")
+    
+    try:
+        import tarfile
+        
+        with tarfile.open(backup_path, "r:*") as tar:
+            tar.extractall(project_path.parent)
+        
+        console.print(f"[green]✅ Project restored successfully![/green]")
+        console.print(f"  Location: {project_path}")
+        console.print(f"[yellow]💡 Run 'devops-project-generator validate {project_path.name}' to check the project[/yellow]")
+        
+    except Exception as e:
+        console.print(f"[red]❌ Restore failed: {str(e)}[/red]")
+        raise typer.Exit(1)
+
+
+def _list_backups() -> None:
+    """List all available backups"""
+    console.print(Panel.fit(
+        "[bold blue]📋 Available Backups[/bold blue]\n"
+        "[dim]Project backups in current directory[/dim]",
+        border_style="blue"
+    ))
+    
+    current_dir = Path.cwd()
+    backup_files = []
+    
+    # Find backup files
+    for item in current_dir.glob("*backup*.tar*"):
+        if item.is_file():
+            backup_files.append(item)
+    
+    if not backup_files:
+        console.print("[yellow]No backup files found in current directory[/yellow]")
+        return
+    
+    console.print()
+    table = Table()
+    table.add_column("Backup File", style="cyan")
+    table.add_column("Size", style="green")
+    table.add_column("Created", style="blue")
+    table.add_column("Project", style="yellow")
+    
+    for backup_file in sorted(backup_files, key=lambda x: x.stat().st_mtime, reverse=True):
+        size_mb = backup_file.stat().st_size / (1024 * 1024)
+        mtime = datetime.datetime.fromtimestamp(backup_file.stat().st_mtime)
+        
+        # Try to get project name from filename
+        project_name = backup_file.name.split("_backup_")[0] if "_backup_" in backup_file.name else "Unknown"
+        
+        # Check for metadata
+        metadata_file = backup_file.with_suffix(".json")
+        created = mtime.strftime("%Y-%m-%d %H:%M")
+        
+        if metadata_file.exists():
+            try:
+                with open(metadata_file, "r", encoding="utf-8") as f:
+                    metadata = json.load(f)
+                project_name = metadata.get("project_name", project_name)
+                created = metadata.get("created", created)
+                if isinstance(created, str):
+                    created = created[:16]  # Just date and time
+            except:
+                pass
+        
+        table.add_row(
+            backup_file.name,
+            f"{size_mb:.1f} MB",
+            created,
+            project_name
+        )
+    
+    console.print(table)
+
+
+@app.command()
+def health(
+    project_path: str = typer.Argument(
+        ".",
+        help="Path to the DevOps project to check"
+    ),
+    detailed: bool = typer.Option(
+        False,
+        "--detailed",
+        help="Show detailed health analysis"
+    ),
+    fix: bool = typer.Option(
+        False,
+        "--fix",
+        help="Attempt to fix health issues automatically"
+    ),
+) -> None:
+    """Perform comprehensive health check on DevOps project"""
+    project_path = Path(project_path).resolve()
+    
+    if not project_path.exists():
+        console.print(f"[red]❌ Project path '{project_path}' does not exist[/red]")
+        raise typer.Exit(1)
+    
+    console.print(Panel.fit(
+        "[bold blue]🏥 Project Health Check[/bold blue]\n"
+        "[dim]Comprehensive analysis of project health and best practices[/dim]",
+        border_style="blue"
+    ))
+    
+    # Perform health check
+    health_report = _perform_health_check(project_path, detailed)
+    
+    # Display results
+    _display_health_report(health_report, detailed)
+    
+    # Auto-fix if requested
+    if fix and health_report["fixable_issues"]:
+        console.print("\n[yellow]🔧 Attempting to fix health issues...[/yellow]")
+        _fix_health_issues(project_path, health_report["fixable_issues"])
+    
+    # Overall health score
+    _display_health_score(health_report)
+
+
+def _perform_health_check(project_path: Path, detailed: bool) -> dict:
+    """Perform comprehensive health check"""
+    report = {
+        "overall_score": 0,
+        "categories": {
+            "structure": {"score": 0, "issues": [], "fixable_issues": [], "checks_passed": []},
+            "security": {"score": 0, "issues": [], "fixable_issues": [], "checks_passed": []},
+            "performance": {"score": 0, "issues": [], "fixable_issues": [], "checks_passed": []},
+            "maintenance": {"score": 0, "issues": [], "fixable_issues": [], "checks_passed": []},
+            "documentation": {"score": 0, "issues": [], "fixable_issues": [], "checks_passed": []}
+        },
+        "recommendations": [],
+        "critical_issues": [],
+        "fixable_issues": []
+    }
+    
+    # Structure health
+    _check_structure_health(project_path, report["categories"]["structure"])
+    
+    # Security health
+    _check_security_health(project_path, report["categories"]["security"])
+    
+    # Performance health
+    _check_performance_health(project_path, report["categories"]["performance"])
+    
+    # Maintenance health
+    _check_maintenance_health(project_path, report["categories"]["maintenance"])
+    
+    # Documentation health
+    _check_documentation_health(project_path, report["categories"]["documentation"])
+    
+    # Calculate overall score
+    total_score = sum(cat["score"] for cat in report["categories"].values())
+    report["overall_score"] = total_score // len(report["categories"])
+    
+    # Collect all issues
+    for category in report["categories"].values():
+        report["critical_issues"].extend([issue for issue in category["issues"] if "critical" in issue.lower()])
+        report["fixable_issues"].extend(category["fixable_issues"])
+    
+    # Generate recommendations
+    report["recommendations"] = _generate_health_recommendations(report)
+    
+    return report
+
+
+def _check_structure_health(project_path: Path, structure: dict) -> None:
+    """Check project structure health"""
+    checks = {
+        "required_dirs": ["app", "ci", "infra", "deploy", "monitoring", "security"],
+        "required_files": ["README.md", "Makefile", ".gitignore"],
+        "recommended_dirs": ["scripts", "docs", "tests"],
+        "recommended_files": ["Dockerfile", "docker-compose.yml"]
+    }
+    
+    score = 100
+    
+    # Check required directories
+    for dir_name in checks["required_dirs"]:
+        dir_path = project_path / dir_name
+        if dir_path.exists():
+            structure["checks_passed"].append(f"✅ {dir_name}/ directory exists")
+        else:
+            structure["issues"].append(f"❌ Missing required {dir_name}/ directory")
+            structure["fixable_issues"].append(("create_dir", dir_name))
+            score -= 15
+    
+    # Check required files
+    for file_name in checks["required_files"]:
+        file_path = project_path / file_name
+        if file_path.exists():
+            structure["checks_passed"].append(f"✅ {file_name} exists")
+        else:
+            structure["issues"].append(f"❌ Missing required {file_name}")
+            if file_name == "README.md":
+                structure["fixable_issues"].append(("create_readme", None))
+            elif file_name == "Makefile":
+                structure["fixable_issues"].append(("create_makefile", None))
+            elif file_name == ".gitignore":
+                structure["fixable_issues"].append(("create_gitignore", None))
+            score -= 10
+    
+    # Check recommended items
+    for dir_name in checks["recommended_dirs"]:
+        dir_path = project_path / dir_name
+        if dir_path.exists():
+            structure["checks_passed"].append(f"✅ {dir_name}/ directory exists")
+        else:
+            structure["issues"].append(f"⚠️  Consider adding {dir_name}/ directory")
+            score -= 5
+    
+    structure["score"] = max(0, score)
+
+
+def _check_security_health(project_path: Path, security: dict) -> None:
+    """Check security health"""
+    score = 100
+    
+    # Check for secrets
+    secret_patterns = [".env", "secret", "key", "password", "token"]
+    for item in project_path.rglob("*"):
+        if item.is_file() and any(pattern in item.name.lower() for pattern in secret_patterns):
+            if item.suffix in [".txt", ".yml", ".yaml", ".json", ".env"]:
+                security["issues"].append(f"🔒 Potential secret file: {item.relative_to(project_path)}")
+                score -= 20
+    
+    # Check for security directories
+    security_dir = project_path / "security"
+    if security_dir.exists():
+        security["checks_passed"].append("✅ Security directory exists")
+        security_files = list(security_dir.rglob("*.yml")) + list(security_dir.rglob("*.yaml"))
+        if security_files:
+            security["checks_passed"].append(f"✅ Found {len(security_files)} security configuration files")
+        else:
+            security["issues"].append("⚠️  Security directory exists but no configuration files")
+            score -= 10
+    else:
+        security["issues"].append("❌ No security configuration found")
+        score -= 25
+    
+    # Check .gitignore for sensitive files
+    gitignore_path = project_path / ".gitignore"
+    if gitignore_path.exists():
+        with open(gitignore_path, "r", encoding="utf-8") as f:
+            gitignore_content = f.read().lower()
+        
+        ignored_patterns = [".env", "secret", "key", "*.pem", "*.p12"]
+        ignored_count = sum(1 for pattern in ignored_patterns if pattern in gitignore_content)
+        
+        if ignored_count >= 3:
+            security["checks_passed"].append("✅ .gitignore properly excludes sensitive files")
+        else:
+            security["issues"].append("⚠️  .gitignore may not exclude all sensitive files")
+            security["fixable_issues"].append(("update_gitignore", None))
+            score -= 15
+    else:
+        security["issues"].append("❌ No .gitignore file found")
+        score -= 20
+    
+    security["score"] = max(0, score)
+
+
+def _check_performance_health(project_path: Path, performance: dict) -> None:
+    """Check performance-related health"""
+    score = 100
+    
+    # Check for Docker files
+    docker_files = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"]
+    docker_found = any((project_path / f).exists() for f in docker_files)
+    
+    if docker_found:
+        performance["checks_passed"].append("✅ Containerization files found")
+    else:
+        performance["issues"].append("⚠️  No containerization files found")
+        performance["fixable_issues"].append(("create_dockerfile", None))
+        score -= 15
+    
+    # Check for CI/CD optimization
+    ci_dir = project_path / "ci"
+    if ci_dir.exists():
+        ci_files = list(ci_dir.rglob("*.yml")) + list(ci_dir.rglob("*.yaml"))
+        if ci_files:
+            performance["checks_passed"].append("✅ CI/CD configuration found")
+            
+            # Check for caching in CI files
+            cache_found = False
+            for ci_file in ci_files:
+                try:
+                    with open(ci_file, "r", encoding="utf-8") as f:
+                        content = f.read().lower()
+                        if "cache" in content:
+                            cache_found = True
+                            break
+                except:
+                    pass
+            
+            if cache_found:
+                performance["checks_passed"].append("✅ CI/CD caching configured")
+            else:
+                performance["issues"].append("⚠️  Consider adding CI/CD caching for better performance")
+                score -= 10
+        else:
+            performance["issues"].append("❌ CI/CD directory exists but no configuration files")
+            score -= 20
+    
+    # Check project size
+    total_size = sum(f.stat().st_size for f in project_path.rglob("*") if f.is_file())
+    size_mb = total_size / (1024 * 1024)
+    
+    if size_mb > 100:
+        performance["issues"].append(f"⚠️  Large project size: {size_mb:.1f} MB")
+        performance["fixable_issues"].append(("optimize_size", None))
+        score -= 10
+    else:
+        performance["checks_passed"].append(f"✅ Reasonable project size: {size_mb:.1f} MB")
+    
+    performance["score"] = max(0, score)
+
+
+def _check_maintenance_health(project_path: Path, maintenance: dict) -> None:
+    """Check maintenance-related health"""
+    score = 100
+    
+    # Check for automation scripts
+    scripts_dir = project_path / "scripts"
+    if scripts_dir.exists():
+        script_files = list(scripts_dir.rglob("*.sh")) + list(scripts_dir.rglob("*.py"))
+        if script_files:
+            maintenance["checks_passed"].append(f"✅ Found {len(script_files)} automation scripts")
+        else:
+            maintenance["issues"].append("⚠️  Scripts directory exists but no scripts found")
+            score -= 10
+    else:
+        maintenance["issues"].append("⚠️  No automation scripts directory")
+        maintenance["fixable_issues"].append(("create_scripts_dir", None))
+        score -= 15
+    
+    # Check for Makefile targets
+    makefile_path = project_path / "Makefile"
+    if makefile_path.exists():
+        try:
+            with open(makefile_path, "r", encoding="utf-8") as f:
+                makefile_content = f.read()
+            
+            common_targets = ["build", "deploy", "test", "clean"]
+            found_targets = [target for target in common_targets if f"{target}:" in makefile_content]
+            
+            if len(found_targets) >= 3:
+                maintenance["checks_passed"].append(f"✅ Makefile has {len(found_targets)} common targets")
+            else:
+                maintenance["issues"].append(f"⚠️  Makefile has only {len(found_targets)} common targets")
+                score -= 10
+        except:
+            maintenance["issues"].append("❌ Error reading Makefile")
+            score -= 5
+    
+    # Check for recent activity
+    import time
+    current_time = time.time()
+    recent_files = []
+    
+    for item in project_path.rglob("*"):
+        if item.is_file():
+            file_age = current_time - item.stat().st_mtime
+            if file_age < 7 * 24 * 60 * 60:  # Less than 7 days
+                recent_files.append(item)
+    
+    if len(recent_files) >= 3:
+        maintenance["checks_passed"].append(f"✅ Recent activity: {len(recent_files)} files modified in last 7 days")
+    else:
+        maintenance["issues"].append("⚠️  Low recent activity - project may need maintenance")
+        score -= 10
+    
+    maintenance["score"] = max(0, score)
+
+
+def _check_documentation_health(project_path: Path, documentation: dict) -> None:
+    """Check documentation health"""
+    score = 100
+    
+    # Check README quality
+    readme_path = project_path / "README.md"
+    if readme_path.exists():
+        try:
+            with open(readme_path, "r", encoding="utf-8") as f:
+                readme_content = f.read()
+            
+            readme_size = len(readme_content)
+            sections = ["#", "##", "###"]
+            section_count = sum(readme_content.count(section) for section in sections)
+            
+            if readme_size > 1000 and section_count >= 5:
+                documentation["checks_passed"].append("✅ Comprehensive README documentation")
+            elif readme_size > 500:
+                documentation["issues"].append("⚠️  README could be more detailed")
+                score -= 10
+            else:
+                documentation["issues"].append("❌ README is too short")
+                documentation["fixable_issues"].append(("enhance_readme", None))
+                score -= 20
+        except:
+            documentation["issues"].append("❌ Error reading README")
+            score -= 15
+    else:
+        documentation["issues"].append("❌ No README.md file found")
+        score -= 30
+    
+    # Check for additional documentation
+    docs_dir = project_path / "docs"
+    if docs_dir.exists():
+        doc_files = list(docs_dir.rglob("*.md")) + list(docs_dir.rglob("*.txt"))
+        if doc_files:
+            documentation["checks_passed"].append(f"✅ Found {len(doc_files)} additional documentation files")
+        else:
+            documentation["issues"].append("⚠️  docs directory exists but no documentation files")
+            score -= 5
+    else:
+        documentation["issues"].append("⚠️  No docs directory found")
+        score -= 10
+    
+    # Check for inline documentation
+    code_files = []
+    for ext in [".py", ".js", ".ts", ".go", ".java"]:
+        code_files.extend(project_path.rglob(f"*{ext}"))
+    
+    documented_files = 0
+    for code_file in code_files[:20]:  # Check first 20 files
+        try:
+            with open(code_file, "r", encoding="utf-8") as f:
+                content = f.read()
+                if any(marker in content for marker in ["#", "//", "/*", "*"]):
+                    documented_files += 1
+        except:
+            pass
+    
+    if code_files and documented_files / len(code_files) > 0.7:
+        documentation["checks_passed"].append("✅ Good inline documentation coverage")
+    elif code_files:
+        documentation["issues"].append("⚠️  Consider adding more inline documentation")
+        score -= 10
+    
+    documentation["score"] = max(0, score)
+
+
+def _generate_health_recommendations(report: dict) -> list:
+    """Generate health improvement recommendations"""
+    recommendations = []
+    
+    if report["overall_score"] < 60:
+        recommendations.append("🚨 Project needs significant improvement - focus on critical issues first")
+    elif report["overall_score"] < 80:
+        recommendations.append("⚡ Good foundation - address the identified issues to reach excellence")
+    else:
+        recommendations.append("🎉 Excellent project health! Consider sharing your practices")
+    
+    # Category-specific recommendations
+    for category_name, category_data in report["categories"].items():
+        if category_data["score"] < 70:
+            if category_name == "structure":
+                recommendations.append("🏗️  Improve project structure with missing directories and files")
+            elif category_name == "security":
+                recommendations.append("🔒 Enhance security with proper secrets management and policies")
+            elif category_name == "performance":
+                recommendations.append("⚡ Optimize performance with caching and containerization")
+            elif category_name == "maintenance":
+                recommendations.append("🔧 Add automation scripts and improve maintainability")
+            elif category_name == "documentation":
+                recommendations.append("📚 Enhance documentation for better project understanding")
+    
+    return recommendations
+
+
+def _display_health_report(report: dict, detailed: bool) -> None:
+    """Display comprehensive health report"""
+    console.print(f"\n[bold]🏥 Overall Health Score: {report['overall_score']}/100[/bold]")
+    
+    # Health score color coding
+    if report["overall_score"] >= 80:
+        console.print("[green]✅ Excellent project health[/green]")
+    elif report["overall_score"] >= 60:
+        console.print("[yellow]⚠️  Good project health with room for improvement[/yellow]")
+    else:
+        console.print("[red]❌ Project needs attention[/red]")
+    
+    # Category breakdown
+    console.print(f"\n[bold]📊 Category Breakdown:[/bold]")
+    for category_name, category_data in report["categories"].items():
+        score = category_data["score"]
+        icon = "🟢" if score >= 80 else "🟡" if score >= 60 else "🔴"
+        console.print(f"  {icon} {category_name.title()}: {score}/100")
+    
+    # Critical issues
+    if report["critical_issues"]:
+        console.print(f"\n[bold red]🚨 Critical Issues:[/bold red]")
+        for issue in report["critical_issues"]:
+            console.print(f"  {issue}")
+    
+    # Category details if detailed
+    if detailed:
+        for category_name, category_data in report["categories"].items():
+            console.print(f"\n[bold]{category_name.title()} Details:[/bold]")
+            
+            if category_data["checks_passed"]:
+                console.print("[green]✅ Passed Checks:[/green]")
+                for check in category_data["checks_passed"][:5]:
+                    console.print(f"  {check}")
+                if len(category_data["checks_passed"]) > 5:
+                    console.print(f"  ... and {len(category_data['checks_passed']) - 5} more")
+            
+            if category_data["issues"]:
+                console.print("[red]❌ Issues:[/red]")
+                for issue in category_data["issues"]:
+                    console.print(f"  {issue}")
+
+
+def _fix_health_issues(project_path: Path, fixable_issues: list) -> None:
+    """Attempt to fix health issues automatically"""
+    for issue_type, issue_data in fixable_issues:
+        try:
+            if issue_type == "create_dir":
+                (project_path / issue_data).mkdir(parents=True, exist_ok=True)
+                console.print(f"[green]✅ Created directory: {issue_data}/[/green]")
+            
+            elif issue_type == "create_readme":
+                readme_content = """# Project Name
+
+## Description
+Add your project description here.
+
+## Installation
+```bash
+# Add installation instructions
+```
+
+## Usage
+```bash
+# Add usage instructions
+```
+
+## Contributing
+Add contributing guidelines here.
+
+## License
+Add license information here.
+"""
+                with open(project_path / "README.md", "w", encoding="utf-8") as f:
+                    f.write(readme_content)
+                console.print("[green]✅ Created README.md[/green]")
+            
+            elif issue_type == "create_gitignore":
+                gitignore_content = """# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Secrets
+*.key
+*.pem
+*.p12
+secrets/
+*.secret
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+"""
+                with open(project_path / ".gitignore", "w", encoding="utf-8") as f:
+                    f.write(gitignore_content)
+                console.print("[green]✅ Created .gitignore[/green]")
+            
+            elif issue_type == "create_scripts_dir":
+                scripts_dir = project_path / "scripts"
+                scripts_dir.mkdir(exist_ok=True)
+                
+                # Create sample script
+                sample_script = """#!/bin/bash
+# Sample automation script
+
+echo "Running automation..."
+
+# Add your automation commands here
+"""
+                with open(scripts_dir / "setup.sh", "w", encoding="utf-8") as f:
+                    f.write(sample_script)
+                os.chmod(scripts_dir / "setup.sh", 0o755)
+                console.print("[green]✅ Created scripts directory with sample script[/green]")
+        
+        except Exception as e:
+            console.print(f"[red]❌ Could not fix {issue_type}: {str(e)}[/red]")
+
+
+def _display_health_score(report: dict) -> None:
+    """Display final health score and recommendations"""
+    console.print(f"\n[bold]🎯 Final Health Score: {report['overall_score']}/100[/bold]")
+    
+    if report["recommendations"]:
+        console.print(f"\n[bold]💡 Recommendations:[/bold]")
+        for rec in report["recommendations"]:
+            console.print(f"  {rec}")
+
+
+@app.command()
 def version() -> None:
     """Show version information"""
     try:
         from . import __version__
     except ImportError:
-        __version__ = "1.2.0"
+        __version__ = "1.3.0"
     console.print(f"[bold blue]DevOps Project Generator[/bold blue] v{__version__}")
 
 

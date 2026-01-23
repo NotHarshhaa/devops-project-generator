@@ -136,6 +136,48 @@ devops-project-generator cleanup my-project --force
 devops-project-generator cleanup my-project --keep-config
 ```
 
+### Template Management (NEW v1.3.0)
+
+```bash
+# List available templates
+devops-project-generator template list
+
+# Create custom template
+devops-project-generator template create --name my-template
+
+# Customize existing template
+devops-project-generator template customize --name my-template
+
+# Export templates
+devops-project-generator template export --output ./templates
+```
+
+### Project Backup (NEW v1.3.0)
+
+```bash
+# Create backup
+devops-project-generator backup create my-project
+
+# List available backups
+devops-project-generator backup list
+
+# Restore from backup
+devops-project-generator backup restore my-project --file backup.tar.gz
+```
+
+### Health Check (NEW v1.3.0)
+
+```bash
+# Basic health check
+devops-project-generator health my-project
+
+# Detailed health analysis
+devops-project-generator health my-project --detailed
+
+# Auto-fix health issues
+devops-project-generator health my-project --fix
+```
+
 ## 🏗️ Generated Project Structure (Example)
 
 ```
@@ -379,7 +421,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] Template caching and pre-loading
 - [x] Better user experience with improved messages
 
-### v1.2 ✅ (Current)
+### v1.2 ✅ 
 - [x] Project validation and structure checking
 - [x] Configuration file management system
 - [x] Project cleanup and teardown utilities
@@ -387,7 +429,14 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] DevOps maturity scoring
 - [x] Intelligent recommendations system
 
-### v1.3
+### v1.3 ✅ (Current)
+- [x] Template management and customization system
+- [x] Project backup and restore functionality
+- [x] Comprehensive health monitoring and scoring
+- [x] Auto-fix capabilities for common issues
+- [x] Advanced project analysis and recommendations
+
+### v1.4
 - [ ] Support for Azure DevOps
 - [ ] Additional cloud providers (GCP, Azure)
 - [ ] More deployment targets (AWS ECS, Fargate)
