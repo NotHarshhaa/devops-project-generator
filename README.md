@@ -90,6 +90,52 @@ devops-project-generator init --interactive
 devops-project-generator list-options
 ```
 
+### Project Configuration (NEW v1.2.0)
+
+```bash
+# Create a configuration file
+devops-project-generator config create
+
+# Show current configuration
+devops-project-generator config show
+
+# Validate configuration file
+devops-project-generator config validate
+```
+
+### Project Validation (NEW v1.2.0)
+
+```bash
+# Validate project structure
+devops-project-generator validate
+
+# Auto-fix common issues
+devops-project-generator validate --fix
+```
+
+### Project Information (NEW v1.2.0)
+
+```bash
+# Show project statistics
+devops-project-generator info
+
+# Detailed analysis
+devops-project-generator info --detailed
+```
+
+### Project Cleanup (NEW v1.2.0)
+
+```bash
+# Clean up a project (with confirmation)
+devops-project-generator cleanup my-project
+
+# Force cleanup without confirmation
+devops-project-generator cleanup my-project --force
+
+# Keep configuration files
+devops-project-generator cleanup my-project --keep-config
+```
+
 ## 🏗️ Generated Project Structure (Example)
 
 ```
@@ -326,14 +372,22 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 🗺️ Roadmap
 
-### v1.1 ✅ (Current)
+### v1.1 ✅ 
 - [x] Performance optimizations (95%+ faster generation)
 - [x] Concurrent file generation
 - [x] Enhanced error handling and validation
 - [x] Template caching and pre-loading
 - [x] Better user experience with improved messages
 
-### v1.2
+### v1.2 ✅ (Current)
+- [x] Project validation and structure checking
+- [x] Configuration file management system
+- [x] Project cleanup and teardown utilities
+- [x] Detailed project statistics and analysis
+- [x] DevOps maturity scoring
+- [x] Intelligent recommendations system
+
+### v1.3
 - [ ] Support for Azure DevOps
 - [ ] Additional cloud providers (GCP, Azure)
 - [ ] More deployment targets (AWS ECS, Fargate)
