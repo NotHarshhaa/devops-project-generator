@@ -19,6 +19,51 @@ Setting up a real-world DevOps project from scratch is repetitive and error-pron
 - **SREs**
 - **Students & freshers building real DevOps projects**
 
+## 🌟 Key Features
+
+### 🎯 Project Generation
+- **Fast scaffolding** - Generate complete DevOps projects in seconds
+- **Interactive mode** - Guided setup with helpful prompts
+- **Flexible configuration** - Choose your tech stack and tools
+- **Best practices** - Industry-standard project structure
+
+### 📋 Template Management (v1.3.0)
+- **Browse templates** by category (CI, Infrastructure, Deployment, Monitoring, Security)
+- **Create custom templates** with pre-populated Jinja2 syntax
+- **Template customization** with variable guidance
+- **File size information** and template metadata
+
+### 🔧 Configuration Profiles (v1.4.0)
+- **Save configurations** as reusable profiles
+- **Interactive profile creation** with prompts
+- **Profile metadata** (creation date, description)
+- **Command generation** from saved profiles
+- **Persistent storage** in user home directory
+
+### 🧪 Integration Testing (v1.4.0)
+- **6 test categories** - Structure, Config files, Security, CI/CD, Documentation, Scripts
+- **Detailed scoring** system (0-100%)
+- **Verbose mode** for step-by-step testing
+- **Actionable error messages** with specific failures
+- **Warning system** for optional components
+
+### 🏥 Project Health (v1.3.0)
+- **Comprehensive analysis** of project health and best practices
+- **Health scoring** with category breakdowns
+- **Intelligent recommendations** for improvements
+- **Auto-fix capabilities** for common issues
+
+### 💾 Backup & Restore (v1.3.0)
+- **Project archiving** with timestamped backups
+- **Backup management** with list and restore functions
+- **Configuration preservation** during backup operations
+
+### 🛠️ Advanced Management
+- **Project validation** and structure checking
+- **Configuration file management** system
+- **Project cleanup** and teardown utilities
+- **Detailed statistics** and project analysis
+
 ## 🧠 What This Generator Creates
 
 A full DevOps project structure covering:
@@ -139,17 +184,43 @@ devops-project-generator cleanup my-project --keep-config
 ### Template Management (NEW v1.3.0)
 
 ```bash
-# List available templates
+# List available templates by category
 devops-project-generator template list
 
+# List templates from specific category
+devops-project-generator template list --category ci
+
 # Create custom template
-devops-project-generator template create --name my-template
+devops-project-generator template create --category ci --name custom-pipeline
 
 # Customize existing template
-devops-project-generator template customize --name my-template
+devops-project-generator template customize --category ci --name github-actions.yml
+```
 
-# Export templates
-devops-project-generator template export --output ./templates
+### Configuration Profiles (NEW v1.4.0)
+
+```bash
+# List saved profiles
+devops-project-generator profile list
+
+# Save current configuration as a profile
+devops-project-generator profile save --name webapp
+
+# Load and display profile details
+devops-project-generator profile load --name webapp
+
+# Delete a saved profile
+devops-project-generator profile delete --name webapp
+```
+
+### Integration Testing (NEW v1.4.0)
+
+```bash
+# Run integration tests on generated project
+devops-project-generator test my-project
+
+# Run tests with verbose output
+devops-project-generator test my-project --verbose
 ```
 
 ### Project Backup (NEW v1.3.0)
@@ -312,6 +383,47 @@ devops-project-generator init \
   --security standard
 ```
 
+### Using Configuration Profiles
+
+```bash
+# Save a common configuration
+devops-project-generator profile save --name webapp \
+  --ci github-actions \
+  --infra terraform \
+  --deploy docker \
+  --observability logs \
+  --security basic
+
+# Generate project using saved profile
+devops-project-generator init --ci github-actions --infra terraform --deploy docker --observability logs --security basic --name my-webapp
+```
+
+### Template Customization
+
+```bash
+# List available CI templates
+devops-project-generator template list --category ci
+
+# Create custom pipeline template
+devops-project-generator template create --category ci --name custom-pipeline
+
+# Customize existing template
+devops-project-generator template customize --category ci --name github-actions.yml
+```
+
+### Integration Testing
+
+```bash
+# Generate project
+devops-project-generator init --name test-project --ci github-actions --deploy docker
+
+# Run integration tests
+devops-project-generator test test-project
+
+# Run tests with detailed output
+devops-project-generator test test-project --verbose
+```
+
 ## 🔧 Configuration
 
 ### Global Configuration
@@ -429,25 +541,35 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] DevOps maturity scoring
 - [x] Intelligent recommendations system
 
-### v1.3 ✅ (Current)
+### v1.3 ✅ 
 - [x] Template management and customization system
 - [x] Project backup and restore functionality
 - [x] Comprehensive health monitoring and scoring
 - [x] Auto-fix capabilities for common issues
 - [x] Advanced project analysis and recommendations
 
-### v1.4
+### v1.4 ✅ (Current)
+- [x] Enhanced template management with category support
+- [x] Configuration profiles for reusable setups
+- [x] Integration testing with comprehensive validation
+- [x] Project scoring and quality assessment
+- [x] Verbose testing mode with detailed feedback
+- [x] Profile management with persistent storage
+
+### v1.5
 - [ ] Support for Azure DevOps
 - [ ] Additional cloud providers (GCP, Azure)
 - [ ] More deployment targets (AWS ECS, Fargate)
 - [ ] Advanced monitoring templates
 - [ ] Plugin system for custom templates
+- [ ] Multi-language project support
 
 ### v2.0
-- [ ] Multi-language support
-- [ ] Advanced project customization
 - [ ] AI-powered recommendations
-- [ ] Enterprise features
+- [ ] Enterprise features and SSO integration
+- [ ] Advanced project customization
+- [ ] Team collaboration features
+- [ ] Cloud IDE integration
 
 ## 📄 License
 

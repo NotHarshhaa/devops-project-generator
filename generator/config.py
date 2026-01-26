@@ -231,7 +231,7 @@ class ProjectConfig:
                 "env_count": len(self.get_environments()),
                 "is_multi_env": len(self.get_environments()) > 1,
                 "generated_at": datetime.datetime.now().isoformat(),
-                "generator_version": "1.3.0",
+                "generator_version": "1.4.0",
             }
         return self._template_context
     

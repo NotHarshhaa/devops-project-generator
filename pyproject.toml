@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devops-project-generator"
-version = "1.3.0"
+version = "1.4.0"
 description = "A CLI tool that scaffolds production-ready DevOps repositories"
 authors = [{name = "NotHarshhaa", email = "devops-project-generator@notHarshhaa.com"}]
 license = {text = "MIT"}
