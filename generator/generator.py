@@ -8,10 +8,11 @@ import time
 import gc
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional, Set, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed, Future
 from functools import lru_cache
-from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateNotFound
+from contextlib import contextmanager
+from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateNotFound, TemplateSyntaxError
 from rich.console import Console
 
 from .config import ProjectConfig, TemplateConfig
@@ -56,25 +57,28 @@ class DevOpsProjectGenerator:
             "Makefile.j2", 
             "gitignore.j2",
             "app/sample-app/main.py.j2",
-            "ci/pipelines/github-actions.yml.j2",
-            "ci/pipelines/gitlab-ci.yml.j2",
-            "infra/terraform/main.tf.j2",
-            "containers/Dockerfile.j2",
-            "k8s/deployment.yaml.j2",
-            "monitoring/prometheus.yml.j2",
-            "security/scan.yml.j2"
+            "app/sample-app/requirements.txt.j2",
+            "scripts/setup.sh.j2",
+            "scripts/deploy.sh.j2"
         ]
         
+        # Only preload templates that actually exist
+        preloaded_count = 0
         for template_name in common_templates:
             try:
                 template_path = Path(__file__).parent.parent / "templates" / template_name
                 if template_path.exists():
                     self.jinja_env.get_template(template_name)
+                    preloaded_count += 1
                     logger.debug(f"Preloaded template: {template_name}")
+                else:
+                    logger.debug(f"Template not found for preloading: {template_name}")
             except TemplateNotFound:
                 logger.debug(f"Template not found for preloading: {template_name}")
             except Exception as e:
                 logger.warning(f"Error preloading template {template_name}: {str(e)}")
+        
+        logger.info(f"Preloaded {preloaded_count} templates")
     
     def _get_template_context(self) -> Dict[str, Any]:
         """Get template context"""
@@ -93,6 +97,10 @@ class DevOpsProjectGenerator:
             context = self._get_template_context()
             rendered = template.render(**context)
             
+            # Validate rendered content
+            if not rendered.strip():
+                logger.warning(f"Template rendered empty content: {template_path}")
+            
             # Cache the result
             self._template_cache[template_path] = rendered
             logger.debug(f"Rendered and cached template: {template_path}")
@@ -100,6 +108,9 @@ class DevOpsProjectGenerator:
             return rendered
         except TemplateNotFound:
             logger.error(f"Template not found: {template_path}")
+            raise
+        except TemplateSyntaxError as e:
+            logger.error(f"Template syntax error in {template_path}: {str(e)}")
             raise
         except Exception as e:
             logger.error(f"Error rendering template {template_path}: {str(e)}")
@@ -114,7 +125,6 @@ class DevOpsProjectGenerator:
             "app",
             "app/sample-app",
             "ci",
-            "ci/pipelines", 
             "infra",
             "infra/environments",
             "infra/modules",
@@ -135,32 +145,44 @@ class DevOpsProjectGenerator:
             "tests"
         ]
         
-        # Batch create directories
+        # Batch create directories with better error handling
         created_dirs = []
+        failed_dirs = []
+        
         try:
             for dir_path in directories:
                 full_path = self.project_path / dir_path
-                if not full_path.exists():
-                    full_path.mkdir(parents=True, exist_ok=True)
-                    created_dirs.append(full_path)
+                try:
+                    if not full_path.exists():
+                        full_path.mkdir(parents=True, exist_ok=True)
+                        created_dirs.append(full_path)
+                        logger.debug(f"Created directory: {full_path}")
+                except Exception as e:
+                    logger.error(f"Failed to create directory {dir_path}: {str(e)}")
+                    failed_dirs.append(dir_path)
             
-            logger.info(f"Created {len(created_dirs)} directories")
+            if failed_dirs:
+                logger.warning(f"Failed to create {len(failed_dirs)} directories: {failed_dirs}")
+            
+            logger.info(f"Successfully created {len(created_dirs)} directories")
             console.print(f"🏗️  Created {len(created_dirs)} directories")
             
         except Exception as e:
-            logger.error(f"Error creating directories: {str(e)}")
+            logger.error(f"Critical error creating directories: {str(e)}")
             # Clean up created directories on error
             for dir_path in created_dirs:
                 try:
                     if dir_path.exists():
                         shutil.rmtree(dir_path)
-                except:
-                    pass
+                        logger.debug(f"Cleaned up directory: {dir_path}")
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to cleanup directory {dir_path}: {str(cleanup_error)}")
             raise
     
-    def _generate_component_files(self, component: str, templates: List[str]) -> List[Path]:
-        """Generate files for a specific component"""
+    def _generate_component_files(self, component: str, templates: List[str]) -> Tuple[List[Path], List[str]]:
+        """Generate files for a specific component with better error handling"""
         generated_files = []
+        failed_files = []
         
         for template_path in templates:
             try:
@@ -173,20 +195,43 @@ class DevOpsProjectGenerator:
                 # Render template
                 content = self._render_template(template_path)
                 
-                # Write file
-                with open(output_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                # Validate content before writing
+                if not content.strip():
+                    logger.warning(f"Skipping empty content for {template_path}")
+                    failed_files.append(f"{template_path}: Empty content")
+                    continue
                 
-                generated_files.append(output_path)
-                self._rendered_files.add(output_path)
-                logger.debug(f"Generated file: {output_path}")
+                # Write file with atomic operation
+                temp_file = output_path.with_suffix('.tmp')
+                try:
+                    with open(temp_file, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    
+                    # Atomic rename
+                    temp_file.replace(output_path)
+                    
+                    generated_files.append(output_path)
+                    self._rendered_files.add(output_path)
+                    logger.debug(f"Generated file: {output_path}")
+                    
+                except Exception as write_error:
+                    # Clean up temp file if it exists
+                    if temp_file.exists():
+                        temp_file.unlink()
+                    raise write_error
                 
+            except TemplateNotFound:
+                logger.error(f"Template not found: {template_path}")
+                failed_files.append(f"{template_path}: Template not found")
+                console.print(f"[yellow]⚠️  Skipped {template_path}: Template not found[/yellow]")
+                continue
             except Exception as e:
                 logger.error(f"Error generating {component} file {template_path}: {str(e)}")
+                failed_files.append(f"{template_path}: {str(e)}")
                 console.print(f"[yellow]⚠️  Skipped {template_path}: {str(e)}[/yellow]")
                 continue
         
-        return generated_files
+        return generated_files, failed_files
     
     def _set_file_permissions(self) -> None:
         """Set appropriate file permissions for scripts and executables"""
@@ -202,15 +247,31 @@ class DevOpsProjectGenerator:
                 except Exception as e:
                     logger.warning(f"Could not set permissions for {file_path}: {str(e)}")
     
+    @contextmanager
+    def _generation_context(self):
+        """Context manager for project generation with cleanup"""
+        try:
+            yield
+        except Exception as e:
+            logger.error(f"Project generation failed: {str(e)}")
+            # Clean up on failure
+            if self.project_path.exists():
+                try:
+                    shutil.rmtree(self.project_path)
+                    logger.info("Cleaned up failed project generation")
+                except Exception as cleanup_error:
+                    logger.error(f"Failed to cleanup project: {str(cleanup_error)}")
+            raise
+    
     def generate(self) -> None:
         """Generate the complete DevOps project with optimized performance"""
         logger.info(f"Starting project generation for {self.config.project_name}")
         
-        try:
+        with self._generation_context():
             # Create project structure
             self._create_project_structure()
             
-            # Generate components concurrently
+            # Generate components concurrently with better error handling
             with ThreadPoolExecutor(max_workers=4) as executor:
                 # Submit component generation tasks
                 futures = {}
@@ -242,15 +303,27 @@ class DevOpsProjectGenerator:
                 futures["base"] = executor.submit(self._generate_component_files, "Base", base_templates)
                 
                 # Collect results with progress indication
+                total_files = 0
+                total_failures = 0
                 completed_components = []
+                
                 for component, future in futures.items():
                     try:
-                        files = future.result(timeout=30)  # 30 second timeout per component
-                        completed_components.append((component, files))
-                        console.print(f"✅ {component.title()} generated ({len(files)} files)")
+                        files, failures = future.result(timeout=30)  # 30 second timeout per component
+                        completed_components.append((component, files, failures))
+                        total_files += len(files)
+                        total_failures += len(failures)
+                        
+                        # Report component status
+                        if failures:
+                            console.print(f"✅ {component.title()} generated ({len(files)} files, {len(failures)} skipped)")
+                        else:
+                            console.print(f"✅ {component.title()} generated ({len(files)} files)")
+                            
                     except Exception as e:
                         logger.error(f"Error in {component} generation: {str(e)}")
                         console.print(f"[red]❌ {component.title()} failed: {str(e)}[/red]")
+                        total_failures += 1
             
             # Set file permissions
             self._set_file_permissions()
@@ -258,20 +331,14 @@ class DevOpsProjectGenerator:
             # Performance cleanup
             gc.collect()  # Force garbage collection
             
-            # Report completion
+            # Report completion with detailed statistics
             elapsed_time = time.time() - self._start_time
             logger.info(f"Project generation completed in {elapsed_time:.2f}s")
-            console.print(f"✅ Project generation completed in {elapsed_time:.2f}s!")
             
-        except Exception as e:
-            logger.error(f"Project generation failed: {str(e)}", exc_info=True)
-            
-            # Clean up on failure
-            if self.project_path.exists():
-                try:
-                    shutil.rmtree(self.project_path)
-                    logger.info("Cleaned up failed project generation")
-                except:
-                    pass
-            
-            raise
+            # Provide detailed summary
+            if total_failures > 0:
+                console.print(f"⚠️  Project generated with {total_failures} warnings in {elapsed_time:.2f}s")
+                console.print(f"   Total files: {total_files}")
+            else:
+                console.print(f"✅ Project generation completed in {elapsed_time:.2f}s!")
+                console.print(f"   Total files: {total_files}")

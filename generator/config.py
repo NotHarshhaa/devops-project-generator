@@ -5,12 +5,49 @@ Configuration management for DevOps Project Generator
 import re
 import logging
 import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
 from dataclasses import dataclass, field
 from pathlib import Path
 from functools import lru_cache
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+class CIOption(Enum):
+    """CI/CD platform options"""
+    GITHUB_ACTIONS = "github-actions"
+    GITLAB_CI = "gitlab-ci"
+    JENKINS = "jenkins"
+    NONE = "none"
+
+
+class InfraOption(Enum):
+    """Infrastructure tool options"""
+    TERRAFORM = "terraform"
+    CLOUDFORMATION = "cloudformation"
+    NONE = "none"
+
+
+class DeployOption(Enum):
+    """Deployment method options"""
+    VM = "vm"
+    DOCKER = "docker"
+    KUBERNETES = "kubernetes"
+
+
+class ObservabilityOption(Enum):
+    """Observability level options"""
+    LOGS = "logs"
+    LOGS_METRICS = "logs-metrics"
+    FULL = "full"
+
+
+class SecurityOption(Enum):
+    """Security level options"""
+    BASIC = "basic"
+    STANDARD = "standard"
+    STRICT = "strict"
 
 
 @dataclass
@@ -25,15 +62,23 @@ class ProjectConfig:
     security: Optional[str] = None
     project_name: str = "devops-project"
     
-    # Valid options (class-level constants for better performance)
-    VALID_CI_OPTIONS = ["github-actions", "gitlab-ci", "jenkins", "none"]
-    VALID_INFRA_OPTIONS = ["terraform", "cloudformation", "none"]
-    VALID_DEPLOY_OPTIONS = ["vm", "docker", "kubernetes"]
-    VALID_OBS_OPTIONS = ["logs", "logs-metrics", "full"]
-    VALID_SEC_OPTIONS = ["basic", "standard", "strict"]
+    # Valid options (using enums for better type safety)
+    VALID_CI_OPTIONS = [option.value for option in CIOption]
+    VALID_INFRA_OPTIONS = [option.value for option in InfraOption]
+    VALID_DEPLOY_OPTIONS = [option.value for option in DeployOption]
+    VALID_OBS_OPTIONS = [option.value for option in ObservabilityOption]
+    VALID_SEC_OPTIONS = [option.value for option in SecurityOption]
     
-    # Cache for template context
+    # Reserved system names (class-level constant)
+    RESERVED_NAMES = {
+        'con', 'prn', 'aux', 'nul', 'com1', 'com2', 'com3', 'com4', 'com5',
+        'com6', 'com7', 'com8', 'com9', 'lpt1', 'lpt2', 'lpt3', 'lpt4',
+        'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9'
+    }
+    
+    # Cache for template context and computed values
     _template_context: Optional[Dict[str, Any]] = None
+    _environments_cache: Optional[List[str]] = None
     
     def __post_init__(self):
         """Validate and sanitize configuration after initialization"""
@@ -75,11 +120,7 @@ class ProjectConfig:
             raise ValueError("Invalid project name format")
         
         # Ensure it doesn't conflict with system names
-        reserved_names = ['con', 'prn', 'aux', 'nul', 'com1', 'com2', 'com3', 'com4', 'com5', 
-                         'com6', 'com7', 'com8', 'com9', 'lpt1', 'lpt2', 'lpt3', 'lpt4', 
-                         'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9']
-        
-        if sanitized.lower() in reserved_names:
+        if sanitized.lower() in self.RESERVED_NAMES:
             raise ValueError(f"Project name '{sanitized}' is reserved")
         
         return sanitized
@@ -200,25 +241,34 @@ class ProjectConfig:
             return False
     
     def get_environments(self) -> List[str]:
-        """Parse environments string into list with validation"""
+        """Parse environments string into list with validation and caching"""
+        if self._environments_cache is not None:
+            return self._environments_cache
+            
         if not self.envs or self.envs == "single":
-            return ["dev"]
+            self._environments_cache = ["dev"]
+            return self._environments_cache
         
         try:
             envs = self._sanitize_environments(self.envs)
-            return [env.strip() for env in envs.split(",") if env.strip()]
+            env_list = [env.strip() for env in envs.split(",") if env.strip()]
+            self._environments_cache = env_list
+            return env_list
         except Exception as e:
             logger.warning(f"Error parsing environments: {str(e)}")
-            return ["dev"]
+            self._environments_cache = ["dev"]
+            return self._environments_cache
     
     def get_template_context(self) -> Dict[str, Any]:
         """Get template context with caching and validation"""
         if self._template_context is None:
+            environments = self.get_environments()
             self._template_context = {
                 "project_name": self.project_name,
                 "project_name_upper": self.project_name.upper(),
                 "project_name_slug": self.project_name.lower().replace("_", "-"),
-                "environments": self.get_environments(),
+                "project_name_snake": self.project_name.lower().replace("-", "_"),
+                "environments": environments,
                 "ci": self.ci,
                 "infra": self.infra,
                 "deploy": self.deploy,
@@ -228,8 +278,9 @@ class ProjectConfig:
                 "has_infra": self.infra and self.infra != "none",
                 "has_docker": self.deploy in ["docker", "kubernetes"],
                 "has_kubernetes": self.deploy == "kubernetes",
-                "env_count": len(self.get_environments()),
-                "is_multi_env": len(self.get_environments()) > 1,
+                "env_count": len(environments),
+                "is_multi_env": len(environments) > 1,
+                "primary_env": environments[0] if environments else "dev",
                 "generated_at": datetime.datetime.now().isoformat(),
                 "generator_version": "1.4.0",
             }
@@ -247,21 +298,67 @@ class ProjectConfig:
         """Check if Docker is configured"""
         return self.deploy in ["docker", "kubernetes"]
     
-    def has_kubernetes(self) -> bool:
-        """Check if Kubernetes is configured"""
-        return self.deploy == "kubernetes"
+    def has_metrics(self) -> bool:
+        """Check if metrics are enabled"""
+        return self.observability in ["logs-metrics", "full"]
+    
+    def has_alerts(self) -> bool:
+        """Check if alerts are enabled"""
+        return self.observability == "full"
+    
+    def get_security_level(self) -> str:
+        """Get security level with fallback"""
+        return self.security or "basic"
+    
+    def get_primary_environment(self) -> str:
+        """Get the primary environment"""
+        environments = self.get_environments()
+        return environments[0] if environments else "dev"
+    
+    def is_production_ready(self) -> bool:
+        """Check if project is production-ready based on configuration"""
+        return (
+            self.has_ci() and
+            self.has_infra() and
+            self.deploy in ["docker", "kubernetes"] and
+            self.observability in ["logs-metrics", "full"] and
+            self.security in ["standard", "strict"]
+        )
 
 
 @dataclass
 class TemplateConfig:
-    """Template configuration management"""
+    """Template configuration management with improved caching and error handling"""
     
     def __init__(self):
         self.template_path = Path(__file__).parent.parent / "templates"
         self._template_cache: Dict[str, List[str]] = {}
+        self._validated_paths: Set[Path] = set()
+        
+        # Validate template directory exists
+        if not self.template_path.exists():
+            logger.warning(f"Template directory not found: {self.template_path}")
+            self.template_path.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created template directory: {self.template_path}")
+    
+    def _validate_template_path(self, component_path: Path) -> bool:
+        """Validate template directory exists and is accessible"""
+        if component_path in self._validated_paths:
+            return True
+            
+        if not component_path.exists():
+            logger.debug(f"Template component directory not found: {component_path}")
+            return False
+            
+        if not component_path.is_dir():
+            logger.warning(f"Template path is not a directory: {component_path}")
+            return False
+            
+        self._validated_paths.add(component_path)
+        return True
     
     def _get_templates_for_component(self, component: str, option: str) -> List[str]:
-        """Get templates for a specific component and option"""
+        """Get templates for a specific component and option with improved caching"""
         cache_key = f"{component}_{option}"
         
         if cache_key in self._template_cache:
@@ -270,43 +367,69 @@ class TemplateConfig:
         templates = []
         component_path = self.template_path / component
         
-        if component_path.exists():
+        if not self._validate_template_path(component_path):
+            logger.debug(f"No templates found for component: {component}")
+            self._template_cache[cache_key] = templates
+            return templates
+        
+        try:
             # Look for templates specific to the option
             option_templates = list(component_path.glob(f"*{option}*.j2"))
-            templates.extend([str(t.relative_to(self.template_path)) for t in option_templates])
+            for template in option_templates:
+                template_str = str(template.relative_to(self.template_path))
+                templates.append(template_str)
+                logger.debug(f"Found option-specific template: {template_str}")
             
-            # Look for generic templates
+            # Look for generic templates (avoid duplicates)
             generic_templates = list(component_path.glob("*.j2"))
             for template in generic_templates:
                 template_str = str(template.relative_to(self.template_path))
                 if template_str not in templates:
                     templates.append(template_str)
+                    logger.debug(f"Found generic template: {template_str}")
+            
+            # Sort templates for consistent ordering
+            templates.sort()
+            
+        except Exception as e:
+            logger.error(f"Error scanning templates for {component}/{option}: {str(e)}")
         
         self._template_cache[cache_key] = templates
+        logger.debug(f"Cached {len(templates)} templates for {component}/{option}")
         return templates
     
     def get_ci_templates(self, ci_option: str) -> List[str]:
-        """Get CI/CD templates"""
+        """Get CI/CD templates with validation"""
+        if not ci_option:
+            return []
         return self._get_templates_for_component("ci", ci_option)
     
     def get_infra_templates(self, infra_option: str) -> List[str]:
-        """Get infrastructure templates"""
+        """Get infrastructure templates with validation"""
+        if not infra_option:
+            return []
         return self._get_templates_for_component("infra", infra_option)
     
     def get_deploy_templates(self, deploy_option: str) -> List[str]:
-        """Get deployment templates"""
+        """Get deployment templates with validation"""
+        if not deploy_option:
+            return []
         return self._get_templates_for_component("deploy", deploy_option)
     
     def get_observability_templates(self, obs_option: str) -> List[str]:
-        """Get observability templates"""
+        """Get observability templates with validation"""
+        if not obs_option:
+            return []
         return self._get_templates_for_component("monitoring", obs_option)
     
     def get_security_templates(self, sec_option: str) -> List[str]:
-        """Get security templates"""
+        """Get security templates with validation"""
+        if not sec_option:
+            return []
         return self._get_templates_for_component("security", sec_option)
     
     def get_base_templates(self) -> List[str]:
-        """Get base templates (always included)"""
+        """Get base templates (always included) with validation"""
         base_templates = [
             "README.md.j2",
             "Makefile.j2",
@@ -320,7 +443,36 @@ class TemplateConfig:
         # Filter to only existing templates
         existing_templates = []
         for template in base_templates:
-            if (self.template_path / template).exists():
+            template_path = self.template_path / template
+            if template_path.exists() and template_path.is_file():
                 existing_templates.append(template)
+                logger.debug(f"Found base template: {template}")
+            else:
+                logger.debug(f"Base template not found: {template}")
         
+        logger.info(f"Found {len(existing_templates)} base templates out of {len(base_templates)} requested")
         return existing_templates
+    
+    def clear_cache(self) -> None:
+        """Clear template cache (useful for development)"""
+        self._template_cache.clear()
+        self._validated_paths.clear()
+        logger.info("Template cache cleared")
+    
+    def get_template_stats(self) -> Dict[str, Any]:
+        """Get statistics about available templates"""
+        stats = {
+            "total_templates": 0,
+            "components": {},
+            "base_templates": len(self.get_base_templates())
+        }
+        
+        components = ["ci", "infra", "deploy", "monitoring", "security"]
+        for component in components:
+            component_path = self.template_path / component
+            if component_path.exists():
+                templates = list(component_path.glob("*.j2"))
+                stats["components"][component] = len(templates)
+                stats["total_templates"] += len(templates)
+        
+        return stats

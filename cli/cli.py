@@ -12,8 +12,10 @@ import datetime
 import re
 import logging
 import time
+import traceback
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
+from contextlib import contextmanager
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -22,13 +24,14 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.traceback import install
 from rich.live import Live
 from rich.text import Text
+from rich.prompt import Confirm, Prompt
 
 from generator import ProjectConfig, DevOpsProjectGenerator
 
 # Install rich traceback for better error display
 install(show_locals=True)
 
-# Configure logging
+# Configure logging with better formatting
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -49,24 +52,151 @@ app = typer.Typer(
 console = Console()
 
 
+@contextmanager
+def handle_cli_errors():
+    """Context manager for consistent CLI error handling"""
+    try:
+        yield
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠️  Operation cancelled by user[/yellow]")
+        logger.info("Operation cancelled by user")
+        raise typer.Exit(130)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        logger.error(f"CLI error: {str(e)}", exc_info=True)
+        console.print(f"\n[red]❌ Error: {str(e)}[/red]")
+        console.print("[yellow]💡 Check the log file for details: devops-generator.log[/yellow]")
+        raise typer.Exit(1)
+
+
+def safe_print(console_output: str, fallback: str = None) -> None:
+    """Safely print console output with fallback for markup errors"""
+    try:
+        console.print(console_output)
+    except Exception as e:
+        if "markup" in str(e).lower() or "rich" in str(e).lower():
+            if fallback:
+                console.print(fallback)
+            else:
+                # Remove rich markup and print plain text
+                import re
+                plain_text = re.sub(r'\[/?[^\]]+\]', '', console_output)
+                console.print(plain_text)
+        else:
+            raise
+
+
 def validate_project_name(name: str) -> str:
     """Validate and sanitize project name"""
     if not name:
         raise typer.BadParameter("Project name cannot be empty")
     
-    # Remove invalid characters and sanitize
-    sanitized = re.sub(r'[^\w\-_.]', '', name.strip())
-    
-    if not sanitized:
-        raise typer.BadParameter("Project name contains no valid characters")
-    
-    if len(sanitized) > 50:
+    # Basic validation
+    if len(name) > 50:
         raise typer.BadParameter("Project name too long (max 50 characters)")
     
-    if sanitized[0] in ('-', '.', '_'):
-        raise typer.BadParameter("Project name cannot start with '-', '.', or '_'")
+    # Check for invalid characters
+    if not re.match(r'^[a-zA-Z0-9_-]+$', name):
+        raise typer.BadParameter("Project name can only contain letters, numbers, hyphens, and underscores")
     
-    return sanitized
+    return name
+
+
+def validate_output_path(path: str) -> Path:
+    """Validate output path and permissions"""
+    output_path = Path(path)
+    
+    if not output_path.exists():
+        try:
+            output_path.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            raise typer.BadParameter(f"Permission denied creating directory: {output_path}")
+    
+    if not output_path.is_dir():
+        raise typer.BadParameter(f"Output path is not a directory: {output_path}")
+    
+    # Check write permissions
+    test_file = output_path / '.devops_generator_test'
+    try:
+        test_file.touch()
+        test_file.unlink()
+    except PermissionError:
+        raise typer.BadParameter(f"No write permission in directory: {output_path}")
+    
+    return output_path
+
+
+def format_duration(seconds: float) -> str:
+    """Format duration in human-readable format"""
+    if seconds < 1:
+        return f"{int(seconds * 1000)}ms"
+    elif seconds < 60:
+        return f"{seconds:.1f}s"
+    else:
+        minutes = int(seconds // 60)
+        remaining_seconds = int(seconds % 60)
+        return f"{minutes}m {remaining_seconds}s"
+
+
+def format_file_size(bytes_size: int) -> str:
+    """Format file size in human-readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if bytes_size < 1024.0:
+            return f"{bytes_size:.1f} {unit}"
+        bytes_size /= 1024.0
+    return f"{bytes_size:.1f} TB"
+
+
+def calculate_project_stats(project_path: Path) -> Dict[str, Any]:
+    """Calculate comprehensive project statistics"""
+    stats = {
+        'files': 0,
+        'directories': 0,
+        'size': 0,
+        'size_formatted': '0 B'
+    }
+    
+    if not project_path.exists():
+        return stats
+    
+    try:
+        for item in project_path.rglob('*'):
+            if item.is_file():
+                stats['files'] += 1
+                stats['size'] += item.stat().st_size
+            elif item.is_dir():
+                stats['directories'] += 1
+        
+        stats['size_formatted'] = format_file_size(stats['size'])
+    except Exception as e:
+        logger.warning(f"Error calculating project stats: {str(e)}")
+    
+    return stats
+
+
+def show_success_message(title: str, message: str) -> None:
+    """Display a success message with consistent formatting"""
+    console.print(Panel.fit(
+        f"[bold green]✅ {title}[/bold green]\n{message}",
+        border_style="green"
+    ))
+
+
+def show_error_message(title: str, message: str) -> None:
+    """Display an error message with consistent formatting"""
+    console.print(Panel.fit(
+        f"[bold red]❌ {title}[/bold red]\n{message}",
+        border_style="red"
+    ))
+
+
+def show_warning_message(title: str, message: str) -> None:
+    """Display a warning message with consistent formatting"""
+    console.print(Panel.fit(
+        f"[bold yellow]⚠️  {title}[/bold yellow]\n{message}",
+        border_style="yellow"
+    ))
 
 
 def validate_output_path(path: str) -> Path:
