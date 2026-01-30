@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-01-30
+
+### 🎉 Major New Features
+
+#### 🔍 Dependency Scanner
+- **Multi-language dependency detection** - Support for Python (requirements.txt, pyproject.toml, Pipfile), Node.js (package.json), Docker images, and Kubernetes manifests
+- **Security vulnerability analysis** - Detect potential security issues in dependencies with detailed reporting
+- **Version tracking and recommendations** - Identify outdated packages and suggest updates with latest version information
+- **Comprehensive reporting** - Export detailed scan reports in JSON or YAML format with actionable recommendations
+- **Cross-platform compatibility** - Fixed Windows path separator issues for reliable template loading
+
+#### 🌍 Multi-Environment Configuration Generator
+- **Configuration inheritance system** - Base configurations with environment-specific overrides for DRY management
+- **Multiple deployment formats** - Generate Kubernetes (Kustomize), Docker Compose, and .env files automatically
+- **Secrets management templates** - Secure secrets template generation with environment-specific configurations
+- **Deployment automation** - Generated deployment scripts supporting multiple environments and deployment methods
+- **Configuration validation** - Built-in validation tools and configuration diff utilities for environment management
+
+### 🚀 Enhancements
+- **Enhanced error handling** - Replaced bare exceptions with specific exception types for better debugging
+- **Performance optimizations** - Improved template loading with better file existence checking
+- **Code quality improvements** - Better resource cleanup and more robust file operations
+- **Cross-platform fixes** - Resolved Windows-specific path handling issues
+
+### 📚 Documentation
+- **Updated README.md** - Comprehensive documentation for new features with examples
+- **Enhanced CLI help** - Updated command descriptions and usage examples
+- **Project structure updates** - Documentation for new multi-environment directory structure
+
+### 🛠️ Technical Improvements
+- **Improved exception specificity** - Better error handling with OSError, IOError, TemplateSyntaxError
+- **Atomic file operations** - Enhanced file writing with proper temp file cleanup
+- **Template caching optimizations** - Better performance for template loading and rendering
+- **Resource management** - Improved cleanup in error scenarios
+
 ## [1.4.0] - 2026-01-26
 
 ### 🎉 Major New Features

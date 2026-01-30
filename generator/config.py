@@ -285,7 +285,7 @@ class ProjectConfig:
                 "is_multi_env": len(environments) > 1,
                 "primary_env": environments[0] if environments else "dev",
                 "generated_at": datetime.datetime.now().isoformat(),
-                "generator_version": "1.4.0",
+                "generator_version": "1.5.0",
             }
         return self._template_context
     

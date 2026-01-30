@@ -64,6 +64,20 @@ Setting up a real-world DevOps project from scratch is repetitive and error-pron
 - **Project cleanup** and teardown utilities
 - **Detailed statistics** and project analysis
 
+### 🔍 Dependency Scanner (NEW v1.5.0)
+- **Multi-language support** - Python, Node.js, Docker, Kubernetes dependencies
+- **Security analysis** - Detect vulnerabilities and security issues
+- **Version tracking** - Identify outdated packages and suggest updates
+- **Comprehensive reporting** - Detailed reports with export options (JSON/YAML)
+- **Actionable recommendations** - Specific improvement suggestions
+
+### 🌍 Multi-Environment Config Generator (NEW v1.5.0)
+- **Configuration inheritance** - Base configs with environment-specific overrides
+- **Multiple formats** - Kubernetes (Kustomize), Docker Compose, .env files
+- **Secrets management** - Secure secrets template generation
+- **Deployment automation** - Generated deployment scripts
+- **Validation tools** - Configuration validation and diff utilities
+
 ## 🧠 What This Generator Creates
 
 A full DevOps project structure covering:
@@ -249,6 +263,38 @@ devops-project-generator health my-project --detailed
 devops-project-generator health my-project --fix
 ```
 
+### Dependency Scanner (NEW v1.5.0)
+
+```bash
+# Scan project dependencies
+devops-project-generator scan my-project
+
+# Detailed scan with full breakdown
+devops-project-generator scan my-project --detailed
+
+# Export scan report to file
+devops-project-generator scan my-project --export report.json --format json
+
+# Export as YAML report
+devops-project-generator scan my-project --export report.yaml --format yaml
+```
+
+### Multi-Environment Config Generator (NEW v1.5.0)
+
+```bash
+# Generate basic multi-environment configs
+devops-project-generator multi-env my-project --envs "dev,stage,prod"
+
+# Generate full configs with Kubernetes, Docker, and secrets
+devops-project-generator multi-env my-project --envs "dev,stage,prod" --type full --with-secrets
+
+# Generate only Kubernetes configs
+devops-project-generator multi-env my-project --envs "dev,prod" --type kubernetes
+
+# Generate only Docker Compose configs
+devops-project-generator multi-env my-project --envs "dev,prod" --type docker
+```
+
 ## 🏗️ Generated Project Structure (Example)
 
 ```
@@ -266,7 +312,24 @@ devops-project/
 │   └── docker-compose.yml
 ├── k8s/
 │   ├── base/
-│   └── overlays/
+│   └── overlays/          # NEW: Environment-specific overlays
+│       ├── dev/
+│       ├── stage/
+│       └── prod/
+├── config/                  # NEW: Multi-environment configs
+│   ├── base-application.yaml
+│   ├── .env.dev
+│   ├── .env.stage
+│   ├── .env.prod
+│   └── secrets/             # NEW: Secrets templates
+│       ├── dev-secrets.yaml
+│       ├── stage-secrets.yaml
+│       └── prod-secrets.yaml
+├── docker/                  # NEW: Docker Compose configs
+│   ├── docker-compose.yml
+│   ├── docker-compose.dev.yml
+│   ├── docker-compose.stage.yml
+│   └── docker-compose.prod.yml
 ├── monitoring/
 │   ├── logs/
 │   ├── metrics/
@@ -275,7 +338,8 @@ devops-project/
 │   ├── secrets/
 │   └── scanning/
 ├── scripts/
-│   └── automation/
+│   ├── automation/
+│   └── deploy.sh            # NEW: Multi-environment deployment script
 ├── Makefile
 └── README.md
 ```
@@ -381,6 +445,39 @@ devops-project-generator init \
   --envs dev,prod \
   --observability logs-metrics \
   --security standard
+```
+
+### Dependency Security Scan (NEW v1.5.0)
+
+```bash
+# Generate project first
+devops-project-generator init --name secure-app --ci github-actions --deploy docker
+
+# Scan for dependencies and security issues
+devops-project-generator scan secure-app --detailed --export security-report.json
+
+# Review the generated report
+cat security-report.json
+```
+
+### Multi-Environment Setup (NEW v1.5.0)
+
+```bash
+# Generate project
+devops-project-generator init --name multi-env-app --ci github-actions --deploy kubernetes
+
+# Setup multi-environment configurations
+devops-project-generator multi-env multi-env-app \
+  --envs "dev,stage,prod" \
+  --type full \
+  --with-secrets
+
+# Deploy to specific environment
+cd multi-env-app
+./scripts/deploy.sh dev
+
+# Or use kubectl directly
+kubectl apply -k k8s/overlays/stage
 ```
 
 ### Using Configuration Profiles
@@ -548,7 +645,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] Auto-fix capabilities for common issues
 - [x] Advanced project analysis and recommendations
 
-### v1.4 ✅ (Current)
+### v1.4 ✅ 
 - [x] Enhanced template management with category support
 - [x] Configuration profiles for reusable setups
 - [x] Integration testing with comprehensive validation
@@ -556,7 +653,14 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] Verbose testing mode with detailed feedback
 - [x] Profile management with persistent storage
 
-### v1.5
+### v1.5 ✅ (Current)
+- [x] **NEW**: Dependency scanner with security analysis
+- [x] **NEW**: Multi-environment configuration generator
+- [x] Enhanced error handling with specific exception types
+- [x] Performance optimizations for template loading
+- [x] Cross-platform compatibility improvements
+
+### v1.6
 - [ ] Support for Azure DevOps
 - [ ] Additional cloud providers (GCP, Azure)
 - [ ] More deployment targets (AWS ECS, Fargate)

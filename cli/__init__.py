@@ -2,7 +2,7 @@
 CLI module for DevOps Project Generator
 """
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 from .cli import app
 

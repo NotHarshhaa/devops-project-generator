@@ -27,6 +27,8 @@ from rich.text import Text
 from rich.prompt import Confirm, Prompt
 
 from generator import ProjectConfig, DevOpsProjectGenerator
+from generator.scanner import DependencyScanner
+from generator.config_generator import MultiEnvConfigGenerator
 
 # Install rich traceback for better error display
 install(show_locals=True)
@@ -2755,7 +2757,7 @@ def _save_profile(name: str) -> None:
         "description": typer.prompt("Description (optional)", default=""),
         "created_at": datetime.datetime.now().isoformat(),
         "config": config,
-        "version": "1.4.0"
+        "version": "1.5.0"
     }
     
     with open(profile_file, 'w', encoding='utf-8') as f:
@@ -3005,8 +3007,319 @@ def version() -> None:
     try:
         from . import __version__
     except ImportError:
-        __version__ = "1.4.0"
+        __version__ = "1.5.0"
     console.print(f"[bold blue]DevOps Project Generator[/bold blue] v{__version__}")
+
+
+@app.command()
+def scan(
+    project_path: str = typer.Argument(
+        ".",
+        help="Path to project to scan for dependencies"
+    ),
+    export: Optional[str] = typer.Option(
+        None,
+        "--export",
+        help="Export report to file (e.g., report.json, report.yaml)"
+    ),
+    format: str = typer.Option(
+        "json",
+        "--format",
+        help="Export format: json or yaml"
+    ),
+    detailed: bool = typer.Option(
+        False,
+        "--detailed",
+        help="Show detailed dependency information"
+    )
+) -> None:
+    """Scan project dependencies and security vulnerabilities"""
+    try:
+        project_path = Path(project_path).resolve()
+        
+        if not project_path.exists():
+            console.print(f"[red]❌ Project path does not exist: {project_path}[/red]")
+            raise typer.Exit(1)
+        
+        if not project_path.is_dir():
+            console.print(f"[red]❌ Path is not a directory: {project_path}[/red]")
+            raise typer.Exit(1)
+        
+        console.print(f"[bold]🔍 Scanning dependencies for:[/bold] {project_path}")
+        
+        # Perform scan
+        scanner = DependencyScanner(str(project_path))
+        result = scanner.scan_project()
+        
+        # Display results
+        console.print("\n[bold]📊 Scan Results:[/bold]")
+        
+        # Summary table
+        summary_table = Table(title="Dependency Summary")
+        summary_table.add_column("Metric", style="cyan")
+        summary_table.add_column("Count", style="green")
+        
+        summary_table.add_row("Total Dependencies", str(result.total_dependencies))
+        summary_table.add_row("Outdated Packages", str(result.outdated_packages))
+        summary_table.add_row("Security Issues", str(result.security_issues))
+        
+        console.print(summary_table)
+        
+        # Recommendations
+        if result.recommendations:
+            console.print("\n[bold]💡 Recommendations:[/bold]")
+            for i, rec in enumerate(result.recommendations, 1):
+                console.print(f"  {i}. {rec}")
+        
+        # Detailed breakdown
+        if detailed:
+            console.print("\n[bold]📋 Detailed Dependencies:[/bold]")
+            
+            # Group by type
+            deps_by_type = {}
+            for dep in result.dependencies:
+                if dep.dependency_type not in deps_by_type:
+                    deps_by_type[dep.dependency_type] = []
+                deps_by_type[dep.dependency_type].append(dep)
+            
+            for dep_type, deps in deps_by_type.items():
+                console.print(f"\n[cyan]{dep_type.upper()} Dependencies:[/cyan]")
+                
+                dep_table = Table()
+                dep_table.add_column("Name", style="white")
+                dep_table.add_column("Version", style="yellow")
+                dep_table.add_column("Source", style="dim")
+                dep_table.add_column("Status", style="red")
+                
+                for dep in deps[:10]:  # Limit to 10 per type for readability
+                    status = ""
+                    if dep.outdated:
+                        status += "⚠️ Outdated"
+                    if dep.security_issues:
+                        status += " 🚨 Security" if status else "🚨 Security"
+                    if not status:
+                        status = "✅ OK"
+                    
+                    dep_table.add_row(
+                        dep.name,
+                        dep.version or "unpinned",
+                        dep.source_file,
+                        status
+                    )
+                
+                console.print(dep_table)
+                
+                if len(deps) > 10:
+                    console.print(f"[dim]... and {len(deps) - 10} more {dep_type} dependencies[/dim]")
+        
+        # Export report
+        if export:
+            scanner.export_report(export, format)
+            console.print(f"\n[green]✅ Report exported to:[/green] {export}")
+        
+        # Final status
+        if result.security_issues > 0:
+            console.print(f"\n[red]🚨 Found {result.security_issues} security issues - immediate attention required[/red]")
+        elif result.outdated_packages > 0:
+            console.print(f"\n[yellow]⚠️  Found {result.outdated_packages} outdated packages - recommend updates[/yellow]")
+        else:
+            console.print("\n[green]✅ No critical issues found[/green]")
+            
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠️  Scan cancelled by user[/yellow]")
+        raise typer.Exit(130)
+    except Exception as e:
+        logger.error(f"Scan error: {str(e)}", exc_info=True)
+        console.print(f"\n[red]❌ Scan failed: {str(e)}[/red]")
+        console.print("[yellow]💡 Check the log file for details: devops-generator.log[/yellow]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def multi_env(
+    project_path: str = typer.Argument(
+        ".",
+        help="Path to project for multi-environment configuration"
+    ),
+    environments: str = typer.Option(
+        "dev,stage,prod",
+        "--envs",
+        help="Comma-separated list of environments (e.g., dev,stage,prod)"
+    ),
+    config_type: str = typer.Option(
+        "full",
+        "--type",
+        help="Configuration type: basic, kubernetes, docker, full"
+    ),
+    with_secrets: bool = typer.Option(
+        False,
+        "--with-secrets",
+        help="Generate secrets templates"
+    )
+) -> None:
+    """Generate multi-environment configurations with inheritance"""
+    try:
+        project_path = Path(project_path).resolve()
+        
+        if not project_path.exists():
+            console.print(f"[red]❌ Project path does not exist: {project_path}[/red]")
+            raise typer.Exit(1)
+        
+        if not project_path.is_dir():
+            console.print(f"[red]❌ Path is not a directory: {project_path}[/red]")
+            raise typer.Exit(1)
+        
+        # Parse environments
+        env_list = [env.strip() for env in environments.split(",") if env.strip()]
+        if not env_list:
+            console.print("[red]❌ At least one environment must be specified[/red]")
+            raise typer.Exit(1)
+        
+        console.print(f"[bold]🔧 Setting up multi-environment configs for:[/bold] {project_path}")
+        console.print(f"[cyan]Environments:[/cyan] {', '.join(env_list)}")
+        console.print(f"[cyan]Config Type:[/cyan] {config_type}")
+        
+        # Initialize generator
+        generator = MultiEnvConfigGenerator(str(project_path))
+        
+        # Setup environment structure
+        generator.setup_environment_structure(env_list)
+        
+        # Add base configuration
+        base_config = {
+            'app': {
+                'name': '{{ project_name }}',
+                'version': '1.0.0',
+                'debug': False
+            },
+            'database': {
+                'host': 'localhost',
+                'port': 5432,
+                'pool_size': 10
+            },
+            'logging': {
+                'level': 'INFO',
+                'format': 'json'
+            }
+        }
+        
+        generator.add_base_config(base_config)
+        
+        # Add environment-specific overrides
+        env_configs = {
+            'dev': {
+                'app': {'debug': True},
+                'database': {'host': 'localhost', 'name': 'dev_db'},
+                'logging': {'level': 'DEBUG'}
+            },
+            'stage': {
+                'app': {'debug': False},
+                'database': {'host': 'stage-db.example.com', 'name': 'stage_db'},
+                'logging': {'level': 'INFO'}
+            },
+            'prod': {
+                'app': {'debug': False},
+                'database': {'host': 'prod-db.example.com', 'name': 'prod_db'},
+                'logging': {'level': 'WARN'}
+            }
+        }
+        
+        for env in env_list:
+            if env in env_configs:
+                generator.add_environment_override(env, env_configs[env])
+        
+        # Add secrets if requested
+        if with_secrets:
+            import secrets as secrets_module
+            for env in env_list:
+                env_secrets = {
+                    'database_password': f'{env}_db_password_123',
+                    'api_key': f'{env}_api_key_placeholder',
+                    'jwt_secret': secrets_module.token_urlsafe(32)
+                }
+                generator.add_secrets(env, env_secrets)
+        
+        # Generate configurations based on type
+        if config_type in ['kubernetes', 'full']:
+            generator.generate_kubernetes_configs(env_list)
+            generator.generate_config_maps(env_list)
+            if with_secrets:
+                generator.generate_secrets_templates(env_list)
+        
+        if config_type in ['docker', 'full']:
+            generator.generate_docker_compose_configs(env_list)
+        
+        if config_type in ['basic', 'full']:
+            generator.generate_env_files(env_list)
+        
+        # Generate deployment script
+        generator.generate_deployment_script(env_list)
+        
+        # Validate configurations
+        validation_results = generator.validate_configurations()
+        has_errors = any(errors for errors in validation_results.values())
+        
+        # Display results
+        console.print("\n[bold]✅ Multi-Environment Configuration Generated![/bold]")
+        
+        # Structure table
+        structure_table = Table(title="Generated Structure")
+        structure_table.add_column("Directory/File", style="cyan")
+        structure_table.add_column("Purpose", style="white")
+        
+        structure_table.add_row("config/", "Environment configurations")
+        structure_table.add_row("config/secrets/", "Secrets templates")
+        structure_table.add_row("scripts/deploy.sh", "Deployment script")
+        
+        if config_type in ['kubernetes', 'full']:
+            structure_table.add_row("k8s/base/", "Base Kubernetes manifests")
+            structure_table.add_row("k8s/overlays/", "Environment-specific overlays")
+        
+        if config_type in ['docker', 'full']:
+            structure_table.add_row("docker/", "Docker Compose configurations")
+        
+        console.print(structure_table)
+        
+        # Environment summary
+        console.print(f"\n[bold]🌍 Environment Summary:[/bold]")
+        for env in env_list:
+            env_config = generator.environments[env]
+            console.print(f"  [cyan]{env.title()}:[/cyan]")
+            console.print(f"    Config: {len(env_config.get_merged_config())} keys")
+            console.print(f"    Secrets: {len(env_config.secrets)} items")
+        
+        # Validation results
+        if has_errors:
+            console.print("\n[red]⚠️  Validation Issues Found:[/red]")
+            for env, errors in validation_results.items():
+                if errors:
+                    console.print(f"  [yellow]{env}:[/yellow]")
+                    for error in errors:
+                        console.print(f"    • {error}")
+        else:
+            console.print("\n[green]✅ All configurations validated successfully[/green]")
+        
+        # Next steps
+        console.print(f"\n[bold]🚀 Next Steps:[/bold]")
+        console.print(f"1. Review generated configurations in [cyan]config/[/cyan] directory")
+        if with_secrets:
+            console.print(f"2. Update secret values in [cyan]config/secrets/[/cyan]")
+        console.print(f"3. Use deployment script: [cyan]./scripts/deploy.sh <environment>[/cyan]")
+        
+        if config_type in ['kubernetes', 'full']:
+            console.print(f"4. Deploy with kubectl: [cyan]kubectl apply -k k8s/overlays/<env>[/cyan]")
+        
+        if config_type in ['docker', 'full']:
+            console.print(f"4. Deploy with Docker: [cyan]docker-compose -f docker/docker-compose.<env>.yml up -d[/cyan]")
+            
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠️  Operation cancelled by user[/yellow]")
+        raise typer.Exit(130)
+    except Exception as e:
+        logger.error(f"Multi-env configuration error: {str(e)}", exc_info=True)
+        console.print(f"\n[red]❌ Configuration generation failed: {str(e)}[/red]")
+        console.print("[yellow]💡 Check the log file for details: devops-generator.log[/yellow]")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
