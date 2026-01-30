@@ -376,14 +376,14 @@ class TemplateConfig:
             # Look for templates specific to the option
             option_templates = list(component_path.glob(f"*{option}*.j2"))
             for template in option_templates:
-                template_str = str(template.relative_to(self.template_path))
+                template_str = str(template.relative_to(self.template_path)).replace('\\', '/')
                 templates.append(template_str)
                 logger.debug(f"Found option-specific template: {template_str}")
             
             # Look for generic templates (avoid duplicates)
             generic_templates = list(component_path.glob("*.j2"))
             for template in generic_templates:
-                template_str = str(template.relative_to(self.template_path))
+                template_str = str(template.relative_to(self.template_path)).replace('\\', '/')
                 if template_str not in templates:
                     templates.append(template_str)
                     logger.debug(f"Found generic template: {template_str}")
