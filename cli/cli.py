@@ -484,7 +484,7 @@ def init(
                 try:
                     shutil.rmtree(project_path)
                     logger.info("Cleaned up partial project")
-                except:
+                except Exception:
                     pass
             raise typer.Exit(130)
         except Exception as e:
@@ -497,7 +497,7 @@ def init(
                 try:
                     shutil.rmtree(project_path)
                     logger.info("Cleaned up partial project due to error")
-                except:
+                except Exception:
                     pass
             raise typer.Exit(1)
     

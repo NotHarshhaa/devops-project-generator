@@ -236,7 +236,7 @@ class ProjectConfig:
             
             return True
             
-        except Exception as e:
+        except (ValueError, AttributeError, TypeError) as e:
             logger.error(f"Configuration validation failed: {str(e)}")
             return False
     
@@ -252,10 +252,13 @@ class ProjectConfig:
         try:
             envs = self._sanitize_environments(self.envs)
             env_list = [env.strip() for env in envs.split(",") if env.strip()]
+            if not env_list:
+                logger.warning("No valid environments found, defaulting to 'dev'")
+                env_list = ["dev"]
             self._environments_cache = env_list
             return env_list
-        except Exception as e:
-            logger.warning(f"Error parsing environments: {str(e)}")
+        except (AttributeError, ValueError) as e:
+            logger.warning(f"Error parsing environments: {str(e)}, defaulting to 'dev'")
             self._environments_cache = ["dev"]
             return self._environments_cache
     

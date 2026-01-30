@@ -67,7 +67,7 @@ class DevOpsProjectGenerator:
         for template_name in common_templates:
             try:
                 template_path = Path(__file__).parent.parent / "templates" / template_name
-                if template_path.exists():
+                if template_path.exists() and template_path.is_file():
                     self.jinja_env.get_template(template_name)
                     preloaded_count += 1
                     logger.debug(f"Preloaded template: {template_name}")
@@ -106,8 +106,8 @@ class DevOpsProjectGenerator:
             logger.debug(f"Rendered and cached template: {template_path}")
             
             return rendered
-        except TemplateNotFound:
-            logger.error(f"Template not found: {template_path}")
+        except TemplateNotFound as e:
+            logger.error(f"Template not found: {template_path} - {str(e)}")
             raise
         except TemplateSyntaxError as e:
             logger.error(f"Template syntax error in {template_path}: {str(e)}")
@@ -214,16 +214,24 @@ class DevOpsProjectGenerator:
                     self._rendered_files.add(output_path)
                     logger.debug(f"Generated file: {output_path}")
                     
-                except Exception as write_error:
+                except (OSError, IOError) as write_error:
                     # Clean up temp file if it exists
                     if temp_file.exists():
-                        temp_file.unlink()
+                        try:
+                            temp_file.unlink()
+                        except Exception:
+                            pass  # Best effort cleanup
                     raise write_error
                 
-            except TemplateNotFound:
+            except TemplateNotFound as e:
                 logger.error(f"Template not found: {template_path}")
                 failed_files.append(f"{template_path}: Template not found")
                 console.print(f"[yellow]⚠️  Skipped {template_path}: Template not found[/yellow]")
+                continue
+            except TemplateSyntaxError as e:
+                logger.error(f"Template syntax error in {template_path}: {str(e)}")
+                failed_files.append(f"{template_path}: Template syntax error")
+                console.print(f"[yellow]⚠️  Skipped {template_path}: Template syntax error[/yellow]")
                 continue
             except Exception as e:
                 logger.error(f"Error generating {component} file {template_path}: {str(e)}")
