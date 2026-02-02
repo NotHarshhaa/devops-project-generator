@@ -1,6 +1,6 @@
-# 🚀 DevOps Project Generator
+# 🚀 DevOps Project Generator 🚀
 
-A powerful CLI tool that scaffolds production-ready DevOps repositories based on user-selected options like CI/CD, infrastructure, deployment, environments, observability, and security.
+A powerful CLI tool that scaffolds production-ready DevOps repositories with ease, allowing you to quickly bootstrap complete DevOps projects by selecting user-friendly options for CI/CD, infrastructure, deployment, environments, observability, and security.
 
 ## ✨ Why DevOps Project Generator?
 
@@ -21,62 +21,42 @@ Setting up a real-world DevOps project from scratch is repetitive and error-pron
 
 ## 🌟 Key Features
 
-### 🎯 Project Generation
-- **Fast scaffolding** - Generate complete DevOps projects in seconds
-- **Interactive mode** - Guided setup with helpful prompts
-- **Flexible configuration** - Choose your tech stack and tools
-- **Best practices** - Industry-standard project structure
+- Fast project generation
+- Interactive setup
+- Configurable tech stack
+- Best practices project structure
+- Browse and create templates
+- Save configurations as profiles
+- Integration testing
+- Project health analysis
+- Backup and restore
+- Advanced project management
+- Dependency scanning
+- Multi-environment config generator
 
-### 📋 Template Management (v1.3.0)
-- **Browse templates** by category (CI, Infrastructure, Deployment, Monitoring, Security)
-- **Create custom templates** with pre-populated Jinja2 syntax
-- **Template customization** with variable guidance
-- **File size information** and template metadata
+## 🖥️ Usage
 
-### 🔧 Configuration Profiles (v1.4.0)
-- **Save configurations** as reusable profiles
-- **Interactive profile creation** with prompts
-- **Profile metadata** (creation date, description)
-- **Command generation** from saved profiles
-- **Persistent storage** in user home directory
+### Quick Start
 
-### 🧪 Integration Testing (v1.4.0)
-- **6 test categories** - Structure, Config files, Security, CI/CD, Documentation, Scripts
-- **Detailed scoring** system (0-100%)
-- **Verbose mode** for step-by-step testing
-- **Actionable error messages** with specific failures
-- **Warning system** for optional components
+```bash
+# Install
+pip install devops-project-generator
 
-### 🏥 Project Health (v1.3.0)
-- **Comprehensive analysis** of project health and best practices
-- **Health scoring** with category breakdowns
-- **Intelligent recommendations** for improvements
-- **Auto-fix capabilities** for common issues
+# Generate a project
+devops-project-generator init --name my-app --ci github-actions --deploy docker
 
-### 💾 Backup & Restore (v1.3.0)
-- **Project archiving** with timestamped backups
-- **Backup management** with list and restore functions
-- **Configuration preservation** during backup operations
+# Scan dependencies (NEW v1.5.0)
+devops-project-generator scan my-app
 
-### 🛠️ Advanced Management
-- **Project validation** and structure checking
-- **Configuration file management** system
-- **Project cleanup** and teardown utilities
-- **Detailed statistics** and project analysis
+# Setup multi-environment configs (NEW v1.5.0)
+devops-project-generator multi-env my-app --envs "dev,stage,prod"
+```
 
-### 🔍 Dependency Scanner (NEW v1.5.0)
-- **Multi-language support** - Python, Node.js, Docker, Kubernetes dependencies
-- **Security analysis** - Detect vulnerabilities and security issues
-- **Version tracking** - Identify outdated packages and suggest updates
-- **Comprehensive reporting** - Detailed reports with export options (JSON/YAML)
-- **Actionable recommendations** - Specific improvement suggestions
+### Documentation
 
-### 🌍 Multi-Environment Config Generator (NEW v1.5.0)
-- **Configuration inheritance** - Base configs with environment-specific overrides
-- **Multiple formats** - Kubernetes (Kustomize), Docker Compose, .env files
-- **Secrets management** - Secure secrets template generation
-- **Deployment automation** - Generated deployment scripts
-- **Validation tools** - Configuration validation and diff utilities
+- 📖 **[Commands Reference](COMMANDS.md)** - Complete command documentation
+- 🎯 **[Usage Examples](EXAMPLES.md)** - Practical examples and workflows
+- 📋 **[Templates Guide](TEMPLATES.md)** - Template customization guide
 
 ## 🧠 What This Generator Creates
 
@@ -91,7 +71,7 @@ A full DevOps project structure covering:
 
 All generated based on your selected options.
 
-## ⚙️ Supported Options (v1)
+## ⚙️ Supported Options (v1.5.0)
 
 ### CI/CD
 - **GitHub Actions**
@@ -123,238 +103,6 @@ All generated based on your selected options.
 - **Standard**
 - **Strict**
 
-## 🖥️ Usage
-
-### CLI Usage
-
-```bash
-devops-project-generator init \
-  --ci github-actions \
-  --infra terraform \
-  --deploy kubernetes \
-  --envs dev,stage,prod \
-  --observability full \
-  --security standard
-```
-
-### Interactive Mode
-
-```bash
-devops-project-generator init --interactive
-```
-
-### List Available Options
-
-```bash
-devops-project-generator list-options
-```
-
-### Project Configuration (NEW v1.2.0)
-
-```bash
-# Create a configuration file
-devops-project-generator config create
-
-# Show current configuration
-devops-project-generator config show
-
-# Validate configuration file
-devops-project-generator config validate
-```
-
-### Project Validation (NEW v1.2.0)
-
-```bash
-# Validate project structure
-devops-project-generator validate
-
-# Auto-fix common issues
-devops-project-generator validate --fix
-```
-
-### Project Information (NEW v1.2.0)
-
-```bash
-# Show project statistics
-devops-project-generator info
-
-# Detailed analysis
-devops-project-generator info --detailed
-```
-
-### Project Cleanup (NEW v1.2.0)
-
-```bash
-# Clean up a project (with confirmation)
-devops-project-generator cleanup my-project
-
-# Force cleanup without confirmation
-devops-project-generator cleanup my-project --force
-
-# Keep configuration files
-devops-project-generator cleanup my-project --keep-config
-```
-
-### Template Management (NEW v1.3.0)
-
-```bash
-# List available templates by category
-devops-project-generator template list
-
-# List templates from specific category
-devops-project-generator template list --category ci
-
-# Create custom template
-devops-project-generator template create --category ci --name custom-pipeline
-
-# Customize existing template
-devops-project-generator template customize --category ci --name github-actions.yml
-```
-
-### Configuration Profiles (NEW v1.4.0)
-
-```bash
-# List saved profiles
-devops-project-generator profile list
-
-# Save current configuration as a profile
-devops-project-generator profile save --name webapp
-
-# Load and display profile details
-devops-project-generator profile load --name webapp
-
-# Delete a saved profile
-devops-project-generator profile delete --name webapp
-```
-
-### Integration Testing (NEW v1.4.0)
-
-```bash
-# Run integration tests on generated project
-devops-project-generator test my-project
-
-# Run tests with verbose output
-devops-project-generator test my-project --verbose
-```
-
-### Project Backup (NEW v1.3.0)
-
-```bash
-# Create backup
-devops-project-generator backup create my-project
-
-# List available backups
-devops-project-generator backup list
-
-# Restore from backup
-devops-project-generator backup restore my-project --file backup.tar.gz
-```
-
-### Health Check (NEW v1.3.0)
-
-```bash
-# Basic health check
-devops-project-generator health my-project
-
-# Detailed health analysis
-devops-project-generator health my-project --detailed
-
-# Auto-fix health issues
-devops-project-generator health my-project --fix
-```
-
-### Dependency Scanner (NEW v1.5.0)
-
-```bash
-# Scan project dependencies
-devops-project-generator scan my-project
-
-# Detailed scan with full breakdown
-devops-project-generator scan my-project --detailed
-
-# Export scan report to file
-devops-project-generator scan my-project --export report.json --format json
-
-# Export as YAML report
-devops-project-generator scan my-project --export report.yaml --format yaml
-```
-
-### Multi-Environment Config Generator (NEW v1.5.0)
-
-```bash
-# Generate basic multi-environment configs
-devops-project-generator multi-env my-project --envs "dev,stage,prod"
-
-# Generate full configs with Kubernetes, Docker, and secrets
-devops-project-generator multi-env my-project --envs "dev,stage,prod" --type full --with-secrets
-
-# Generate only Kubernetes configs
-devops-project-generator multi-env my-project --envs "dev,prod" --type kubernetes
-
-# Generate only Docker Compose configs
-devops-project-generator multi-env my-project --envs "dev,prod" --type docker
-```
-
-## 🏗️ Generated Project Structure (Example)
-
-```
-devops-project/
-├── app/
-│   └── sample-app/
-├── ci/
-│   ├── pipelines/
-│   └── README.md
-├── infra/
-│   ├── terraform/
-│   └── environments/
-├── containers/
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── k8s/
-│   ├── base/
-│   └── overlays/          # NEW: Environment-specific overlays
-│       ├── dev/
-│       ├── stage/
-│       └── prod/
-├── config/                  # NEW: Multi-environment configs
-│   ├── base-application.yaml
-│   ├── .env.dev
-│   ├── .env.stage
-│   ├── .env.prod
-│   └── secrets/             # NEW: Secrets templates
-│       ├── dev-secrets.yaml
-│       ├── stage-secrets.yaml
-│       └── prod-secrets.yaml
-├── docker/                  # NEW: Docker Compose configs
-│   ├── docker-compose.yml
-│   ├── docker-compose.dev.yml
-│   ├── docker-compose.stage.yml
-│   └── docker-compose.prod.yml
-├── monitoring/
-│   ├── logs/
-│   ├── metrics/
-│   └── alerts/
-├── security/
-│   ├── secrets/
-│   └── scanning/
-├── scripts/
-│   ├── automation/
-│   └── deploy.sh            # NEW: Multi-environment deployment script
-├── Makefile
-└── README.md
-```
-
-## 🛠️ Tech Stack
-
-### Generator Core
-- **Python**
-- **Jinja2**
-- **YAML-based configuration**
-
-### CLI
-- **Typer**
-- **Rich**
-
 ## 📦 Installation
 
 ### From PyPI
@@ -381,194 +129,28 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-## 🚀 Quick Start
+## 🏗️ Generated Project Structure
 
-1. **Generate a new project**
-   ```bash
-   devops-project-generator init --name my-app --ci github-actions --deploy kubernetes
-   ```
-
-2. **Navigate to your project**
-   ```bash
-   cd my-app
-   ```
-
-3. **Setup the environment**
-   ```bash
-   make setup
-   ```
-
-4. **Start the application**
-   ```bash
-   make start
-   ```
-
-5. **Check health**
-   ```bash
-   make health
-   ```
-
-## 📖 Examples
-
-### Basic Web App with Docker
-
-```bash
-devops-project-generator init \
-  --name my-webapp \
-  --ci github-actions \
-  --deploy docker \
-  --envs single \
-  --observability logs \
-  --security basic
+```
+devops-project/
+├── app/
+├── ci/
+├── infra/
+├── k8s/
+├── config/              # NEW: Multi-environment configs
+├── docker/              # NEW: Docker Compose configs
+├── monitoring/
+├── security/
+├── scripts/
+├── Makefile
+└── README.md
 ```
 
-### Enterprise Kubernetes App
-
-```bash
-devops-project-generator init \
-  --name enterprise-app \
-  --ci github-actions \
-  --infra terraform \
-  --deploy kubernetes \
-  --envs dev,stage,prod \
-  --observability full \
-  --security strict
-```
-
-### Simple VM Deployment
-
-```bash
-devops-project-generator init \
-  --name simple-app \
-  --ci jenkins \
-  --deploy vm \
-  --envs dev,prod \
-  --observability logs-metrics \
-  --security standard
-```
-
-### Dependency Security Scan (NEW v1.5.0)
-
-```bash
-# Generate project first
-devops-project-generator init --name secure-app --ci github-actions --deploy docker
-
-# Scan for dependencies and security issues
-devops-project-generator scan secure-app --detailed --export security-report.json
-
-# Review the generated report
-cat security-report.json
-```
-
-### Multi-Environment Setup (NEW v1.5.0)
-
-```bash
-# Generate project
-devops-project-generator init --name multi-env-app --ci github-actions --deploy kubernetes
-
-# Setup multi-environment configurations
-devops-project-generator multi-env multi-env-app \
-  --envs "dev,stage,prod" \
-  --type full \
-  --with-secrets
-
-# Deploy to specific environment
-cd multi-env-app
-./scripts/deploy.sh dev
-
-# Or use kubectl directly
-kubectl apply -k k8s/overlays/stage
-```
-
-### Using Configuration Profiles
-
-```bash
-# Save a common configuration
-devops-project-generator profile save --name webapp \
-  --ci github-actions \
-  --infra terraform \
-  --deploy docker \
-  --observability logs \
-  --security basic
-
-# Generate project using saved profile
-devops-project-generator init --ci github-actions --infra terraform --deploy docker --observability logs --security basic --name my-webapp
-```
-
-### Template Customization
-
-```bash
-# List available CI templates
-devops-project-generator template list --category ci
-
-# Create custom pipeline template
-devops-project-generator template create --category ci --name custom-pipeline
-
-# Customize existing template
-devops-project-generator template customize --category ci --name github-actions.yml
-```
-
-### Integration Testing
-
-```bash
-# Generate project
-devops-project-generator init --name test-project --ci github-actions --deploy docker
-
-# Run integration tests
-devops-project-generator test test-project
-
-# Run tests with detailed output
-devops-project-generator test test-project --verbose
-```
-
-## 🔧 Configuration
-
-### Global Configuration
-
-You can set default options in `~/.devops-generator/config.yaml`:
-
-```yaml
-defaults:
-  ci: github-actions
-  deploy: kubernetes
-  observability: logs-metrics
-  security: standard
-```
+For detailed structure information, see the **[Templates Guide](TEMPLATES.md)**.
 
 ### Project Templates
 
-The generator supports custom templates. Place your templates in:
-
-```
-~/.devops-generator/templates/
-├── ci/
-├── infra/
-├── deploy/
-├── monitoring/
-└── security/
-```
-
-## 🧪 Testing
-
-### Run Tests
-
-```bash
-pytest
-```
-
-### Run Tests with Coverage
-
-```bash
-pytest --cov=devops_project_generator --cov-report=html
-```
-
-### Run Linting
-
-```bash
-flake8 devops_project_generator/
-black devops_project_generator/
-mypy devops_project_generator/
-```
+The generator supports custom templates. See the **[Templates Guide](TEMPLATES.md)** for detailed information on creating and customizing templates.
 
 ## 🤝 Contributing
 
@@ -583,97 +165,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 5. Run the test suite
 6. Submit a pull request
 
-### Adding New Features
-
-1. **New CI/CD Platform**: Add templates in `templates/ci/`
-2. **New Infrastructure Tool**: Add templates in `templates/infra/`
-3. **New Deployment Method**: Add templates in `templates/deploy/`
-4. **New Security Level**: Add templates in `templates/security/`
-
-## 📚 Documentation
-
-- [User Guide](docs/user-guide.md)
-- [Developer Guide](docs/developer-guide.md)
-- [Template Reference](docs/template-reference.md)
-- [API Documentation](docs/api.md)
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Permission Denied**
-   ```bash
-   chmod +x scripts/setup.sh scripts/deploy.sh
-   ```
-
-2. **Template Not Found**
-   - Check if template files exist in `templates/`
-   - Verify template syntax
-
-3. **Generated Files Not Executable**
-   ```bash
-   find . -name "*.sh" -exec chmod +x {} \;
-   ```
-
 ### Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/NotHarshhaa/devops-project-generator/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/NotHarshhaa/devops-project-generator/discussions)
 - **Documentation**: [Wiki](https://github.com/NotHarshhaa/devops-project-generator/wiki)
-
-## 🗺️ Roadmap
-
-### v1.1 ✅ 
-- [x] Performance optimizations (95%+ faster generation)
-- [x] Concurrent file generation
-- [x] Enhanced error handling and validation
-- [x] Template caching and pre-loading
-- [x] Better user experience with improved messages
-
-### v1.2 ✅ 
-- [x] Project validation and structure checking
-- [x] Configuration file management system
-- [x] Project cleanup and teardown utilities
-- [x] Detailed project statistics and analysis
-- [x] DevOps maturity scoring
-- [x] Intelligent recommendations system
-
-### v1.3 ✅ 
-- [x] Template management and customization system
-- [x] Project backup and restore functionality
-- [x] Comprehensive health monitoring and scoring
-- [x] Auto-fix capabilities for common issues
-- [x] Advanced project analysis and recommendations
-
-### v1.4 ✅ 
-- [x] Enhanced template management with category support
-- [x] Configuration profiles for reusable setups
-- [x] Integration testing with comprehensive validation
-- [x] Project scoring and quality assessment
-- [x] Verbose testing mode with detailed feedback
-- [x] Profile management with persistent storage
-
-### v1.5 ✅ (Current)
-- [x] **NEW**: Dependency scanner with security analysis
-- [x] **NEW**: Multi-environment configuration generator
-- [x] Enhanced error handling with specific exception types
-- [x] Performance optimizations for template loading
-- [x] Cross-platform compatibility improvements
-
-### v1.6
-- [ ] Support for Azure DevOps
-- [ ] Additional cloud providers (GCP, Azure)
-- [ ] More deployment targets (AWS ECS, Fargate)
-- [ ] Advanced monitoring templates
-- [ ] Plugin system for custom templates
-- [ ] Multi-language project support
-
-### v2.0
-- [ ] AI-powered recommendations
-- [ ] Enterprise features and SSO integration
-- [ ] Advanced project customization
-- [ ] Team collaboration features
-- [ ] Cloud IDE integration
 
 ## 📄 License
 
