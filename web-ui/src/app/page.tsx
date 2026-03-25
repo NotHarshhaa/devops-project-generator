@@ -7,6 +7,7 @@ import { AdvancedConfigBuilder } from "@/components/advanced-config-builder";
 import { CostOptimizer } from "@/components/cost-optimizer";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useConfig } from "@/lib/config-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,18 +49,9 @@ import {
 } from "lucide-react";
 
 export default function Home() {
+  const { config } = useConfig();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeTab, setActiveTab] = useState("generator");
-  const [demoConfig] = useState({
-    projectName: "my-devops-project",
-    pipeline: "nodejs-typescript" as const,
-    ci: "github-actions" as const,
-    infra: "aws-vpc-eks" as const,
-    deploy: "helm-charts" as const,
-    envs: "dev,stage,prod" as const,
-    observability: "prometheus-grafana" as const,
-    security: "nist-csf" as const,
-  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -191,11 +183,11 @@ export default function Home() {
             </TabsContent>
 
             <TabsContent value="config" className="mt-0">
-              <AdvancedConfigBuilder config={demoConfig} />
+              <AdvancedConfigBuilder config={config} />
             </TabsContent>
 
             <TabsContent value="cost" className="mt-0">
-              <CostOptimizer config={demoConfig} />
+              <CostOptimizer config={config} />
             </TabsContent>
 
             <TabsContent value="analytics" className="mt-0">

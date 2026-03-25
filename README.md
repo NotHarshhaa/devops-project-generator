@@ -1,6 +1,10 @@
 # 🚀 DevOps Project Generator 🚀
 
-A powerful CLI tool that scaffolds production-ready DevOps repositories with ease, allowing you to quickly bootstrap complete DevOps projects by selecting user-friendly options for pipeline frameworks, infrastructure patterns, deployment strategies, observability stacks, and security compliance frameworks.
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://pypi.org/project/devops-project-generator/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
+A powerful CLI tool and modern web UI that scaffolds production-ready DevOps repositories with ease, allowing you to quickly bootstrap complete DevOps projects by selecting user-friendly options for pipeline frameworks, infrastructure patterns, deployment strategies, observability stacks, and security compliance frameworks.
 
 ## ✨ Why DevOps Project Generator?
 
@@ -8,7 +12,10 @@ Setting up a real-world DevOps project from scratch is repetitive and error-pron
 
 ✔ Opinionated but configurable  
 ✔ DevOps-focused, production-oriented  
-✔ CLI support  
+✔ CLI + Modern Web UI  
+✔ Advanced configuration analysis  
+✔ Real-time cost optimization  
+✔ Project analytics dashboard  
 ✔ No tool lock-in  
 ✔ Modern DevOps patterns
 
@@ -24,16 +31,40 @@ Setting up a real-world DevOps project from scratch is repetitive and error-pron
 
 ## 🌟 Key Features
 
-- Fast DevOps project generation
-- Interactive setup with modern UI
-- Pipeline framework selection
-- Infrastructure as Code patterns
-- Deployment strategy templates
-- Observability stack configurations
-- Security compliance frameworks
-- Best practices project structure
-- Multi-environment support
-- Integration-ready configurations
+### Core Features
+- **Fast DevOps project generation** - Generate complete projects in seconds
+- **Interactive setup with modern UI** - Beautiful Next.js web interface
+- **Pipeline framework selection** - Support for 8+ tech stacks
+- **Infrastructure as Code patterns** - Terraform, CloudFormation, Ansible
+- **Deployment strategy templates** - Blue-green, canary, GitOps, and more
+- **Observability stack configurations** - Prometheus, ELK, DataDog, etc.
+- **Security compliance frameworks** - NIST, CIS, SOC2, GDPR, HIPAA
+- **Best practices project structure** - Industry-standard layouts
+- **Multi-environment support** - Dev, staging, production configs
+- **Integration-ready configurations** - Ready to deploy
+
+### 🆕 New in v2.0.0: Advanced UI Features
+
+#### 🔧 Advanced Configuration Builder
+- **Dependency graph visualization** - See how components relate
+- **Conflict detection** - Automatic incompatibility detection
+- **Complexity scoring** - Understand your stack complexity (0-100)
+- **Smart recommendations** - AI-powered optimization suggestions
+- **Real-time validation** - Instant feedback on configurations
+
+#### 💰 Cost Optimization Advisor
+- **Monthly cost estimation** - Accurate cloud provider pricing
+- **Cost breakdown by category** - Infrastructure, observability, CI/CD, security
+- **Optimization recommendations** - Save up to 70% on cloud costs
+- **Savings calculator** - See potential monthly savings
+- **Multi-environment costing** - Account for all environments
+
+#### 📊 Project Analytics Dashboard
+- **Real-time tracking** - Track all your generated projects
+- **Technology distribution** - See your most-used technologies
+- **Popular combinations** - Learn from successful patterns
+- **Trending analysis** - Identify growing technologies
+- **Privacy-first** - All data stored locally in browser
 
 ## 🖥️ Usage
 
@@ -46,9 +77,10 @@ pip install devops-project-generator
 # Generate a project
 devops-project-generator init --name my-infra --pipeline nodejs-typescript --infra aws-vpc-eks --deploy blue-green
 
-# Web UI (NEW v2.0.0)
-cd web-ui && npm run dev
+# Web UI with Advanced Features (v2.0.0)
+cd web-ui && npm install && npm run dev
 # Visit http://localhost:3000
+# Features: Generator, Config Builder, Cost Advisor, Analytics
 ```
 
 ### Documentation
@@ -69,6 +101,38 @@ A complete DevOps project structure covering:
 - **Automation Scripts** - Setup, deployment, and maintenance scripts
 
 All generated based on your selected DevOps options.
+
+## 🎨 Web UI Features
+
+The modern web interface includes four powerful tabs:
+
+### 1. 🚀 Generator Tab
+- Step-by-step project configuration
+- Visual option cards with descriptions
+- Real-time validation
+- Instant project generation
+- Download as ZIP
+
+### 2. 🔧 Config Builder Tab
+- Dependency graph visualization
+- Conflict detection and warnings
+- Complexity scoring (Simple/Moderate/Complex)
+- Smart recommendations
+- Configuration validation
+
+### 3. 💰 Cost Advisor Tab
+- Monthly cost estimation
+- Cost breakdown by component
+- Optimization recommendations
+- Potential savings calculator
+- Difficulty and impact ratings
+
+### 4. 📊 Analytics Tab
+- Total projects generated
+- Technology distribution charts
+- Popular stack combinations
+- Trending technologies
+- Real-time statistics
 
 ## ⚙️ Supported Options (v2.0.0)
 
@@ -204,7 +268,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Typer** - For the amazing CLI framework
 - **Rich** - For beautiful terminal output
 - **Jinja2** - For powerful templating
-- **Next.js** - For the modern web UI
+- **Next.js 16** - For the modern web UI
+- **React 19** - For the UI components
+- **shadcn/ui** - For beautiful UI components
+- **Tailwind CSS** - For styling
+- **Lucide Icons** - For icons
 - **DevOps Community** - For best practices and inspiration
 
 ## 📞 Contact

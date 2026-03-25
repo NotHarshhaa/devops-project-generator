@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ConfigProvider } from "@/lib/config-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,7 +37,9 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <ThemeProvider defaultTheme="system">
-          <TooltipProvider>{children}</TooltipProvider>
+          <ConfigProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </ConfigProvider>
         </ThemeProvider>
       </body>
     </html>

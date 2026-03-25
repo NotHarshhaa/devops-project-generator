@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ProjectConfig, GenerationResult } from "@/lib/types";
 import { steps, getOptionsForStep } from "@/lib/options";
 import { generateProject } from "@/lib/generator";
+import { useConfig } from "@/lib/config-context";
+import { trackProjectGeneration } from "@/lib/analytics";
 import { OptionCardComponent } from "@/components/option-card";
 import { StepIndicator } from "@/components/step-indicator";
 import { FileTree } from "@/components/file-tree";
@@ -62,6 +64,7 @@ const stepIcons: Record<string, React.ElementType> = {
 };
 
 export function ProjectGenerator() {
+  const { config: globalConfig, updateConfig: updateGlobalConfig } = useConfig();
   const [currentStep, setCurrentStep] = useState(0);
   const [config, setConfig] = useState<ProjectConfig>(defaultConfig);
   const [result, setResult] = useState<GenerationResult | null>(null);
@@ -75,9 +78,13 @@ export function ProjectGenerator() {
 
   const updateConfig = useCallback(
     (field: keyof ProjectConfig, value: string) => {
-      setConfig((prev) => ({ ...prev, [field]: value }));
+      setConfig((prev) => {
+        const newConfig = { ...prev, [field]: value };
+        updateGlobalConfig(newConfig);
+        return newConfig;
+      });
     },
-    []
+    [updateGlobalConfig]
   );
 
   const canProceed = useCallback(() => {
@@ -125,6 +132,9 @@ export function ProjectGenerator() {
       const generationResult = generateProject(config);
       setResult(generationResult);
       setCompletedSteps((prev) => new Set([...prev, steps.length - 1]));
+      
+      // Track analytics
+      trackProjectGeneration(config);
     } catch (error) {
       console.error("Generation failed:", error);
     } finally {
@@ -157,10 +167,11 @@ export function ProjectGenerator() {
 
   const handleReset = useCallback(() => {
     setConfig(defaultConfig);
+    updateGlobalConfig(defaultConfig);
     setCurrentStep(0);
     setResult(null);
     setCompletedSteps(new Set());
-  }, []);
+  }, [updateGlobalConfig]);
 
   // Generating state
   if (isGenerating) {
