@@ -3,11 +3,15 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ProjectGenerator } from "@/components/project-generator";
+import { AdvancedConfigBuilder } from "@/components/advanced-config-builder";
+import { CostOptimizer } from "@/components/cost-optimizer";
+import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Rocket,
   Github,
@@ -39,10 +43,23 @@ import {
   Settings2,
   Workflow,
   ChevronUp,
+  Network,
+  DollarSign,
 } from "lucide-react";
 
 export default function Home() {
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [activeTab, setActiveTab] = useState("generator");
+  const [demoConfig] = useState({
+    projectName: "my-devops-project",
+    pipeline: "nodejs-typescript" as const,
+    ci: "github-actions" as const,
+    infra: "aws-vpc-eks" as const,
+    deploy: "helm-charts" as const,
+    envs: "dev,stage,prod" as const,
+    observability: "prometheus-grafana" as const,
+    security: "nist-csf" as const,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -128,11 +145,64 @@ export default function Home() {
         </p>
       </section>
 
-      {/* Main Generator */}
+      {/* Main Generator with Tabs */}
       <main className="container mx-auto max-w-5xl px-3 sm:px-4 pb-10 sm:pb-16">
-        <div className="rounded-xl sm:rounded-2xl border bg-card/50 backdrop-blur-sm p-4 sm:p-6 md:p-8 shadow-xl shadow-black/5">
-          <ProjectGenerator />
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex justify-center mb-6">
+            <TabsList className="inline-flex h-auto p-1.5 bg-muted/80 backdrop-blur-sm border border-border/60 rounded-xl shadow-lg shadow-black/5">
+              <TabsTrigger 
+                value="generator" 
+                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+              >
+                <Rocket className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">Generator</span>
+                <span className="sm:hidden">Gen</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="config" 
+                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+              >
+                <Network className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">Config Builder</span>
+                <span className="sm:hidden">Config</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cost" 
+                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+              >
+                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">Cost Advisor</span>
+                <span className="sm:hidden">Cost</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="analytics" 
+                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+              >
+                <BarChart3 className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">Analytics</span>
+                <span className="sm:hidden">Stats</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="rounded-xl sm:rounded-2xl border bg-card/50 backdrop-blur-sm p-4 sm:p-6 md:p-8 shadow-xl shadow-black/5">
+            <TabsContent value="generator" className="mt-0">
+              <ProjectGenerator />
+            </TabsContent>
+
+            <TabsContent value="config" className="mt-0">
+              <AdvancedConfigBuilder config={demoConfig} />
+            </TabsContent>
+
+            <TabsContent value="cost" className="mt-0">
+              <CostOptimizer config={demoConfig} />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="mt-0">
+              <AnalyticsDashboard />
+            </TabsContent>
+          </div>
+        </Tabs>
       </main>
 
       {/* ── Features Section ── */}
