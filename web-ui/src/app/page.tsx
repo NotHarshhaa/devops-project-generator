@@ -26,6 +26,7 @@ import {
   Shield,
   ShieldCheck,
   ShieldAlert,
+  Sparkles,
   Activity,
   BarChart3,
   FileText,
@@ -138,7 +139,7 @@ export default function Home() {
       </section>
 
       {/* Main Generator with Tabs */}
-      <main className="container mx-auto max-w-5xl px-3 sm:px-4 pb-10 sm:pb-16">
+      <main id="generator-section" className="container mx-auto max-w-5xl px-3 sm:px-4 pb-10 sm:pb-16">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex justify-center mb-6">
             <TabsList className="inline-flex h-auto p-1.5 bg-muted/80 backdrop-blur-sm border border-border/60 rounded-xl shadow-lg shadow-black/5">
@@ -196,6 +197,157 @@ export default function Home() {
           </div>
         </Tabs>
       </main>
+
+      {/* ── New Features v2.0.0 Section ── */}
+      <section className="container mx-auto max-w-5xl px-4 py-8 sm:py-16 border-y from-primary/5 to-background">
+        <div className="text-center mb-6 sm:mb-10">
+          <Badge className="mb-3 gap-1.5 px-3 py-1 text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
+            <Sparkles className="h-3.5 w-3.5" />
+            New in v2.0.0
+          </Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
+            Advanced Features for{" "}
+            <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              Modern DevOps
+            </span>
+          </h2>
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+            Three powerful new features to analyze, optimize, and track your DevOps projects with real-time insights.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          {/* Advanced Configuration Builder */}
+          <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-4 sm:p-6 relative">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 mb-4 group-hover:scale-110 transition-transform">
+                <Network className="h-6 w-6 text-blue-500" />
+              </div>
+              <h3 className="font-bold text-lg mb-2">Advanced Config Builder</h3>
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                Visualize dependencies, detect conflicts, and get smart recommendations with real-time complexity scoring.
+              </p>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Dependency graph visualization</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Automatic conflict detection</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Complexity scoring (0-100)</span>
+                </div>
+              </div>
+              <Button 
+                className="w-full gap-2"
+                onClick={() => {
+                  setActiveTab("config");
+                  document.getElementById('generator-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Try Config Builder
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Cost Optimization Advisor */}
+          <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-4 sm:p-6 relative">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10 mb-4 group-hover:scale-110 transition-transform">
+                <DollarSign className="h-6 w-6 text-green-500" />
+              </div>
+              <h3 className="font-bold text-lg mb-2">Cost Optimization Advisor</h3>
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                Get accurate cost estimates and optimization recommendations to save up to 70% on your cloud infrastructure.
+              </p>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Monthly cost estimation</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Optimization recommendations</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Potential savings calculator</span>
+                </div>
+              </div>
+              <Button 
+                className="w-full gap-2"
+                onClick={() => {
+                  setActiveTab("cost");
+                  document.getElementById('generator-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Try Cost Advisor
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Project Analytics Dashboard */}
+          <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-4 sm:p-6 relative">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 mb-4 group-hover:scale-110 transition-transform">
+                <BarChart3 className="h-6 w-6 text-purple-500" />
+              </div>
+              <h3 className="font-bold text-lg mb-2">Project Analytics Dashboard</h3>
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                Track your projects with real-time analytics, technology trends, and popular stack combinations.
+              </p>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Real-time project tracking</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Technology distribution charts</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span>Privacy-first (local storage)</span>
+                </div>
+              </div>
+              <Button 
+                className="w-full gap-2"
+                onClick={() => {
+                  setActiveTab("analytics");
+                  document.getElementById('generator-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Try Analytics
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Feature Highlights */}
+        <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="text-center p-4 rounded-lg bg-muted/50">
+            <div className="text-2xl font-bold text-primary mb-1">100%</div>
+            <div className="text-xs text-muted-foreground">Local Storage</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-muted/50">
+            <div className="text-2xl font-bold text-primary mb-1">Real-Time</div>
+            <div className="text-xs text-muted-foreground">Analysis & Tracking</div>
+          </div>
+          <div className="text-center p-4 rounded-lg bg-muted/50">
+            <div className="text-2xl font-bold text-primary mb-1">70%</div>
+            <div className="text-xs text-muted-foreground">Potential Cost Savings</div>
+          </div>
+        </div>
+      </section>
 
       {/* ── Features Section ── */}
       <section className="container mx-auto max-w-5xl px-4 py-16 sm:py-24">
