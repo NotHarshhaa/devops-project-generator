@@ -1,88 +1,83 @@
 import { ProjectConfig, GeneratedFile, GenerationResult } from "./types";
 
+// Helper function to ensure parent directories exist for a file
+function ensureDirectories(filePath: string): GeneratedFile[] {
+  const dirs: GeneratedFile[] = [];
+  const parts = filePath.split('/');
+  
+  // Remove filename and project name
+  parts.pop(); // Remove filename
+  const projectName = parts.shift(); // Remove project name
+  
+  // Build up directory paths
+  let currentPath = projectName || '';
+  for (const part of parts) {
+    currentPath += '/' + part;
+    dirs.push({
+      path: currentPath,
+      content: "",
+      type: "directory"
+    });
+  }
+  
+  return dirs;
+}
+
 export function generateProject(config: ProjectConfig): GenerationResult {
-  const files: GeneratedFile[] = [];
+  const allFiles: GeneratedFile[] = [];
   const components: string[] = [];
 
-  // Create DevOps directory structure
-  const dirs = [
-    "pipelines",
-    "infrastructure",
-    "infrastructure/modules",
-    "infrastructure/environments",
-    "deployments",
-    "deployments/helm",
-    "deployments/kustomize",
-    "monitoring",
-    "monitoring/dashboards",
-    "monitoring/alerts",
-    "security",
-    "security/policies",
-    "security/compliance",
-    "scripts",
-    "docs",
-    "tests",
-  ];
-
-  // Add pipeline-specific directories
-  if (config.pipeline) {
-    switch (config.pipeline) {
-      case "terraform-module":
-        dirs.push("terraform", "terraform/examples", "terraform/test");
-        break;
-      case "kubernetes-operator":
-        dirs.push("operator", "operator/config", "operator/controllers");
-        break;
-      case "microservice":
-        dirs.push("services", "gateway", "shared");
-        break;
-    }
-  }
-
-  // Add infrastructure-specific directories
-  if (config.infra) {
-    switch (config.infra) {
-      case "aws-vpc-eks":
-      case "azure-vnet-aks":
-      case "gcp-vpc-gke":
-        dirs.push("kubernetes", "kubernetes/manifests");
-        break;
-    }
-  }
-
-  for (const dir of dirs) {
-    files.push({ path: `${config.projectName}/${dir}`, content: "", type: "directory" });
-  }
-
   // Base files (always generated)
-  files.push(...generateBaseFiles(config));
+  allFiles.push(...generateBaseFiles(config));
   components.push("Base");
 
   // Pipeline files
-  files.push(...generatePipelineFiles(config));
+  allFiles.push(...generatePipelineFiles(config));
   components.push(`Pipeline: ${config.pipeline}`);
 
   // CI/CD files
   if (config.ci && config.ci !== "none") {
-    files.push(...generateCIFiles(config));
+    allFiles.push(...generateCIFiles(config));
     components.push("CI/CD");
   }
 
   // Infrastructure files
-  files.push(...generateInfraFiles(config));
+  allFiles.push(...generateInfraFiles(config));
   components.push("Infrastructure");
 
   // Deployment files
-  files.push(...generateDeployFiles(config));
+  allFiles.push(...generateDeployFiles(config));
   components.push("Deployment");
 
   // Monitoring files
-  files.push(...generateMonitoringFiles(config));
+  allFiles.push(...generateMonitoringFiles(config));
   components.push("Monitoring");
 
   // Security files
-  files.push(...generateSecurityFiles(config));
+  allFiles.push(...generateSecurityFiles(config));
   components.push("Security");
+
+  // Automatically create directories for all files
+  const dirSet = new Set<string>();
+  const files: GeneratedFile[] = [];
+  
+  allFiles.forEach(file => {
+    if (file.type === "file") {
+      // Add directories for this file
+      const dirs = ensureDirectories(file.path);
+      dirs.forEach(dir => dirSet.add(dir.path));
+    }
+    files.push(file);
+  });
+  
+  // Add unique directories to files array
+  dirSet.forEach(dirPath => {
+    files.unshift({
+      path: dirPath,
+      content: "",
+      type: "directory"
+    });
+  });
 
   const totalDirs = files.filter((f) => f.type === "directory").length;
   const totalFiles = files.filter((f) => f.type === "file").length;
@@ -617,10 +612,117 @@ services:
     );
   }
 
+  if (config.deploy === "helm-charts") {
+    files.push(
+      {
+        path: `${config.projectName}/deployments/helm/Chart.yaml`,
+        type: "file",
+        content: `apiVersion: v2
+name: ${slug}
+description: Helm chart for ${config.projectName}
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+`,
+      },
+      {
+        path: `${config.projectName}/deployments/helm/values.yaml`,
+        type: "file",
+        content: `# Default values for ${slug}
+replicaCount: 2
+
+image:
+  repository: ${slug}
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+`,
+      },
+      {
+        path: `${config.projectName}/deployments/helm/templates/deployment.yaml`,
+        type: "file",
+        content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "${slug}.fullname" . }}
+  labels:
+    app: {{ include "${slug}.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "${slug}.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "${slug}.name" . }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+`,
+      },
+      {
+        path: `${config.projectName}/deployments/helm/templates/service.yaml`,
+        type: "file",
+        content: `apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "${slug}.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+    protocol: TCP
+  selector:
+    app: {{ include "${slug}.name" . }}
+`,
+      }
+    );
+  }
+
   if (config.deploy === "kustomize") {
     files.push(
       {
-        path: `${config.projectName}/k8s/base/deployment.yml`,
+        path: `${config.projectName}/deployments/kustomize/base/kustomization.yaml`,
+        type: "file",
+        content: `apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - namespace.yaml
+
+commonLabels:
+  app: ${slug}
+`,
+      },
+      {
+        path: `${config.projectName}/deployments/kustomize/base/deployment.yaml`,
         type: "file",
         content: `# Kubernetes Deployment
 # Generated by DevOps Project Generator
@@ -768,6 +870,73 @@ echo "VM setup complete!"
 function generateMonitoringFiles(config: ProjectConfig): GeneratedFile[] {
   const slug = config.projectName.toLowerCase().replace(/_/g, "-");
   const files: GeneratedFile[] = [];
+
+  // Add alert rules (always)
+  files.push({
+    path: `${config.projectName}/monitoring/alerts/rules.yml`,
+    type: "file",
+    content: `# Alert Rules for ${config.projectName}
+# Generated by DevOps Project Generator
+
+groups:
+  - name: ${slug}-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}%"
+
+      - alert: ServiceDown
+        expr: up{job="${slug}"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "${config.projectName} is down"
+`,
+  });
+
+  // Add dashboards (always)
+  files.push({
+    path: `${config.projectName}/monitoring/dashboards/overview.json`,
+    type: "file",
+    content: `{
+  "dashboard": {
+    "title": "${config.projectName} Overview",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\\"5..\\"}[5m])"
+          }
+        ]
+      },
+      {
+        "title": "Response Time",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+          }
+        ]
+      }
+    ]
+  }
+}
+`,
+  });
 
   // Basic security (always)
   files.push({
@@ -1145,6 +1314,63 @@ spec:
 
 function generateInfraFiles(config: ProjectConfig): GeneratedFile[] {
   const files: GeneratedFile[] = [];
+  const envs = getEnvList(config);
+  
+  // Add environment-specific files
+  envs.forEach((env) => {
+    files.push({
+      path: `${config.projectName}/infrastructure/environments/${env}.tfvars`,
+      type: "file",
+      content: `# ${env} environment variables
+# Generated by DevOps Project Generator
+
+environment = "${env}"
+project_name = "${config.projectName}"
+region = "us-east-1"
+
+# Environment-specific settings
+instance_count = ${env === "prod" ? "3" : env === "stage" ? "2" : "1"}
+instance_type = "${env === "prod" ? "t3.medium" : "t3.small"}"
+`,
+    });
+  });
+  
+  // Add reusable modules
+  files.push({
+    path: `${config.projectName}/infrastructure/modules/networking/main.tf`,
+    type: "file",
+    content: `# Networking Module
+# Generated by DevOps Project Generator
+
+variable "project_name" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}
+
+variable "vpc_cidr" {
+  type    = string
+  default = "10.0.0.0/16"
+}
+
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  
+  tags = {
+    Name        = "\${var.project_name}-\${var.environment}-vpc"
+    Environment = var.environment
+  }
+}
+
+output "vpc_id" {
+  value = aws_vpc.main.id
+}
+`,
+  });
   
   switch (config.infra) {
     case "aws-vpc-eks":

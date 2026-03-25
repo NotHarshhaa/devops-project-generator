@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ProjectConfig, GenerationResult } from "@/lib/types";
 import { steps, getOptionsForStep } from "@/lib/options";
@@ -78,13 +78,11 @@ export function ProjectGenerator() {
 
   const updateConfig = useCallback(
     (field: keyof ProjectConfig, value: string) => {
-      setConfig((prev) => {
-        const newConfig = { ...prev, [field]: value };
-        updateGlobalConfig(newConfig);
-        return newConfig;
-      });
+      const newConfig = { ...config, [field]: value };
+      setConfig(newConfig);
+      updateGlobalConfig(newConfig);
     },
-    [updateGlobalConfig]
+    [config, updateGlobalConfig]
   );
 
   const canProceed = useCallback(() => {

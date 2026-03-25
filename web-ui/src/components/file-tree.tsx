@@ -26,7 +26,10 @@ function buildTree(files: GeneratedFile[], projectName: string): TreeNode {
     children: [],
   };
 
-  for (const file of files) {
+  // Only process actual files, not directory entries
+  const actualFiles = files.filter(f => f.type === "file");
+
+  for (const file of actualFiles) {
     const parts = file.path.split("/").slice(1); // Remove project name prefix
     let current = root;
 
@@ -48,6 +51,18 @@ function buildTree(files: GeneratedFile[], projectName: string): TreeNode {
       current = child;
     }
   }
+
+  // Remove empty directories recursively
+  const removeEmptyDirs = (node: TreeNode): boolean => {
+    if (node.type === "file") return true;
+    
+    // Filter children, keeping only non-empty ones
+    node.children = node.children.filter(child => removeEmptyDirs(child));
+    
+    // A directory is non-empty if it has children
+    return node.children.length > 0;
+  };
+  removeEmptyDirs(root);
 
   // Sort: directories first, then files, alphabetically
   const sortChildren = (node: TreeNode) => {
