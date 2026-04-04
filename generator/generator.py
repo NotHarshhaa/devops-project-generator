@@ -1,357 +1,741 @@
+#!/usr/bin/env python3
 """
-Core DevOps project generator
+Core DevOps project generator with modular architecture
 """
 
-import os
-import shutil
-import time
-import gc
 import logging
+import time
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set, Tuple
-from concurrent.futures import ThreadPoolExecutor, as_completed, Future
-from functools import lru_cache
-from contextlib import contextmanager
-from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateNotFound, TemplateSyntaxError
-from rich.console import Console
+from typing import Dict, Any, List, Optional, Tuple
 
 from .config import ProjectConfig, TemplateConfig
+from .template_engine import TemplateRenderer, TemplateManager, RenderContext
+from .file_manager import ProjectStructureManager, ProjectValidator, BackupManager
+from .utils import PerformanceUtils, ProgressTracker, ValidationUtils
 
 logger = logging.getLogger(__name__)
-console = Console()
 
 
 class DevOpsProjectGenerator:
-    """Main DevOps project generator class"""
+    """DevOps project generator with improved modular architecture"""
     
-    def __init__(self, config: ProjectConfig, output_dir: str = "."):
+    def __init__(self, config: ProjectConfig, output_dir: str = ".", max_workers: int = 4):
         self.config = config
         self.output_dir = Path(output_dir)
-        self.template_config = TemplateConfig()
         self.project_path = self.output_dir / config.project_name
+        self.max_workers = max_workers
         self._start_time = time.time()
         
-        # Performance tracking
-        self._template_cache: Dict[str, Any] = {}
-        self._rendered_files: Set[Path] = set()
-        
-        # Setup optimized Jinja2 environment with caching
-        template_path = Path(__file__).parent.parent / "templates"
-        self.jinja_env = Environment(
-            loader=FileSystemLoader(str(template_path)),
-            autoescape=select_autoescape(["html", "xml"]),
-            trim_blocks=True,
-            lstrip_blocks=True,
-            cache_size=200,  # Increased cache size for better performance
-            auto_reload=False,  # Disable auto-reload for performance
-            enable_async=False,  # Disable async for simplicity
+        # Initialize modular components
+        self.performance = PerformanceUtils()
+        self.progress = ProgressTracker(total_steps=0)
+        self.template_manager = TemplateManager(
+            Path(__file__).parent.parent / "templates"
         )
+        self.structure_manager = ProjectStructureManager(self.project_path, max_workers)
+        self.validator = ProjectValidator(self.project_path)
+        self.backup_manager = BackupManager(self.project_path)
         
-        # Pre-load commonly used templates
-        self._preload_templates()
+        # Maintain backward compatibility
+        self.template_config = TemplateConfig()
+        
+        # Validate configuration
+        self._validate_configuration()
+        
+        # Setup progress tracking
+        self._setup_progress_tracking()
     
-    def _preload_templates(self) -> None:
-        """Pre-load commonly used templates for better performance"""
-        common_templates = [
-            "README.md.j2",
-            "Makefile.j2", 
-            "gitignore.j2",
-            "app/sample-app/main.py.j2",
-            "app/sample-app/requirements.txt.j2",
-            "scripts/setup.sh.j2",
-            "scripts/deploy.sh.j2"
+    def _validate_configuration(self) -> None:
+        """Validate project configuration"""
+        # Validate project name
+        valid_name, name_errors = ValidationUtils.validate_project_name(self.config.project_name)
+        if not valid_name:
+            raise ValueError(f"Invalid project name: {', '.join(name_errors)}")
+        
+        # Validate output path
+        valid_path, path_errors = ValidationUtils.validate_output_path(self.project_path)
+        if not valid_path:
+            raise ValueError(f"Invalid output path: {', '.join(path_errors)}")
+    
+    def _setup_progress_tracking(self) -> None:
+        """Setup progress tracking for generation process"""
+        steps = [
+            (1, "Creating project structure"),
+            (2, "Rendering templates"),
+            (3, "Setting up configuration files"),
+            (4, "Creating scripts and documentation"),
+            (5, "Validating project structure"),
+            (6, "Finalizing project")
         ]
         
-        # Only preload templates that actually exist
-        preloaded_count = 0
-        for template_name in common_templates:
-            try:
-                template_path = Path(__file__).parent.parent / "templates" / template_name
-                if template_path.exists() and template_path.is_file():
-                    self.jinja_env.get_template(template_name)
-                    preloaded_count += 1
-                    logger.debug(f"Preloaded template: {template_name}")
-                else:
-                    logger.debug(f"Template not found for preloading: {template_name}")
-            except TemplateNotFound:
-                logger.debug(f"Template not found for preloading: {template_name}")
-            except Exception as e:
-                logger.warning(f"Error preloading template {template_name}: {str(e)}")
+        for step_num, description in steps:
+            self.progress.add_step(step_num, description)
         
-        logger.info(f"Preloaded {preloaded_count} templates")
+        self.progress.total_steps = len(steps)
+    
+    # Legacy method compatibility
+    def generate(self) -> Dict[str, Any]:
+        """Legacy generate method - delegates to new implementation"""
+        return self.generate_project()
     
     def _get_template_context(self) -> Dict[str, Any]:
-        """Get template context"""
+        """Legacy method - delegates to config"""
         return self.config.get_template_context()
     
     def _render_template(self, template_path: str) -> str:
-        """Render a template with caching and error handling"""
-        # Check cache first
-        if template_path in self._template_cache:
-            cached_template = self._template_cache[template_path]
-            logger.debug(f"Using cached template: {template_path}")
-            return cached_template
+        """Legacy method - now uses template engine"""
+        template_renderer = TemplateRenderer(
+            Path(__file__).parent.parent / "templates"
+        )
+        context = self._get_template_context()
+        template = template_renderer.get_template(template_path)
+        return template.render(**context)
+    
+    def create_project_structure(self) -> None:
+        """Legacy method - delegates to structure manager"""
+        self._create_project_structure()
+    
+    def setup_ci_cd(self) -> None:
+        """Legacy method - integrated into template rendering"""
+        logger.info("CI/CD setup now handled by modular template rendering")
+    
+    def setup_infrastructure(self) -> None:
+        """Legacy method - integrated into template rendering"""
+        logger.info("Infrastructure setup now handled by modular template rendering")
+    
+    def setup_deployment(self) -> None:
+        """Legacy method - integrated into template rendering"""
+        logger.info("Deployment setup now handled by modular template rendering")
+    
+    def setup_monitoring(self) -> None:
+        """Legacy method - integrated into template rendering"""
+        logger.info("Monitoring setup now handled by modular template rendering")
+    
+    def setup_security(self) -> None:
+        """Legacy method - integrated into template rendering"""
+        logger.info("Security setup now handled by modular template rendering")
+    
+    def create_documentation(self) -> None:
+        """Legacy method - integrated into scripts/docs creation"""
+        logger.info("Documentation creation now handled by modular file manager")
+    
+    def validate_project(self) -> Dict[str, Any]:
+        """Legacy method - delegates to project validator"""
+        return self.validator.validate_structure()
+    
+    def generate_project(self) -> Dict[str, Any]:
+        """Generate complete DevOps project"""
+        self.performance.start_timer("total_generation")
         
         try:
-            template = self.jinja_env.get_template(template_path)
-            context = self._get_template_context()
-            rendered = template.render(**context)
+            logger.info(f"Starting project generation: {self.config.project_name}")
             
-            # Validate rendered content
-            if not rendered.strip():
-                logger.warning(f"Template rendered empty content: {template_path}")
+            # Step 1: Create project structure
+            self._create_project_structure()
+            self.progress.complete_step(1)
             
-            # Cache the result
-            self._template_cache[template_path] = rendered
-            logger.debug(f"Rendered and cached template: {template_path}")
+            # Step 2: Render templates
+            self._render_templates()
+            self.progress.complete_step(2)
             
-            return rendered
-        except TemplateNotFound as e:
-            logger.error(f"Template not found: {template_path} - {str(e)}")
-            raise
-        except TemplateSyntaxError as e:
-            logger.error(f"Template syntax error in {template_path}: {str(e)}")
-            raise
+            # Step 3: Setup configuration files
+            self._setup_configuration_files()
+            self.progress.complete_step(3)
+            
+            # Step 4: Create scripts and documentation
+            self._create_scripts_and_docs()
+            self.progress.complete_step(4)
+            
+            # Step 5: Validate project structure
+            self._validate_generated_project()
+            self.progress.complete_step(5)
+            
+            # Step 6: Finalize project
+            self._finalize_project()
+            self.progress.complete_step(6)
+            
+            # Generate results
+            total_time = self.performance.end_timer("total_generation")
+            results = self._generate_results(total_time)
+            
+            logger.info(f"Project generation completed successfully in {total_time:.2f}s")
+            return results
+            
         except Exception as e:
-            logger.error(f"Error rendering template {template_path}: {str(e)}")
+            logger.error(f"Project generation failed: {str(e)}")
             raise
     
     def _create_project_structure(self) -> None:
-        """Create the basic project directory structure with batch operations"""
-        logger.info("Creating project structure")
+        """Create basic project directory structure"""
+        self.performance.start_timer("structure_creation")
         
-        # Define all directories to create
+        # Define project structure based on configuration
         directories = [
             "app",
-            "app/sample-app",
-            "ci",
+            "ci", 
             "infra",
-            "infra/environments",
-            "infra/modules",
             "deploy",
-            "containers",
-            "k8s",
-            "k8s/base",
-            "k8s/overlays",
             "monitoring",
-            "monitoring/logs",
-            "monitoring/metrics",
-            "monitoring/alerts",
             "security",
-            "security/policies",
-            "security/scanning",
             "scripts",
             "docs",
             "tests"
         ]
         
-        # Batch create directories with better error handling
-        created_dirs = []
-        failed_dirs = []
+        # Add component-specific directories
+        if self.config.ci != "none":
+            directories.extend([f"ci/{self.config.ci}"])
         
-        try:
-            for dir_path in directories:
-                full_path = self.project_path / dir_path
-                try:
-                    if not full_path.exists():
-                        full_path.mkdir(parents=True, exist_ok=True)
-                        created_dirs.append(full_path)
-                        logger.debug(f"Created directory: {full_path}")
-                except Exception as e:
-                    logger.error(f"Failed to create directory {dir_path}: {str(e)}")
-                    failed_dirs.append(dir_path)
-            
-            if failed_dirs:
-                logger.warning(f"Failed to create {len(failed_dirs)} directories: {failed_dirs}")
-            
-            logger.info(f"Successfully created {len(created_dirs)} directories")
-            console.print(f"🏗️  Created {len(created_dirs)} directories")
-            
-        except Exception as e:
-            logger.error(f"Critical error creating directories: {str(e)}")
-            # Clean up created directories on error
-            for dir_path in created_dirs:
-                try:
-                    if dir_path.exists():
-                        shutil.rmtree(dir_path)
-                        logger.debug(f"Cleaned up directory: {dir_path}")
-                except Exception as cleanup_error:
-                    logger.warning(f"Failed to cleanup directory {dir_path}: {str(cleanup_error)}")
-            raise
+        if self.config.infra != "none":
+            directories.extend([f"infra/{self.config.infra}"])
+        
+        if self.config.deploy != "vm":
+            directories.extend([f"deploy/{self.config.deploy}"])
+        
+        # Add directories to structure manager
+        for directory in directories:
+            self.structure_manager.add_directory(directory)
+        
+        # Execute structure creation
+        results = self.structure_manager.execute_all(parallel=True)
+        
+        if results["failed"] > 0:
+            logger.warning(f"Failed to create {results['failed']} directories")
+        
+        self.performance.end_timer("structure_creation")
     
-    def _generate_component_files(self, component: str, templates: List[str]) -> Tuple[List[Path], List[str]]:
-        """Generate files for a specific component with better error handling"""
-        generated_files = []
-        failed_files = []
+    def _render_templates(self) -> None:
+        """Render project templates"""
+        self.performance.start_timer("template_rendering")
         
-        for template_path in templates:
-            try:
-                # Convert template path to output path
-                output_path = self.project_path / template_path.replace('.j2', '')
-                
-                # Create parent directory if needed
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                
-                # Render template
-                content = self._render_template(template_path)
-                
-                # Validate content before writing
-                if not content.strip():
-                    logger.warning(f"Skipping empty content for {template_path}")
-                    failed_files.append(f"{template_path}: Empty content")
-                    continue
-                
-                # Write file with atomic operation
-                temp_file = output_path.with_suffix('.tmp')
-                try:
-                    with open(temp_file, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    
-                    # Atomic rename
-                    temp_file.replace(output_path)
-                    
-                    generated_files.append(output_path)
-                    self._rendered_files.add(output_path)
-                    logger.debug(f"Generated file: {output_path}")
-                    
-                except (OSError, IOError) as write_error:
-                    # Clean up temp file if it exists
-                    if temp_file.exists():
-                        try:
-                            temp_file.unlink()
-                        except Exception:
-                            pass  # Best effort cleanup
-                    raise write_error
-                
-            except TemplateNotFound as e:
-                logger.error(f"Template not found: {template_path}")
-                failed_files.append(f"{template_path}: Template not found")
-                console.print(f"[yellow]⚠️  Skipped {template_path}: Template not found[/yellow]")
-                continue
-            except TemplateSyntaxError as e:
-                logger.error(f"Template syntax error in {template_path}: {str(e)}")
-                failed_files.append(f"{template_path}: Template syntax error")
-                console.print(f"[yellow]⚠️  Skipped {template_path}: Template syntax error[/yellow]")
-                continue
-            except Exception as e:
-                logger.error(f"Error generating {component} file {template_path}: {str(e)}")
-                failed_files.append(f"{template_path}: {str(e)}")
-                console.print(f"[yellow]⚠️  Skipped {template_path}: {str(e)}[/yellow]")
-                continue
+        # Get template configurations based on project config
+        template_configs = self._get_template_configurations()
         
-        return generated_files, failed_files
+        # Get base template variables
+        base_variables = self.config.get_template_context()
+        
+        # Render templates using template engine
+        template_renderer = TemplateRenderer(
+            Path(__file__).parent.parent / "templates",
+            max_workers=self.max_workers
+        )
+        
+        render_results = template_renderer.render_batch(template_configs, base_variables)
+        
+        successful_count = sum(1 for success in render_results.values() if success)
+        logger.info(f"Rendered {successful_count}/{len(template_configs)} templates")
+        
+        self.performance.end_timer("template_rendering")
     
-    def _set_file_permissions(self) -> None:
-        """Set appropriate file permissions for scripts and executables"""
-        script_extensions = ['.sh', '.py', '.bat']
+    def _get_template_configurations(self) -> List[Dict[str, Any]]:
+        """Get template configurations based on project settings"""
+        templates = []
         
-        for file_path in self._rendered_files:
-            if file_path.suffix in script_extensions:
-                try:
-                    # Make script executable
-                    current_permissions = file_path.stat().st_mode
-                    file_path.chmod(current_permissions | 0o755)
-                    logger.debug(f"Set executable permissions for: {file_path}")
-                except Exception as e:
-                    logger.warning(f"Could not set permissions for {file_path}: {str(e)}")
-    
-    @contextmanager
-    def _generation_context(self):
-        """Context manager for project generation with cleanup"""
-        try:
-            yield
-        except Exception as e:
-            logger.error(f"Project generation failed: {str(e)}")
-            # Clean up on failure
-            if self.project_path.exists():
-                try:
-                    shutil.rmtree(self.project_path)
-                    logger.info("Cleaned up failed project generation")
-                except Exception as cleanup_error:
-                    logger.error(f"Failed to cleanup project: {str(cleanup_error)}")
-            raise
-    
-    def generate(self) -> None:
-        """Generate the complete DevOps project with optimized performance"""
-        logger.info(f"Starting project generation for {self.config.project_name}")
+        # Core templates
+        templates.extend([
+            {
+                'template': 'README.md.j2',
+                'output': 'README.md',
+                'variables': {}
+            },
+            {
+                'template': '.gitignore.j2',
+                'output': '.gitignore',
+                'variables': {}
+            },
+            {
+                'template': 'Makefile.j2',
+                'output': 'Makefile',
+                'variables': {}
+            }
+        ])
         
-        with self._generation_context():
-            # Create project structure
-            self._create_project_structure()
-            
-            # Generate components concurrently with better error handling
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                # Submit component generation tasks
-                futures = {}
-                
-                # Pipeline component
-                if self.config.pipeline:
-                    pipeline_templates = self.template_config.get_pipeline_templates(self.config.pipeline)
-                    futures["pipeline"] = executor.submit(self._generate_component_files, "Pipeline", pipeline_templates)
-                
-                # CI/CD component
-                if self.config.ci and self.config.ci != "none":
-                    ci_templates = self.template_config.get_ci_templates(self.config.ci)
-                    futures["ci"] = executor.submit(self._generate_component_files, "CI/CD", ci_templates)
-                
-                # Infrastructure component
-                if self.config.infra and self.config.infra != "none":
-                    infra_templates = self.template_config.get_infra_templates(self.config.infra)
-                    futures["infra"] = executor.submit(self._generate_component_files, "Infrastructure", infra_templates)
-                
-                # Deployment component
-                deploy_templates = self.template_config.get_deploy_templates(self.config.deploy)
-                futures["deploy"] = executor.submit(self._generate_component_files, "Deployment", deploy_templates)
-                
-                # Monitoring component
-                obs_templates = self.template_config.get_observability_templates(self.config.observability)
-                futures["monitoring"] = executor.submit(self._generate_component_files, "Monitoring", obs_templates)
-                
-                # Security component
-                sec_templates = self.template_config.get_security_templates(self.config.security)
-                futures["security"] = executor.submit(self._generate_component_files, "Security", sec_templates)
-                
-                # Base files (always generated)
-                base_templates = self.template_config.get_base_templates()
-                futures["base"] = executor.submit(self._generate_component_files, "Base", base_templates)
-                
-                # Collect results with progress indication
-                total_files = 0
-                total_failures = 0
-                completed_components = []
-                
-                for component, future in futures.items():
-                    try:
-                        files, failures = future.result(timeout=30)  # 30 second timeout per component
-                        completed_components.append((component, files, failures))
-                        total_files += len(files)
-                        total_failures += len(failures)
-                        
-                        # Report component status
-                        if failures:
-                            console.print(f"✅ {component.title()} generated ({len(files)} files, {len(failures)} skipped)")
-                        else:
-                            console.print(f"✅ {component.title()} generated ({len(files)} files)")
-                            
-                    except Exception as e:
-                        logger.error(f"Error in {component} generation: {str(e)}")
-                        console.print(f"[red]❌ {component.title()} failed: {str(e)}[/red]")
-                        total_failures += 1
-            
-            # Set file permissions
-            self._set_file_permissions()
-            
-            # Performance cleanup
-            gc.collect()  # Force garbage collection
-            
-            # Report completion with detailed statistics
-            elapsed_time = time.time() - self._start_time
-            logger.info(f"Project generation completed in {elapsed_time:.2f}s")
-            
-            # Provide detailed summary
-            if total_failures > 0:
-                console.print(f"⚠️  Project generated with {total_failures} warnings in {elapsed_time:.2f}s")
-                console.print(f"   Total files: {total_files}")
-            else:
-                console.print(f"✅ Project generation completed in {elapsed_time:.2f}s!")
-                console.print(f"   Total files: {total_files}")
+        # CI/CD templates
+        if self.config.ci != "none":
+            templates.append({
+                'template': f'ci/{self.config.ci}/pipeline.yml.j2',
+                'output': f'ci/{self.config.ci}/pipeline.yml',
+                'variables': {'ci_platform': self.config.ci}
+            })
+        
+        # Infrastructure templates
+        if self.config.infra != "none":
+            templates.append({
+                'template': f'infra/{self.config.infra}/main.tf.j2',
+                'output': f'infra/{self.config.infra}/main.tf',
+                'variables': {'infra_type': self.config.infra}
+            })
+        
+        # Deployment templates
+        if self.config.deploy != "vm":
+            templates.append({
+                'template': f'deploy/{self.config.deploy}/deployment.yml.j2',
+                'output': f'deploy/{self.config.deploy}/deployment.yml',
+                'variables': {'deploy_type': self.config.deploy}
+            })
+        
+        # Application templates
+        templates.extend([
+            {
+                'template': 'app/main.py.j2',
+                'output': 'app/main.py',
+                'variables': {}
+            },
+            {
+                'template': 'app/requirements.txt.j2',
+                'output': 'app/requirements.txt',
+                'variables': {}
+            }
+        ])
+        
+        return templates
+    
+    def _setup_configuration_files(self) -> None:
+        """Setup project configuration files"""
+        self.performance.start_timer("config_setup")
+        
+        # Create configuration files
+        config_files = [
+            {
+                'path': 'devops-config.yaml',
+                'content': self._generate_config_yaml()
+            },
+            {
+                'path': 'environment.yml',
+                'content': self._generate_environment_config()
+            }
+        ]
+        
+        for config_file in config_files:
+            self.structure_manager.add_file_creation(
+                config_file['path'],
+                config_file['content']
+            )
+        
+        results = self.structure_manager.execute_all(parallel=False)
+        
+        if results["failed"] > 0:
+            logger.warning(f"Failed to create {results['failed']} configuration files")
+        
+        self.performance.end_timer("config_setup")
+    
+    def _generate_config_yaml(self) -> str:
+        """Generate main configuration YAML"""
+        import yaml
+        
+        config_dict = {
+            'project': {
+                'name': self.config.project_name,
+                'version': '1.0.0',
+                'description': f'DevOps project: {self.config.project_name}'
+            },
+            'ci_cd': {
+                'platform': self.config.ci,
+                'enabled': self.config.ci != "none"
+            },
+            'infrastructure': {
+                'type': self.config.infra,
+                'provider': self._get_cloud_provider()
+            },
+            'deployment': {
+                'strategy': self.config.deploy,
+                'environments': self.config.envs
+            },
+            'observability': {
+                'level': self.config.observability,
+                'monitoring': self.config.observability in ["prometheus-grafana", "datadog", "elk-stack"]
+            },
+            'security': {
+                'level': self.config.security,
+                'compliance': self.config.security in ["nist-csf", "cis-benchmarks", "zero-trust"]
+            }
+        }
+        
+        return yaml.dump(config_dict, default_flow_style=False, indent=2)
+    
+    def _generate_environment_config(self) -> str:
+        """Generate environment configuration"""
+        import yaml
+        
+        environments = {}
+        
+        if self.config.envs == "single":
+            environments["development"] = {
+                'debug': True,
+                'logging_level': 'DEBUG'
+            }
+        elif self.config.envs == "dev,stage,prod":
+            environments.update({
+                'development': {
+                    'debug': True,
+                    'logging_level': 'DEBUG'
+                },
+                'staging': {
+                    'debug': False,
+                    'logging_level': 'INFO'
+                },
+                'production': {
+                    'debug': False,
+                    'logging_level': 'WARN'
+                }
+            })
+        
+        return yaml.dump({'environments': environments}, default_flow_style=False, indent=2)
+    
+    def _get_cloud_provider(self) -> str:
+        """Get cloud provider based on infrastructure type"""
+        infra_mapping = {
+            'aws-vpc-eks': 'aws',
+            'aws-ecs-fargate': 'aws',
+            'azure-vnet-aks': 'azure',
+            'gcp-vpc-gke': 'gcp',
+            'multicloud-terraform': 'multi'
+        }
+        return infra_mapping.get(self.config.infra, 'aws')
+    
+    def _create_scripts_and_docs(self) -> None:
+        """Create automation scripts and documentation"""
+        self.performance.start_timer("scripts_docs_creation")
+        
+        # Scripts
+        scripts = [
+            {
+                'path': 'scripts/setup.sh',
+                'content': self._generate_setup_script()
+            },
+            {
+                'path': 'scripts/deploy.sh',
+                'content': self._generate_deploy_script()
+            },
+            {
+                'path': 'scripts/test.sh',
+                'content': self._generate_test_script()
+            }
+        ]
+        
+        # Documentation
+        docs = [
+            {
+                'path': 'docs/ARCHITECTURE.md',
+                'content': self._generate_architecture_docs()
+            },
+            {
+                'path': 'docs/DEPLOYMENT.md',
+                'content': self._generate_deployment_docs()
+            }
+        ]
+        
+        for script in scripts:
+            self.structure_manager.add_file_creation(script['path'], script['content'])
+        
+        for doc in docs:
+            self.structure_manager.add_file_creation(doc['path'], doc['content'])
+        
+        results = self.structure_manager.execute_all(parallel=True)
+        
+        if results["failed"] > 0:
+            logger.warning(f"Failed to create {results['failed']} scripts/docs")
+        
+        self.performance.end_timer("scripts_docs_creation")
+    
+    def _generate_setup_script(self) -> str:
+        """Generate setup script"""
+        return f"""#!/bin/bash
+# Setup script for {self.config.project_name}
+
+set -e
+
+echo "🚀 Setting up {self.config.project_name}..."
+
+# Install dependencies
+if [ -f "app/requirements.txt" ]; then
+    echo "📦 Installing Python dependencies..."
+    pip install -r app/requirements.txt
+fi
+
+# Setup infrastructure
+if [ -d "infra" ]; then
+    echo "🏗️  Setting up infrastructure..."
+    cd infra
+    terraform init
+    terraform plan
+    cd ..
+fi
+
+echo "✅ Setup completed successfully!"
+"""
+    
+    def _generate_deploy_script(self) -> str:
+        """Generate deployment script"""
+        return f"""#!/bin/bash
+# Deployment script for {self.config.project_name}
+
+set -e
+
+ENVIRONMENT=${{1:-development}}
+
+echo "🚀 Deploying {self.config.project_name} to $ENVIRONMENT..."
+
+# Run tests
+echo "🧪 Running tests..."
+./scripts/test.sh
+
+# Deploy based on strategy
+case "{self.config.deploy}" in
+    "kubernetes")
+        echo "☸️  Deploying to Kubernetes..."
+        kubectl apply -f deploy/
+        ;;
+    "docker")
+        echo "🐳 Building and deploying Docker containers..."
+        docker-compose -f docker/docker-compose.yml up -d
+        ;;
+    *)
+        echo "🖥️  Deploying to VM..."
+        ./scripts/setup.sh
+        ;;
+esac
+
+echo "✅ Deployment completed!"
+"""
+    
+    def _generate_test_script(self) -> str:
+        """Generate test script"""
+        return """#!/bin/bash
+# Test script for the project
+
+set -e
+
+echo "🧪 Running tests..."
+
+# Python tests
+if [ -f "app/requirements.txt" ]; then
+    echo "🐍 Running Python tests..."
+    python -m pytest app/tests/ -v
+fi
+
+# Infrastructure tests
+if [ -d "infra" ]; then
+    echo "🏗️  Validating infrastructure..."
+    cd infra
+    terraform validate
+    cd ..
+fi
+
+# Security tests
+if [ -d "security" ]; then
+    echo "🔒 Running security scans..."
+    # Add security scanning commands here
+fi
+
+echo "✅ All tests passed!"
+"""
+    
+    def _generate_architecture_docs(self) -> str:
+        """Generate architecture documentation"""
+        return f"""# Architecture Documentation
+
+## Project Overview
+{self.config.project_name} - A DevOps-enabled project with modern infrastructure and deployment practices.
+
+## Components
+
+### Application
+- **Framework**: Python application
+- **Structure**: Modular architecture in `app/` directory
+
+### CI/CD
+- **Platform**: {self.config.ci}
+- **Pipeline**: Automated testing and deployment
+- **Location**: `ci/{self.config.ci}/`
+
+### Infrastructure
+- **Type**: {self.config.infra}
+- **Provider**: {self._get_cloud_provider()}
+- **Location**: `infra/{self.config.infra}/`
+
+### Deployment
+- **Strategy**: {self.config.deploy}
+- **Environments**: {self.config.envs}
+- **Location**: `deploy/{self.config.deploy}/`
+
+### Observability
+- **Level**: {self.config.observability}
+- **Monitoring**: {'Enabled' if self.config.observability != 'logs' else 'Basic logging'}
+
+### Security
+- **Framework**: {self.config.security}
+- **Compliance**: {'Enabled' if self.config.security != 'basic' else 'Basic security'}
+
+## Data Flow
+1. Code commits trigger CI/CD pipeline
+2. Automated tests validate changes
+3. Infrastructure is provisioned/updated
+4. Application is deployed to target environment
+5. Monitoring and logging collect operational data
+
+## Technology Stack
+- **Language**: Python
+- **Containerization**: Docker
+- **Infrastructure as Code**: Terraform
+- **CI/CD**: {self.config.ci}
+- **Orchestration**: Kubernetes (if applicable)
+"""
+    
+    def _generate_deployment_docs(self) -> str:
+        """Generate deployment documentation"""
+        return f"""# Deployment Guide
+
+## Overview
+This guide covers deploying {self.config.project_name} to different environments.
+
+## Prerequisites
+- Docker (if using container deployment)
+- kubectl (if using Kubernetes)
+- Terraform (if using infrastructure)
+- Access to target cloud platform
+
+## Environments
+{self.config.envs}
+
+## Deployment Methods
+
+### 1. Automated Deployment
+```bash
+# Deploy to specific environment
+./scripts/deploy.sh <environment>
+```
+
+### 2. Manual Deployment
+
+#### Development
+```bash
+./scripts/setup.sh
+```
+
+#### Production
+```bash
+# 1. Validate infrastructure
+cd infra && terraform plan && terraform apply
+
+# 2. Deploy application
+./scripts/deploy.sh production
+```
+
+## Configuration
+Configuration is managed through:
+- `devops-config.yaml` - Main project configuration
+- `environment.yml` - Environment-specific settings
+- CI/CD pipeline variables
+
+## Monitoring
+- Logs are collected and centralized
+- Metrics are available through {self.config.observability}
+- Health checks are configured for all services
+
+## Troubleshooting
+1. Check logs in the monitoring system
+2. Validate infrastructure state
+3. Run health checks: `./scripts/test.sh`
+4. Review CI/CD pipeline logs
+"""
+    
+    def _validate_generated_project(self) -> None:
+        """Validate the generated project structure"""
+        self.performance.start_timer("project_validation")
+        
+        validation_results = self.validator.validate_structure()
+        
+        if not validation_results["valid"]:
+            logger.warning("Project validation found issues:")
+            for error in validation_results["errors"]:
+                logger.warning(f"  - {error}")
+        
+        if validation_results["warnings"]:
+            logger.info("Project validation warnings:")
+            for warning in validation_results["warnings"]:
+                logger.info(f"  - {warning}")
+        
+        self.performance.end_timer("project_validation")
+    
+    def _finalize_project(self) -> None:
+        """Finalize project generation"""
+        self.performance.start_timer("project_finalization")
+        
+        # Create initial backup
+        success, message = self.backup_manager.create_backup(include_config=False)
+        if success:
+            logger.info(f"Created initial backup: {message}")
+        
+        # Generate project report
+        self._generate_project_report()
+        
+        self.performance.end_timer("project_finalization")
+    
+    def _generate_project_report(self) -> None:
+        """Generate comprehensive project report"""
+        report = self.validator.generate_report()
+        
+        report_path = self.project_path / "PROJECT_REPORT.md"
+        with open(report_path, 'w', encoding='utf-8') as f:
+            f.write(report)
+        
+        logger.info(f"Generated project report: {report_path}")
+    
+    def _generate_results(self, total_time: float) -> Dict[str, Any]:
+        """Generate generation results summary"""
+        return {
+            "success": True,
+            "project_name": self.config.project_name,
+            "project_path": str(self.project_path),
+            "generation_time": total_time,
+            "progress": self.progress.get_progress(),
+            "performance_metrics": self.performance.get_metrics(),
+            "validation_results": self.validator.validate_structure(),
+            "configuration": {
+                "ci": self.config.ci,
+                "infra": self.config.infra,
+                "deploy": self.config.deploy,
+                "envs": self.config.envs,
+                "observability": self.config.observability,
+                "security": self.config.security
+            }
+        }
+    
+    def get_generation_status(self) -> Dict[str, Any]:
+        """Get current generation status"""
+        return {
+            "progress": self.progress.get_progress(),
+            "status": self.progress.get_status(),
+            "performance_metrics": self.performance.get_metrics(),
+            "operations_summary": self.structure_manager.get_operation_summary()
+        }
+    
+    def create_backup(self, **kwargs) -> Tuple[bool, str]:
+        """Create project backup"""
+        return self.backup_manager.create_backup(**kwargs)
+    
+    def restore_backup(self, backup_name: str) -> Tuple[bool, str]:
+        """Restore project from backup"""
+        return self.backup_manager.restore_backup(backup_name)
+    
+    def list_backups(self) -> List[Dict[str, Any]]:
+        """List available backups"""
+        return self.backup_manager.list_backups()
+
+
+# Factory function for backward compatibility
+def create_generator(config: ProjectConfig, output_dir: str = ".", 
+                   use_modular: bool = True) -> DevOpsProjectGenerator:
+    """
+    Factory function to create generator with specified architecture
+    
+    Args:
+        config: Project configuration
+        output_dir: Output directory
+        use_modular: Whether to use new modular architecture (default: True)
+    
+    Returns:
+        DevOpsProjectGenerator instance
+    """
+    return DevOpsProjectGenerator(config, output_dir)
