@@ -1,5 +1,43 @@
 import { ProjectConfig, GeneratedFile, GenerationResult } from "./types";
 
+// Enhanced complexity calculation for realistic generation time estimation
+function calculateComplexity(config: ProjectConfig): number {
+  let complexity = 1;
+  
+  // Infrastructure complexity
+  if (config.infra.includes("multi-cloud")) complexity += 3;
+  if (config.infra.includes("eks") || config.infra.includes("aks") || config.infra.includes("gke")) complexity += 2;
+  if (config.infra.includes("on-prem")) complexity += 4;
+  if (config.infra.includes("terraform")) complexity += 2;
+  
+  // Deployment complexity
+  if (config.deploy.includes("gitops") || config.deploy.includes("helm")) complexity += 2;
+  if (config.deploy.includes("canary")) complexity += 1;
+  if (config.deploy.includes("serverless")) complexity += 2;
+  if (config.deploy.includes("blue-green")) complexity += 1;
+  
+  // Environment complexity
+  const envCount = config.envs.split(",").length;
+  complexity += envCount - 1;
+  
+  // Security complexity
+  if (config.security.includes("zero-trust") || config.security.includes("soc2") || config.security.includes("hipaa")) complexity += 3;
+  if (config.security.includes("cis")) complexity += 2;
+  if (config.security.includes("nist")) complexity += 2;
+  
+  // Observability complexity
+  if (config.observability.includes("datadog") || config.observability.includes("new-relic")) complexity += 2;
+  if (config.observability.includes("elk")) complexity += 2;
+  if (config.observability.includes("prometheus")) complexity += 1;
+  
+  // CI/CD complexity
+  if (config.ci === "github-actions") complexity += 1;
+  if (config.ci === "gitlab-ci") complexity += 1;
+  if (config.ci === "jenkins") complexity += 2;
+  
+  return complexity;
+}
+
 // Helper function to ensure parent directories exist for a file
 function ensureDirectories(filePath: string): GeneratedFile[] {
   const dirs: GeneratedFile[] = [];
@@ -23,103 +61,34 @@ function ensureDirectories(filePath: string): GeneratedFile[] {
   return dirs;
 }
 
-export function generateProject(config: ProjectConfig): GenerationResult {
-  const allFiles: GeneratedFile[] = [];
-  const components: string[] = [];
-
-  // Base files (always generated)
-  allFiles.push(...generateBaseFiles(config));
-  components.push("Base");
-
-  // Pipeline files
-  allFiles.push(...generatePipelineFiles(config));
-  components.push(`Pipeline: ${config.pipeline}`);
-
-  // CI/CD files
-  if (config.ci && config.ci !== "none") {
-    allFiles.push(...generateCIFiles(config));
-    components.push("CI/CD");
-  }
-
-  // Infrastructure files
-  allFiles.push(...generateInfraFiles(config));
-  components.push("Infrastructure");
-
-  // Deployment files
-  allFiles.push(...generateDeployFiles(config));
-  components.push("Deployment");
-
-  // Monitoring files
-  allFiles.push(...generateMonitoringFiles(config));
-  components.push("Monitoring");
-
-  // Security files
-  allFiles.push(...generateSecurityFiles(config));
-  components.push("Security");
-
-  // Automatically create directories for all files
-  const dirSet = new Set<string>();
+// Generate realistic base files with enhanced content
+function generateRealisticBaseFiles(config: ProjectConfig): GeneratedFile[] {
   const files: GeneratedFile[] = [];
+  const projectName = config.projectName.toLowerCase().replace(/\s+/g, '-');
   
-  allFiles.forEach(file => {
-    if (file.type === "file") {
-      // Add directories for this file
-      const dirs = ensureDirectories(file.path);
-      dirs.forEach(dir => dirSet.add(dir.path));
-    }
-    files.push(file);
-  });
-  
-  // Add unique directories to files array
-  dirSet.forEach(dirPath => {
-    files.unshift({
-      path: dirPath,
-      content: "",
-      type: "directory"
-    });
-  });
+  // Enhanced README.md
+  files.push({
+    path: `${projectName}/README.md`,
+    content: `# ${config.projectName}
 
-  const totalDirs = files.filter((f) => f.type === "directory").length;
-  const totalFiles = files.filter((f) => f.type === "file").length;
+## Overview
+This project was generated using the DevOps Project Generator v2.0.0. It includes a comprehensive set of DevOps configurations and infrastructure as code templates.
 
-  return {
-    success: true,
-    projectName: config.projectName,
-    files,
-    summary: { totalFiles, totalDirs, components },
-  };
-}
+## Architecture
+- **Application**: Sample web application with health checks and metrics
+- **Infrastructure**: ${config.infra.toUpperCase()}
+- **Deployment**: ${config.deploy.toUpperCase()}
+- **CI/CD**: ${config.ci.toUpperCase()}
+- **Observability**: ${config.observability.toUpperCase()}
+- **Security**: ${config.security.toUpperCase()}
 
-function getEnvList(config: ProjectConfig): string[] {
-  if (config.envs === "single") return ["dev"];
-  return config.envs.split(",").map((e) => e.trim());
-}
+## Prerequisites
+- Docker
+- Kubernetes CLI (kubectl)
+- Terraform (if using infrastructure as code)
+- Make (for build automation)
 
-function generateBaseFiles(config: ProjectConfig): GeneratedFile[] {
-  const envs = getEnvList(config);
-  const slug = config.projectName.toLowerCase().replace(/_/g, "-");
-
-  return [
-    {
-      path: `${config.projectName}/README.md`,
-      type: "file",
-      content: `# ${config.projectName}
-
-> Generated by DevOps Project Generator v1.6.0
-
-## DevOps Stack Overview
-
-| Component           | Selection                    |
-|---------------------|------------------------------|
-| Pipeline Framework  | ${config.pipeline}           |
-| CI/CD Platform      | ${config.ci}                 |
-| Infrastructure      | ${config.infra}              |
-| Deployment Strategy | ${config.deploy}             |
-| Environments        | ${envs.join(", ")}           |
-| Observability       | ${config.observability}      |
-| Security Framework  | ${config.security}           |
-
-## Getting Started
+## Quick Start
 
 \`\`\`bash
 # Setup the project
@@ -128,1371 +97,1287 @@ make setup
 # Run locally
 make run
 
-# Deploy
-make deploy
+# Deploy to staging
+make deploy-staging
+
+# Run tests
+make test
 \`\`\`
 
 ## Project Structure
-
 \`\`\`
-${config.projectName}/
-├── app/              # Application source code
-├── ci/               # CI/CD pipeline configurations
-├── infra/            # Infrastructure as Code
-├── deploy/           # Deployment configurations
-├── k8s/              # Kubernetes manifests
-├── monitoring/       # Observability configs
-├── security/         # Security policies & scanning
-├── scripts/          # Utility scripts
-├── docs/             # Documentation
-└── tests/            # Test suites
+${projectName}/
+├── app/                    # Application source code
+├── ci/                     # CI/CD pipeline configurations
+├── infra/                  # Infrastructure as code
+├── deploy/                 # Deployment configurations
+├── monitoring/             # Monitoring and alerting
+├── security/               # Security policies and configurations
+├── scripts/                # Utility scripts
+├── docs/                   # Documentation
+└── tests/                  # Test files
 \`\`\`
 
-## Environments
+## Environment Variables
+Create a \`.env\` file based on \`.env.example\`:
 
-${envs.map((e) => `- **${e}**`).join("\n")}
+\`\`\`bash
+cp .env.example .env
+\`\`\`
 
-## License
+## Monitoring
+The application exposes metrics at \`/metrics\` and health checks at \`/health\`.
 
-MIT
-`,
-    },
-    {
-      path: `${config.projectName}/Makefile`,
-      type: "file",
-      content: `# ${config.projectName} Makefile
-# Generated by DevOps Project Generator
+## Security
+This project implements security best practices including:
+- ${config.security.includes('zero-trust') ? 'Zero Trust architecture' : 'Network security policies'}
+- ${config.security.includes('soc2') ? 'SOC2 compliance controls' : 'Security monitoring'}
+- ${config.security.includes('hipaa') ? 'HIPAA compliance measures' : 'Data protection'}
 
-.PHONY: help setup run test deploy clean lint
+## Support
+For issues and questions, please refer to the documentation in the \`docs/\` directory.
 
-help: ## Show this help
-\t@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-20s\\033[0m %s\\n", $$1, $$2}'
+---
+*Generated on ${new Date().toISOString()} by DevOps Project Generator v2.0.0*`,
+    type: "file"
+  });
 
-setup: ## Setup the project
-\t@echo "Setting up ${config.projectName}..."
-\t@bash scripts/setup.sh
+  // Enhanced Makefile
+  files.push({
+    path: `${projectName}/Makefile`,
+    content: `.PHONY: help setup build run test deploy-staging deploy-prod clean lint format security-check monitoring-setup
 
-run: ## Run the application locally
-\t@echo "Running ${config.projectName}..."
-${config.deploy === "helm-charts" || config.deploy === "kustomize" ? "\t@docker-compose up --build" : "\t@echo 'Deployment strategy: " + config.deploy + "'"}
+# Default target
+help:
+	@echo "Available targets:"
+	@echo "  setup           - Install dependencies and initialize project"
+	@echo "  build           - Build the application"
+	@echo "  run             - Run the application locally"
+	@echo "  test            - Run all tests"
+	@echo "  deploy-staging  - Deploy to staging environment"
+	@echo "  deploy-prod     - Deploy to production environment"
+	@echo "  clean           - Clean build artifacts"
+	@echo "  lint            - Run linting"
+	@echo "  format          - Format code"
+	@echo "  security-check  - Run security scans"
+	@echo "  monitoring-setup- Setup monitoring infrastructure"
 
-test: ## Run tests
-\t@echo "Running tests..."
-\t@cd tests && python -m pytest -v
+# Project configuration
+PROJECT_NAME := ${config.projectName}
+VERSION := 2.0.0
+DOCKER_REGISTRY := your-registry.com
+DOCKER_TAG := \$(DOCKER_REGISTRY)/\$(PROJECT_NAME):\$(VERSION)
 
-deploy: ## Deploy the application
-\t@echo "Deploying ${config.projectName}..."
-\t@bash scripts/deploy.sh
+# Setup project
+setup:
+	@echo "Setting up \$(PROJECT_NAME)..."
+	docker build -t \$(DOCKER_TAG) .
+	@if [ ! -f .env ]; then cp .env.example .env; echo "Created .env file"; fi
+	@echo "Setup complete!"
 
-clean: ## Clean build artifacts
-\t@echo "Cleaning..."
-\t@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-\t@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+# Build application
+build:
+	@echo "Building \$(PROJECT_NAME)..."
+	docker build -t \$(DOCKER_TAG) .
+	docker tag \$(DOCKER_TAG) \$(DOCKER_REGISTRY)/\$(PROJECT_NAME):latest
 
-lint: ## Run linters
-\t@echo "Linting..."
-\t@flake8 app/ --max-line-length=120
+# Run locally
+run:
+	@echo "Running \$(PROJECT_NAME) locally..."
+	docker run -p 8080:8080 --env-file .env \$(DOCKER_TAG)
 
-${config.deploy === "helm-charts" || config.deploy === "kustomize" ? `docker-build: ## Build Docker image
-\t@docker build -t ${slug}:latest -f deploy/Dockerfile .
+# Run tests
+test:
+	@echo "Running tests..."
+	docker run --rm \$(DOCKER_TAG) npm test
+	@echo "Tests completed!"
 
-docker-push: ## Push Docker image
-\t@docker push ${slug}:latest` : ""}
-`,
-    },
-    {
-      path: `${config.projectName}/.gitignore`,
-      type: "file",
-      content: `# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-dist/
-*.egg-info/
-*.egg
-.eggs/
-venv/
-.env
+# Deploy to staging
+deploy-staging:
+	@echo "Deploying to staging..."
+	@if command -v kubectl >/dev/null 2>&1; then \
+		kubectl apply -f deploy/k8s/staging/; \
+		echo "Staging deployment complete!"; \
+	else \
+		echo "kubectl not found. Please install Kubernetes CLI."; \
+	fi
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Deploy to production
+deploy-prod:
+	@echo "Deploying to production..."
+	@if command -v kubectl >/dev/null 2>&1; then \
+		kubectl apply -f deploy/k8s/production/; \
+		echo "Production deployment complete!"; \
+	else \
+		echo "kubectl not found. Please install Kubernetes CLI."; \
+	fi
 
-# OS
-.DS_Store
-Thumbs.db
+# Clean artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	docker system prune -f
+	rm -rf node_modules/ dist/ build/
 
-# Docker
-.docker/
+# Run linting
+lint:
+	@echo "Running linting..."
+	docker run --rm \$(DOCKER_TAG) npm run lint
 
-# Terraform
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfvars
+# Format code
+format:
+	@echo "Formatting code..."
+	docker run --rm \$(DOCKER_TAG) npm run format
 
-# Kubernetes
-*.kubeconfig
+# Security checks
+security-check:
+	@echo "Running security scans..."
+	@if command -v trivy >/dev/null 2>&1; then \
+		trivy image \$(DOCKER_TAG); \
+	else \
+		echo "Trivy not found. Install for security scanning."; \
+	fi
 
-# Logs
-*.log
-logs/
+# Setup monitoring
+monitoring-setup:
+	@echo "Setting up monitoring..."
+	@if command -v helm >/dev/null 2>&1; then \
+		helm repo add prometheus-community https://prometheus-community.github.io/helm-charts; \
+		helm install monitoring prometheus-community/kube-prometheus-stack; \
+	else \
+		echo "Helm not found. Install for monitoring setup."; \
+	fi`,
+    type: "file"
+  });
 
-# Coverage
-htmlcov/
-.coverage
-`,
-    },
-    {
-      path: `${config.projectName}/app/sample-app/main.py`,
-      type: "file",
-      content: `#!/usr/bin/env python3
+  // Sample Python application with enhanced features
+  files.push({
+    path: `${projectName}/app/main.py`,
+    content: `#!/usr/bin/env python3
 """
 ${config.projectName} - Sample Application
-Generated by DevOps Project Generator
+Generated by DevOps Project Generator v2.0.0
 """
 
 import os
+import json
+import time
 import logging
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from datetime import datetime
+from flask import Flask, jsonify, request
+from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
-logging.basicConfig(level=logging.INFO)
+# Configuration
+app = Flask(__name__)
+port = int(os.environ.get('PORT', 8080))
+log_level = os.environ.get('LOG_LEVEL', 'INFO')
+
+# Setup structured logging
+logging.basicConfig(
+    level=getattr(logging, log_level),
+    format='{"timestamp": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s", "service": "${config.projectName}"}'
+)
 logger = logging.getLogger(__name__)
 
-PORT = int(os.environ.get("PORT", 8080))
-ENV = os.environ.get("ENVIRONMENT", "development")
+# Prometheus metrics
+REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
+REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
+ACTIVE_CONNECTIONS = Gauge('active_connections', 'Active connections')
+LAST_REQUEST_TIME = Gauge('last_request_time', 'Last request timestamp')
 
-
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == "/health":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"status": "healthy", "service": "${config.projectName}"}')
-        elif self.path == "/":
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain")
-            self.end_headers()
-            self.wfile.write(f"${config.projectName} running in {ENV}".encode())
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-
-if __name__ == "__main__":
-    server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
-    logger.info(f"Starting ${config.projectName} on port {PORT} (env: {ENV})")
-    server.serve_forever()
-`,
-    },
-    {
-      path: `${config.projectName}/app/sample-app/requirements.txt`,
-      type: "file",
-      content: `# ${config.projectName} dependencies
-flask>=2.3.0
-gunicorn>=21.2.0
-requests>=2.31.0
-python-dotenv>=1.0.0
-`,
-    },
-    {
-      path: `${config.projectName}/scripts/setup.sh`,
-      type: "file",
-      content: `#!/bin/bash
-# Setup script for ${config.projectName}
-# Generated by DevOps Project Generator
-
-set -euo pipefail
-
-echo "🚀 Setting up ${config.projectName}..."
-
-# Create virtual environment
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-    echo "✅ Virtual environment created"
-fi
-
-# Activate and install deps
-source venv/bin/activate
-pip install -r app/sample-app/requirements.txt
-echo "✅ Dependencies installed"
-
-echo "🎉 Setup complete! Run 'make run' to start."
-`,
-    },
-    {
-      path: `${config.projectName}/scripts/deploy.sh`,
-      type: "file",
-      content: `#!/bin/bash
-# Deploy script for ${config.projectName}
-# Generated by DevOps Project Generator
-
-set -euo pipefail
-
-ENVIRONMENT=\${1:-dev}
-
-echo "🚀 Deploying ${config.projectName} to \${ENVIRONMENT}..."
-
-${config.deploy === "helm-charts" ? `helm upgrade --install ${slug} ./deployments/helm --namespace=${slug}-\${ENVIRONMENT} --create-namespace
-echo "✅ Helm chart deployed"` : ""}
-${config.deploy === "kustomize" ? `kubectl apply -k deployments/kustomize/overlays/\${ENVIRONMENT}
-echo "✅ Kustomize manifests applied"` : ""}
-${config.deploy === "blue-green" ? `echo "Executing blue-green deployment..."
-kubectl apply -f deployments/blue-green.yaml
-echo "✅ Blue-green deployment initiated"` : ""}
-${config.deploy === "canary" ? `echo "Executing canary deployment..."
-kubectl apply -f deployments/canary.yaml
-echo "✅ Canary deployment initiated"` : ""}
-
-echo "🎉 Deployment to \${ENVIRONMENT} complete!"
-`,
-    },
-  ];
-}
-
-function generateCIFiles(config: ProjectConfig): GeneratedFile[] {
-  const slug = config.projectName.toLowerCase().replace(/_/g, "-");
-  const files: GeneratedFile[] = [];
-
-  if (config.ci === "github-actions") {
-    files.push({
-      path: `${config.projectName}/ci/github-actions.yml`,
-      type: "file",
-      content: `# GitHub Actions CI/CD Pipeline
-# Generated by DevOps Project Generator
-
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-env:
-  APP_NAME: ${slug}
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r app/sample-app/requirements.txt
-      - name: Run tests
-        run: python -m pytest tests/ -v
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Lint
-        run: |
-          pip install flake8
-          flake8 app/ --max-line-length=120
-${config.deploy === "helm-charts" || config.deploy === "kustomize" || config.deploy === "blue-green" || config.deploy === "canary" ? `
-  build:
-    needs: [test, lint]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: docker build -t ${slug}:\${{ github.sha }} .
-      - name: Push Docker image
-        run: |
-          echo "\${{ secrets.DOCKER_PASSWORD }}" | docker login -u "\${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push ${slug}:\${{ github.sha }}` : ""}
-`,
-    });
-  }
-
-  if (config.ci === "gitlab-ci") {
-    files.push({
-      path: `${config.projectName}/ci/.gitlab-ci.yml`,
-      type: "file",
-      content: `# GitLab CI/CD Pipeline
-# Generated by DevOps Project Generator
-
-stages:
-  - test
-  - lint
-  - build
-  - deploy
-
-variables:
-  APP_NAME: ${slug}
-  PIP_CACHE_DIR: "\$CI_PROJECT_DIR/.pip-cache"
-
-cache:
-  paths:
-    - .pip-cache/
-
-test:
-  stage: test
-  image: python:3.11-slim
-  script:
-    - pip install -r app/sample-app/requirements.txt
-    - python -m pytest tests/ -v
-
-lint:
-  stage: lint
-  image: python:3.11-slim
-  script:
-    - pip install flake8
-    - flake8 app/ --max-line-length=120
-${config.deploy === "helm-charts" || config.deploy === "kustomize" || config.deploy === "blue-green" || config.deploy === "canary" ? `
-build:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    - docker build -t ${slug}:\$CI_COMMIT_SHA .
-    - docker push ${slug}:\$CI_COMMIT_SHA
-  only:
-    - main` : ""}
-`,
-    });
-  }
-
-  if (config.ci === "jenkins") {
-    files.push({
-      path: `${config.projectName}/ci/Jenkinsfile`,
-      type: "file",
-      content: `// Jenkins Pipeline
-// Generated by DevOps Project Generator
-
-pipeline {
-    agent any
-
-    environment {
-        APP_NAME = '${slug}'
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
+@app.route('/health', methods=['GET'])
+@REQUEST_DURATION.time()
+def health_check():
+    """Enhanced health check endpoint"""
+    try:
+        health_status = {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "version": "2.0.0",
+            "service": "${config.projectName}",
+            "checks": {
+                "database": "ok",
+                "external_api": "ok",
+                "memory": "ok"
             }
         }
+        REQUEST_COUNT.labels(method='GET', endpoint='/health', status='200').inc()
+        return jsonify(health_status), 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        REQUEST_COUNT.labels(method='GET', endpoint='/health', status='500').inc()
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
 
-        stage('Test') {
-            steps {
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install -r app/sample-app/requirements.txt
-                    python -m pytest tests/ -v
-                '''
+@app.route('/metrics', methods=['GET'])
+def metrics():
+    """Prometheus metrics endpoint"""
+    try:
+        REQUEST_COUNT.labels(method='GET', endpoint='/metrics', status='200').inc()
+        return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+    except Exception as e:
+        logger.error(f"Metrics endpoint failed: {str(e)}")
+        return jsonify({"error": "Metrics unavailable"}), 500
+
+@app.route('/api/data', methods=['GET', 'POST'])
+@REQUEST_DURATION.time()
+def api_data():
+    """Sample API endpoint"""
+    try:
+        if request.method == 'GET':
+            data = {
+                "message": "Hello from ${config.projectName}!",
+                "timestamp": datetime.utcnow().isoformat(),
+                "environment": os.environ.get('ENVIRONMENT', 'development'),
+                "version": "2.0.0"
             }
-        }
-
-        stage('Lint') {
-            steps {
-                sh '''
-                    . venv/bin/activate
-                    pip install flake8
-                    flake8 app/ --max-line-length=120
-                '''
+            REQUEST_COUNT.labels(method='GET', endpoint='/api/data', status='200').inc()
+            return jsonify(data), 200
+        
+        elif request.method == 'POST':
+            payload = request.get_json()
+            logger.info(f"Received data: {json.dumps(payload)}")
+            
+            response = {
+                "received": payload,
+                "processed_at": datetime.utcnow().isoformat(),
+                "status": "processed"
             }
-        }
-${config.deploy === "helm-charts" || config.deploy === "kustomize" || config.deploy === "blue-green" || config.deploy === "canary" ? `
-        stage('Build') {
-            when { branch 'main' }
-            steps {
-                sh "docker build -t ${slug}:\${BUILD_NUMBER} ."
-            }
-        }
+            REQUEST_COUNT.labels(method='POST', endpoint='/api/data', status='201').inc()
+            return jsonify(response), 201
+            
+    except Exception as e:
+        logger.error(f"API endpoint failed: {str(e)}")
+        REQUEST_COUNT.labels(method=request.method, endpoint='/api/data', status='500').inc()
+        return jsonify({"error": "Internal server error"}), 500
 
-        stage('Push') {
-            when { branch 'main' }
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    sh "echo \$PASS | docker login -u \$USER --password-stdin"
-                    sh "docker push ${slug}:\${BUILD_NUMBER}"
-                }
-            }
-        }` : ""}
-    }
+@app.before_request
+def before_request():
+    """Update metrics before each request"""
+    ACTIVE_CONNECTIONS.inc()
+    LAST_REQUEST_TIME.set(time.time())
 
-    post {
-        always {
-            cleanWs()
-        }
-        failure {
-            echo 'Pipeline failed!'
-        }
-    }
-}
-`,
-    });
-  }
+@app.after_request
+def after_request(response):
+    """Update metrics after each request"""
+    ACTIVE_CONNECTIONS.dec()
+    return response
 
-  return files;
-}
+if __name__ == '__main__':
+    logger.info(f"Starting ${config.projectName} application on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False)`,
+    type: "file"
+  });
 
-function generateDeployFiles(config: ProjectConfig): GeneratedFile[] {
-  const slug = config.projectName.toLowerCase().replace(/_/g, "-");
-  const files: GeneratedFile[] = [];
+  // Requirements file for Python app
+  files.push({
+    path: `${projectName}/app/requirements.txt`,
+    content: `flask==2.3.3
+prometheus-client==0.17.1
+gunicorn==21.2.0
+structlog==23.1.0
+python-dotenv==1.0.0
+pytest==7.4.2
+pytest-cov==4.1.0
+black==23.7.0
+flake8==6.0.0
+bandit==1.7.5`,
+    type: "file"
+  });
 
-  if (config.deploy === "helm-charts" || config.deploy === "kustomize") {
-    files.push(
-      {
-        path: `${config.projectName}/deploy/Dockerfile`,
-        type: "file",
-        content: `# Dockerfile for ${config.projectName}
-# Generated by DevOps Project Generator
-
-FROM python:3.11-slim AS base
+  // Dockerfile
+  files.push({
+    path: `${projectName}/Dockerfile`,
+    content: `# Multi-stage build for ${config.projectName}
+FROM python:3.11-slim as builder
 
 WORKDIR /app
-
-# Install dependencies
-COPY app/sample-app/requirements.txt .
+COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
-COPY app/sample-app/ .
+# Production stage
+FROM python:3.11-slim as production
 
-# Create non-root user
-RUN useradd --create-home appuser
+# Security best practices
+RUN adduser --disabled-password --gecos '' appuser
+WORKDIR /app
+
+# Copy installed packages
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY app/ .
+
+# Set permissions
+RUN chown -R appuser:appuser /app
 USER appuser
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \\
+  CMD curl -f http://localhost:8080/health || exit 1
+
+# Expose port
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \\
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
+# Run the application
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120", "main:app"]
 
-CMD ["python", "main.py"]
-`,
-      },
-      {
-        path: `${config.projectName}/deploy/docker-compose.yml`,
-        type: "file",
-        content: `# Docker Compose for ${config.projectName}
-# Generated by DevOps Project Generator
+# Labels for metadata
+LABEL version="2.0.0" \\
+      description="${config.projectName} application" \\
+      maintainer="devops-team@company.com" \\
+      created="${new Date().toISOString()}"`,
+    type: "file"
+  });
 
-version: '3.8'
+  // Environment example file
+  files.push({
+    path: `${projectName}/.env.example`,
+    content: `# Application Configuration
+PORT=8080
+LOG_LEVEL=INFO
+ENVIRONMENT=development
 
-services:
-  app:
-    build:
-      context: ..
-      dockerfile: deploy/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - ENVIRONMENT=\${ENVIRONMENT:-dev}
-      - PORT=8080
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-`,
-      }
-    );
-  }
+# Database Configuration
+DATABASE_URL=postgresql://user:password@localhost:5432/${projectName}
+DATABASE_POOL_SIZE=10
 
-  if (config.deploy === "helm-charts") {
-    files.push(
-      {
-        path: `${config.projectName}/deployments/helm/Chart.yaml`,
-        type: "file",
-        content: `apiVersion: v2
-name: ${slug}
-description: Helm chart for ${config.projectName}
-type: application
-version: 1.0.0
-appVersion: "1.0.0"
-`,
-      },
-      {
-        path: `${config.projectName}/deployments/helm/values.yaml`,
-        type: "file",
-        content: `# Default values for ${slug}
-replicaCount: 2
+# External Services
+EXTERNAL_API_URL=https://api.example.com
+EXTERNAL_API_KEY=your-api-key-here
 
-image:
-  repository: ${slug}
-  pullPolicy: IfNotPresent
-  tag: "latest"
+# Security
+JWT_SECRET=your-jwt-secret-here
+ENCRYPTION_KEY=your-encryption-key-here
 
-service:
-  type: ClusterIP
-  port: 80
-  targetPort: 8080
+# Monitoring
+PROMETHEUS_ENABLED=true
+METRICS_PORT=9090
 
-resources:
-  limits:
-    cpu: 500m
-    memory: 256Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
+# Feature Flags
+FEATURE_NEW_UI=false
+FEATURE_ADVANCED_ANALYTICS=true`,
+    type: "file"
+  });
 
-autoscaling:
-  enabled: false
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 80
-`,
-      },
-      {
-        path: `${config.projectName}/deployments/helm/templates/deployment.yaml`,
-        type: "file",
-        content: `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ include "${slug}.fullname" . }}
-  labels:
-    app: {{ include "${slug}.name" . }}
-spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ include "${slug}.name" . }}
-  template:
-    metadata:
-      labels:
-        app: {{ include "${slug}.name" . }}
-    spec:
-      containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        ports:
-        - containerPort: {{ .Values.service.targetPort }}
-        resources:
-          {{- toYaml .Values.resources | nindent 12 }}
-`,
-      },
-      {
-        path: `${config.projectName}/deployments/helm/templates/service.yaml`,
-        type: "file",
-        content: `apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "${slug}.fullname" . }}
-spec:
-  type: {{ .Values.service.type }}
-  ports:
-  - port: {{ .Values.service.port }}
-    targetPort: {{ .Values.service.targetPort }}
-    protocol: TCP
-  selector:
-    app: {{ include "${slug}.name" . }}
-`,
-      }
-    );
-  }
+  return files;
+}
 
-  if (config.deploy === "kustomize") {
-    files.push(
-      {
-        path: `${config.projectName}/deployments/kustomize/base/kustomization.yaml`,
-        type: "file",
-        content: `apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
+// Generate realistic application files
+function generateRealisticApplicationFiles(config: ProjectConfig): GeneratedFile[] {
+  const files: GeneratedFile[] = [];
+  const projectName = config.projectName.toLowerCase().replace(/\s+/g, '-');
+  
+  // Unit tests
+  files.push({
+    path: `${projectName}/tests/test_main.py`,
+    content: `"""
+Unit tests for ${config.projectName} application
+Generated by DevOps Project Generator v2.0.0
+"""
 
-resources:
-  - deployment.yaml
-  - service.yaml
-  - namespace.yaml
+import pytest
+import json
+import sys
+import os
 
-commonLabels:
-  app: ${slug}
-`,
-      },
-      {
-        path: `${config.projectName}/deployments/kustomize/base/deployment.yaml`,
-        type: "file",
-        content: `# Kubernetes Deployment
-# Generated by DevOps Project Generator
+# Add the app directory to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
 
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ${slug}
-  labels:
-    app: ${slug}
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: ${slug}
-  template:
-    metadata:
-      labels:
-        app: ${slug}
-    spec:
-      containers:
-        - name: ${slug}
-          image: ${slug}:latest
-          ports:
-            - containerPort: 8080
-          env:
-            - name: ENVIRONMENT
-              value: "production"
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
-              memory: "256Mi"
-              cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
-`,
-      },
-      {
-        path: `${config.projectName}/k8s/base/service.yml`,
-        type: "file",
-        content: `# Kubernetes Service
-# Generated by DevOps Project Generator
+from main import app
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: ${slug}
-  labels:
-    app: ${slug}
-spec:
-  type: ClusterIP
-  ports:
-    - port: 80
-      targetPort: 8080
-      protocol: TCP
-  selector:
-    app: ${slug}
-`,
-      },
-      {
-        path: `${config.projectName}/k8s/base/namespace.yml`,
-        type: "file",
-        content: `# Kubernetes Namespace
-# Generated by DevOps Project Generator
+@pytest.fixture
+def client():
+    """Test client fixture"""
+    app.config['TESTING'] = True
+    with app.test_client() as client:
+        yield client
 
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ${slug}
-  labels:
-    project: ${slug}
-`,
-      }
-    );
-  }
+def test_health_check(client):
+    """Test health check endpoint"""
+    response = client.get('/health')
+    assert response.status_code == 200
+    
+    data = json.loads(response.data)
+    assert data['status'] == 'healthy'
+    assert data['service'] == '${config.projectName}'
+    assert 'version' in data
+    assert 'checks' in data
 
-  if (config.deploy === "rolling") {
-    files.push({
-      path: `${config.projectName}/deploy/vm-setup.sh`,
-      type: "file",
-      content: `#!/bin/bash
-# VM Deployment Setup for ${config.projectName}
-# Generated by DevOps Project Generator
+def test_metrics_endpoint(client):
+    """Test metrics endpoint"""
+    response = client.get('/metrics')
+    assert response.status_code == 200
+    assert 'text/plain' in response.content_type
+
+def test_api_data_get(client):
+    """Test GET /api/data endpoint"""
+    response = client.get('/api/data')
+    assert response.status_code == 200
+    
+    data = json.loads(response.data)
+    assert 'message' in data
+    assert 'timestamp' in data
+    assert 'version' in data
+
+def test_api_data_post(client):
+    """Test POST /api/data endpoint"""
+    test_data = {'key': 'value', 'number': 42}
+    response = client.post('/api/data', 
+                          json=test_data,
+                          content_type='application/json')
+    assert response.status_code == 201
+    
+    data = json.loads(response.data)
+    assert data['received'] == test_data
+    assert data['status'] == 'processed'
+
+def test_api_data_post_invalid(client):
+    """Test POST /api/data with invalid data"""
+    response = client.post('/api/data', 
+                          data='invalid json',
+                          content_type='application/json')
+    assert response.status_code == 400
+
+if __name__ == '__main__':
+    pytest.main([__file__])`,
+    type: "file"
+  });
+
+  // Integration tests
+  files.push({
+    path: `${projectName}/tests/test_integration.py`,
+    content: `"""
+Integration tests for ${config.projectName} application
+Generated by DevOps Project Generator v2.0.0
+"""
+
+import pytest
+import requests
+import time
+import subprocess
+import signal
+import os
+
+class TestApplicationIntegration:
+    """Integration tests for the application"""
+    
+    @classmethod
+    def setup_class(cls):
+        """Setup test environment"""
+        # Start the application in background
+        cls.app_process = subprocess.Popen([
+            'python', 'app/main.py'
+        ], cwd=os.path.dirname(os.path.dirname(__file__)))
+        
+        # Wait for application to start
+        time.sleep(3)
+        
+        cls.base_url = 'http://localhost:8080'
+    
+    @classmethod
+    def teardown_class(cls):
+        """Cleanup test environment"""
+        if hasattr(cls, 'app_process'):
+            cls.app_process.terminate()
+            cls.app_process.wait()
+    
+    def test_health_check_integration(self):
+        """Test health check endpoint integration"""
+        response = requests.get(f'{self.base_url}/health', timeout=5)
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert data['status'] == 'healthy'
+        assert 'checks' in data
+    
+    def test_metrics_integration(self):
+        """Test metrics endpoint integration"""
+        response = requests.get(f'{self.base_url}/metrics', timeout=5)
+        assert response.status_code == 200
+        assert 'http_requests_total' in response.text
+    
+    def test_api_workflow(self):
+        """Test complete API workflow"""
+        # Test GET request
+        response = requests.get(f'{self.base_url}/api/data', timeout=5)
+        assert response.status_code == 200
+        
+        # Test POST request
+        test_data = {'test': 'integration', 'timestamp': time.time()}
+        response = requests.post(f'{self.base_url}/api/data', 
+                               json=test_data, timeout=5)
+        assert response.status_code == 201
+        
+        data = response.json()
+        assert data['received'] == test_data
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])`,
+    type: "file"
+  });
+
+  return files;
+}
+
+// Generate realistic script files
+function generateRealisticScriptFiles(config: ProjectConfig): GeneratedFile[] {
+  const files: GeneratedFile[] = [];
+  const projectName = config.projectName.toLowerCase().replace(/\s+/g, '-');
+  
+  // Setup script
+  files.push({
+    path: `${projectName}/scripts/setup.sh`,
+    content: `#!/bin/bash
+# Setup script for ${config.projectName}
+# Generated by DevOps Project Generator v2.0.0
 
 set -euo pipefail
 
-echo "Setting up ${config.projectName} on VM..."
+# Colors for output
+RED='\\033[0;31m'
+GREEN='\\033[0;32m'
+YELLOW='\\033[1;33m'
+NC='\\033[0m' # No Color
 
-# Install Python
-sudo apt-get update
-sudo apt-get install -y python3 python3-pip python3-venv
+# Logging functions
+log_info() {
+    echo -e "\${GREEN}[INFO]\${NC} \$1"
+}
 
-# Create app directory
-sudo mkdir -p /opt/${slug}
-sudo chown \$USER:\$USER /opt/${slug}
+log_warn() {
+    echo -e "\${YELLOW}[WARN]\${NC} \$1"
+}
 
-# Setup app
-cd /opt/${slug}
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+log_error() {
+    echo -e "\${RED}[ERROR]\${NC} \$1"
+}
 
-# Create systemd service
-sudo cat > /etc/systemd/system/${slug}.service << EOF
-[Unit]
-Description=${config.projectName} Service
-After=network.target
+# Check prerequisites
+check_prerequisites() {
+    log_info "Checking prerequisites..."
+    
+    # Check Docker
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker is not installed. Please install Docker first."
+        exit 1
+    fi
+    
+    # Check Docker Compose
+    if ! command -v docker-compose &> /dev/null; then
+        log_error "Docker Compose is not installed. Please install Docker Compose first."
+        exit 1
+    fi
+    
+    # Check kubectl if using Kubernetes
+    if command -v kubectl &> /dev/null; then
+        log_info "kubectl found"
+    else
+        log_warn "kubectl not found. Kubernetes deployment may not work."
+    fi
+    
+    # Check Terraform if using infrastructure as code
+    if command -v terraform &> /dev/null; then
+        log_info "Terraform found"
+    else
+        log_warn "Terraform not found. Infrastructure as code may not work."
+    fi
+    
+    log_info "Prerequisites check completed."
+}
 
-[Service]
-Type=simple
-User=\$USER
-WorkingDirectory=/opt/${slug}
-ExecStart=/opt/${slug}/venv/bin/python main.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+# Setup environment
+setup_environment() {
+    log_info "Setting up environment..."
+    
+    # Create .env file if it doesn't exist
+    if [ ! -f .env ]; then
+        if [ -f .env.example ]; then
+            cp .env.example .env
+            log_info "Created .env file from .env.example"
+        else
+            log_warn ".env.example not found. Creating basic .env file."
+            cat > .env << EOF
+PORT=8080
+LOG_LEVEL=INFO
+ENVIRONMENT=development
 EOF
+        fi
+    else
+        log_info ".env file already exists"
+    fi
+    
+    # Create necessary directories
+    mkdir -p logs
+    mkdir -p data
+    mkdir -p backups
+    
+    log_info "Environment setup completed."
+}
 
-sudo systemctl daemon-reload
-sudo systemctl enable ${slug}
-sudo systemctl start ${slug}
+# Build Docker images
+build_images() {
+    log_info "Building Docker images..."
+    
+    # Build main application
+    docker build -t ${projectName}:latest .
+    
+    if [ \$? -eq 0 ]; then
+        log_info "Docker image built successfully"
+    else
+        log_error "Failed to build Docker image"
+        exit 1
+    fi
+}
 
-echo "VM setup complete!"
-`,
-    });
-  }
+# Run initial tests
+run_tests() {
+    log_info "Running initial tests..."
+    
+    # Run unit tests
+    docker run --rm ${projectName}:latest python -m pytest tests/ -v
+    
+    if [ \$? -eq 0 ]; then
+        log_info "Tests passed successfully"
+    else
+        log_warn "Some tests failed. Check the output above."
+    fi
+}
+
+# Main setup function
+main() {
+    log_info "Starting setup for ${config.projectName}..."
+    
+    check_prerequisites
+    setup_environment
+    build_images
+    run_tests
+    
+    log_info "Setup completed successfully!"
+    log_info "You can now run the application with: make run"
+}
+
+# Run main function
+main "\$@"`,
+    type: "file"
+  });
+
+  // Deployment script
+  files.push({
+    path: `${projectName}/scripts/deploy.sh`,
+    content: `#!/bin/bash
+# Deployment script for ${config.projectName}
+# Generated by DevOps Project Generator v2.0.0
+
+set -euo pipefail
+
+# Configuration
+PROJECT_NAME="${projectName}"
+DOCKER_REGISTRY="\${DOCKER_REGISTRY:-localhost:5000}"
+VERSION="\${VERSION:-latest}"
+ENVIRONMENT="\${ENVIRONMENT:-staging}"
+
+# Colors for output
+RED='\\033[0;31m'
+GREEN='\\033[0;32m'
+YELLOW='\\033[1;33m'
+NC='\\033[0m'
+
+# Logging functions
+log_info() {
+    echo -e "\${GREEN}[INFO]\${NC} \$1"
+}
+
+log_warn() {
+    echo -e "\${YELLOW}[WARN]\${NC} \$1"
+}
+
+log_error() {
+    echo -e "\${RED}[ERROR]\${NC} \$1"
+}
+
+# Validate environment
+validate_environment() {
+    log_info "Validating deployment environment: \$ENVIRONMENT"
+    
+    case \$ENVIRONMENT in
+        staging|production|development)
+            log_info "Environment \$ENVIRONMENT is valid"
+            ;;
+        *)
+            log_error "Invalid environment: \$ENVIRONMENT"
+            log_error "Valid environments: staging, production, development"
+            exit 1
+            ;;
+    esac
+}
+
+# Build and push Docker image
+build_and_push() {
+    log_info "Building and pushing Docker image..."
+    
+    # Build image
+    docker build -t \${DOCKER_REGISTRY}/\${PROJECT_NAME}:\${VERSION} .
+    
+    # Tag as latest
+    docker tag \${DOCKER_REGISTRY}/\${PROJECT_NAME}:\${VERSION} \${DOCKER_REGISTRY}/\${PROJECT_NAME}:latest
+    
+    # Push to registry
+    if [[ "\$DOCKER_REGISTRY" != "localhost:5000" ]]; then
+        docker push \${DOCKER_REGISTRY}/\${PROJECT_NAME}:\${VERSION}
+        docker push \${DOCKER_REGISTRY}/\${PROJECT_NAME}:latest
+        log_info "Image pushed to registry"
+    else
+        log_info "Using local registry, skipping push"
+    fi
+}
+
+# Deploy to Kubernetes
+deploy_kubernetes() {
+    log_info "Deploying to Kubernetes..."
+    
+    if ! command -v kubectl &> /dev/null; then
+        log_error "kubectl not found. Cannot deploy to Kubernetes."
+        exit 1
+    fi
+    
+    # Apply namespace if it doesn't exist
+    kubectl create namespace \${PROJECT_NAME}-\${ENVIRONMENT} --dry-run=client -o yaml | kubectl apply -f -
+    
+    # Apply deployment configurations
+    if [ -d "deploy/k8s/\${ENVIRONMENT}" ]; then
+        kubectl apply -f deploy/k8s/\${ENVIRONMENT}/ -n \${PROJECT_NAME}-\${ENVIRONMENT}
+        log_info "Kubernetes deployment applied"
+    else
+        log_warn "No Kubernetes configurations found for \$ENVIRONMENT"
+    fi
+    
+    # Wait for deployment to be ready
+    kubectl rollout status deployment/\${PROJECT_NAME} -n \${PROJECT_NAME}-\${ENVIRONMENT} --timeout=300s
+    
+    log_info "Kubernetes deployment completed"
+}
+
+# Deploy using Docker Compose (for development)
+deploy_docker_compose() {
+    log_info "Deploying with Docker Compose..."
+    
+    if [ -f "docker-compose.yml" ]; then
+        export COMPOSE_PROJECT_NAME=\${PROJECT_NAME}-\${ENVIRONMENT}
+        export VERSION=\${VERSION}
+        
+        docker-compose up -d
+        log_info "Docker Compose deployment completed"
+    else
+        log_warn "docker-compose.yml not found"
+    fi
+}
+
+# Health check after deployment
+health_check() {
+    log_info "Performing health check..."
+    
+    # Wait for application to start
+    sleep 10
+    
+    # Check health endpoint
+    if command -v curl &> /dev/null; then
+        if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+            log_info "Health check passed"
+        else
+            log_warn "Health check failed"
+        fi
+    else
+        log_warn "curl not found, skipping health check"
+    fi
+}
+
+# Main deployment function
+main() {
+    log_info "Starting deployment of \${PROJECT_NAME} to \${ENVIRONMENT}..."
+    
+    validate_environment
+    build_and_push
+    
+    case \$ENVIRONMENT in
+        development)
+            deploy_docker_compose
+            ;;
+        staging|production)
+            deploy_kubernetes
+            ;;
+    esac
+    
+    health_check
+    
+    log_info "Deployment completed successfully!"
+}
+
+# Run main function
+main "\$@"`,
+    type: "file"
+  });
+
+  // Health check script
+  files.push({
+    path: `${projectName}/scripts/health-check.sh`,
+    content: `#!/bin/bash
+# Health check script for ${config.projectName}
+# Generated by DevOps Project Generator v2.0.0
+
+set -euo pipefail
+
+# Configuration
+PROJECT_NAME="${projectName}"
+HEALTH_URL="\${HEALTH_URL:-http://localhost:8080/health}"
+TIMEOUT="\${TIMEOUT:-30}"
+RETRIES="\${RETRIES:-3}"
+
+# Colors for output
+RED='\\033[0;31m'
+GREEN='\\033[0;32m'
+YELLOW='\\033[1;33m'
+NC='\\033[0m'
+
+# Logging functions
+log_info() {
+    echo -e "\${GREEN}[INFO]\${NC} \$1"
+}
+
+log_warn() {
+    echo -e "\${YELLOW}[WARN]\${NC} \$1"
+}
+
+log_error() {
+    echo -e "\${RED}[ERROR]\${NC} \$1"
+}
+
+# Check if service is healthy
+check_health() {
+    local attempt=1
+    
+    while [ \$attempt -le \$RETRIES ]; do
+        log_info "Health check attempt \$attempt/\$RETRIES..."
+        
+        if command -v curl &> /dev/null; then
+            # Use curl for health check
+            response=\$(curl -s -o /dev/null -w "%{http_code}" --max-time \$TIMEOUT "\$HEALTH_URL" || echo "000")
+            
+            if [ "\$response" = "200" ]; then
+                log_info "Health check passed (HTTP 200)"
+                return 0
+            else
+                log_warn "Health check failed (HTTP \$response)"
+            fi
+        elif command -v wget &> /dev/null; then
+            # Use wget as fallback
+            if wget -q --spider --timeout=\$TIMEOUT "\$HEALTH_URL" 2>/dev/null; then
+                log_info "Health check passed"
+                return 0
+            else
+                log_warn "Health check failed"
+            fi
+        else
+            log_error "Neither curl nor wget available for health check"
+            return 1
+        fi
+        
+        if [ \$attempt -lt \$RETRIES ]; then
+            log_info "Waiting 5 seconds before retry..."
+            sleep 5
+        fi
+        
+        attempt=\$((attempt + 1))
+    done
+    
+    log_error "Health check failed after \$RETRIES attempts"
+    return 1
+}
+
+# Check service dependencies
+check_dependencies() {
+    log_info "Checking service dependencies..."
+    
+    # Check database connectivity (example)
+    # if command -v psql &> /dev/null; then
+    #     if psql "\$DATABASE_URL" -c "SELECT 1;" > /dev/null 2>&1; then
+    #         log_info "Database connectivity: OK"
+    #     else
+    #         log_warn "Database connectivity: FAILED"
+    #     fi
+    # fi
+    
+    # Check external API connectivity (example)
+    # if command -v curl &> /dev/null; then
+    #     if curl -f "\$EXTERNAL_API_URL/health" > /dev/null 2>&1; then
+    #         log_info "External API connectivity: OK"
+    #     else
+    #         log_warn "External API connectivity: FAILED"
+    #     fi
+    # fi
+    
+    log_info "Dependency checks completed"
+}
+
+# Check system resources
+check_resources() {
+    log_info "Checking system resources..."
+    
+    # Check disk space
+    disk_usage=\$(df . | awk 'NR==2 {print \$5}' | sed 's/%//')
+    if [ \$disk_usage -lt 80 ]; then
+        log_info "Disk usage: \$disk_usage% (OK)"
+    else
+        log_warn "Disk usage: \$disk_usage% (HIGH)"
+    fi
+    
+    # Check memory usage
+    if command -v free &> /dev/null; then
+        memory_usage=\$(free | awk 'NR==2{printf "%.0f", \$3*100/\$2}')
+        if [ \$memory_usage -lt 80 ]; then
+            log_info "Memory usage: \$memory_usage% (OK)"
+        else
+            log_warn "Memory usage: \$memory_usage% (HIGH)"
+        fi
+    fi
+    
+    # Check CPU load
+    if command -v uptime &> /dev/null; then
+        load_avg=\$(uptime | awk -F'load average:' '{print \$2}' | awk '{print \$1}' | sed 's/,//')
+        log_info "CPU load average: \$load_avg"
+    fi
+}
+
+# Generate health report
+generate_report() {
+    local status=\$1
+    local timestamp=\$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    
+    cat > health-report-\$(date +%Y%m%d-%H%M%S).json << EOF
+{
+    "service": "\${PROJECT_NAME}",
+    "timestamp": "\${timestamp}",
+    "status": "\${status}",
+    "checks": {
+        "health_endpoint": "\${HEALTH_URL}",
+        "dependencies": "checked",
+        "resources": "checked"
+    }
+}
+EOF
+    
+    log_info "Health report generated"
+}
+
+# Main health check function
+main() {
+    log_info "Starting health check for \${PROJECT_NAME}..."
+    
+    check_dependencies
+    check_resources
+    
+    if check_health; then
+        generate_report "healthy"
+        log_info "Overall health status: HEALTHY"
+        exit 0
+    else
+        generate_report "unhealthy"
+        log_error "Overall health status: UNHEALTHY"
+        exit 1
+    fi
+}
+
+# Run main function
+main "\$@"`,
+    type: "file"
+  });
 
   return files;
 }
 
-function generateMonitoringFiles(config: ProjectConfig): GeneratedFile[] {
-  const slug = config.projectName.toLowerCase().replace(/_/g, "-");
+// Generate CI/CD pipeline files
+function generateRealisticCIFiles(config: ProjectConfig): GeneratedFile[] {
   const files: GeneratedFile[] = [];
-
-  // Add alert rules (always)
-  files.push({
-    path: `${config.projectName}/monitoring/alerts/rules.yml`,
-    type: "file",
-    content: `# Alert Rules for ${config.projectName}
-# Generated by DevOps Project Generator
-
-groups:
-  - name: ${slug}-alerts
-    rules:
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value }}%"
-
-      - alert: ServiceDown
-        expr: up{job="${slug}"} == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "${config.projectName} is down"
-`,
-  });
-
-  // Add dashboards (always)
-  files.push({
-    path: `${config.projectName}/monitoring/dashboards/overview.json`,
-    type: "file",
-    content: `{
-  "dashboard": {
-    "title": "${config.projectName} Overview",
-    "panels": [
-      {
-        "title": "Request Rate",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total[5m])"
-          }
-        ]
-      },
-      {
-        "title": "Error Rate",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total{status=~\\"5..\\"}[5m])"
-          }
-        ]
-      },
-      {
-        "title": "Response Time",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
-          }
-        ]
-      }
-    ]
-  }
-}
-`,
-  });
-
-  // Basic security (always)
-  files.push({
-    path: `${config.projectName}/security/policies/security-policy.md`,
-    type: "file",
-    content: `# Security Policy - ${config.projectName}
-
-## Reporting Vulnerabilities
-
-Please report security vulnerabilities to security@example.com.
-
-## Security Level: ${config.security}
-
-### Implemented Controls
-
-${config.security === "nist-csf" ? `- Basic input validation
-- HTTPS enforcement
-- Dependency scanning` : ""}
-${config.security === "cis-benchmarks" ? `- Input validation and sanitization
-- HTTPS enforcement
-- Dependency scanning
-- Container image scanning
-- Secret management
-- RBAC policies` : ""}
-${config.security === "zero-trust" ? `- Comprehensive input validation
-- HTTPS enforcement with HSTS
-- Dependency scanning (automated)
-- Container image scanning
-- Secret management (Vault)
-- RBAC with least privilege
-- Network policies
-- Pod security standards
-- Audit logging
-- Compliance checks` : ""}
-`,
-  });
-
-  if (config.observability === "prometheus-grafana" || config.observability === "elk-stack") {
-    files.push({
-      path: `${config.projectName}/monitoring/metrics/prometheus.yml`,
-      type: "file",
-      content: `# Prometheus Configuration for ${config.projectName}
-# Generated by DevOps Project Generator
-
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: '${slug}'
-    static_configs:
-      - targets: ['localhost:8080']
-    metrics_path: '/metrics'
-    scrape_interval: 10s
-
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['localhost:9100']
-`,
-    });
-  }
-
-  if (config.observability === "elk-stack") {
-    files.push({
-      path: `${config.projectName}/monitoring/alerts/alerts.yml`,
-      type: "file",
-      content: `# Alert Rules for ${config.projectName}
-# Generated by DevOps Project Generator
-
-groups:
-  - name: ${slug}-alerts
-    rules:
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "High error rate on {{ $labels.instance }}"
-          description: "Error rate is {{ $value }}%"
-
-      - alert: HighLatency
-        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High latency on {{ $labels.instance }}"
-
-      - alert: ServiceDown
-        expr: up{job="${slug}"} == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "${config.projectName} is down"
-`,
-    });
-  }
-
-  return files;
-}
-
-function generateSecurityFiles(config: ProjectConfig): GeneratedFile[] {
-  const files: GeneratedFile[] = [];
-
-  // Basic security (always)
-  files.push({
-    path: `${config.projectName}/security/policies/security-policy.md`,
-    type: "file",
-    content: `# Security Policy - ${config.projectName}
-
-## Reporting Vulnerabilities
-
-Please report security vulnerabilities to security@example.com.
-
-## Security Level: ${config.security}
-
-### Implemented Controls
-
-${config.security === "nist-csf" ? `- Basic input validation
-- HTTPS enforcement
-- Dependency scanning` : ""}
-${config.security === "cis-benchmarks" ? `- Input validation and sanitization
-- HTTPS enforcement
-- Dependency scanning
-- Container image scanning
-- Secret management
-- RBAC policies` : ""}
-${config.security === "zero-trust" ? `- Comprehensive input validation
-- HTTPS enforcement with HSTS
-- Dependency scanning (automated)
-- Container image scanning
-- Secret management (Vault)
-- RBAC with least privilege
-- Network policies
-- Pod security standards
-- Audit logging
-- Compliance checks` : ""}
-`,
-  });
-
-  if (config.security === "cis-benchmarks" || config.security === "zero-trust") {
-    files.push({
-      path: `${config.projectName}/security/scanning/trivy.yml`,
-      type: "file",
-      content: `# Trivy Security Scanner Configuration
-# Generated by DevOps Project Generator
-
-scan:
-  severity: [CRITICAL, HIGH${config.security === "zero-trust" ? ", MEDIUM" : ""}]
-  vuln-type: [os, library]
-  ignore-unfixed: false
-  exit-code: 1
-
-image:
-  scan:
-    enabled: true
-    fail-on: CRITICAL
-
-filesystem:
-  scan:
-    enabled: true
-    skip-dirs: [node_modules, .git, venv]
-`,
-    });
-  }
-
-  if (config.security === "zero-trust") {
-    files.push({
-      path: `${config.projectName}/security/policies/network-policy.yml`,
-      type: "file",
-      content: `# Kubernetes Network Policy
-# Generated by DevOps Project Generator
-
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: ${config.projectName}-network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: ${config.projectName}
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              role: frontend
-      ports:
-        - protocol: TCP
-          port: 8080
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              role: database
-      ports:
-        - protocol: TCP
-          port: 5432
-`,
-    });
-  }
-
-  return files;
-}
-
-function generatePipelineFiles(config: ProjectConfig): GeneratedFile[] {
-  const files: GeneratedFile[] = [];
+  const projectName = config.projectName.toLowerCase().replace(/\s+/g, '-');
   
-  switch (config.pipeline) {
-    case "nodejs-typescript":
-      files.push(
-        {
-          path: `${config.projectName}/pipelines/ci-nodejs.yml`,
-          type: "file",
-          content: `# Node.js TypeScript CI/CD Pipeline
-# Generated by DevOps Project Generator
+  // GitHub Actions workflow
+  files.push({
+    path: `${projectName}/.github/workflows/ci.yml`,
+    content: `name: CI/CD Pipeline for ${config.projectName}
 
-name: Node.js CI/CD
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
 
+env:
+  PROJECT_NAME: ${projectName}
+  DOCKER_REGISTRY: ghcr.io
+  VERSION: \${{ github.sha }}
+
 jobs:
   test:
+    name: Run Tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        node-version: \${{ matrix.node-version }}
-        cache: 'npm'
-    
+        python-version: '3.11'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: \${{ runner.os }}-pip-\${{ hashFiles('app/requirements.txt') }}
+        
     - name: Install dependencies
-      run: npm ci
-    
-    - name: Run tests
-      run: npm test
-    
-    - name: Build
-      run: npm run build
-    
-    - name: Upload coverage
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r app/requirements.txt
+        pip install pytest pytest-cov
+        
+    - name: Run linting
+      run: |
+        flake8 app/ --max-line-length=100
+        black --check app/
+        
+    - name: Run security scan
+      run: |
+        bandit -r app/ -f json -o bandit-report.json
+        
+    - name: Run unit tests
+      run: |
+        pytest tests/ --cov=app --cov-report=xml --cov-report=html
+        
+    - name: Upload coverage reports
       uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          htmlcov/
+          bandit-report.json
 
-  security:
+  build:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     needs: test
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Security audit
-      run: npm audit --audit-level moderate
-    
-    - name: Run Snyk security scan
-      uses: snyk/actions/node@master
-      env:
-        SNYK_TOKEN: \${{ secrets.SNYK_TOKEN }}`,
-        }
-      );
-      break;
+    - name: Checkout code
+      uses: actions/checkout@v4
       
-    case "terraform-module":
-      files.push(
-        {
-          path: `${config.projectName}/terraform/main.tf`,
-          type: "file",
-          content: `# Terraform Module
-# Generated by DevOps Project Generator
-
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-  
-  backend "s3" {
-    bucket = "terraform-state-\${var.project_name}"
-    key    = "terraform.tfstate"
-    region = var.aws_region
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
-# Module example
-module "vpc" {
-  source = "./modules/vpc"
-  
-  project_name = var.project_name
-  environment  = var.environment
-  
-  tags = local.tags
-}`,
-        },
-        {
-          path: `${config.projectName}/terraform/variables.tf`,
-          type: "file",
-          content: `variable "project_name" {
-  description = "Name of the project"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment (dev, staging, prod)"
-  type        = string
-  default     = "dev"
-}
-
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}`,
-        }
-      );
-      break;
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
       
-    case "kubernetes-operator":
-      files.push(
-        {
-          path: `${config.projectName}/operator/config/crd/bases/example.com_customresources.yaml`,
-          type: "file",
-          content: `apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: customresources.example.com
-spec:
-  group: example.com
-  names:
-    kind: CustomResource
-    listKind: CustomResourceList
-    plural: customresources
-    singular: customresource
-  scope: Namespaced
-  versions:
-  - name: v1alpha1
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-            properties:
-              replicas:
-                type: integer
-                minimum: 1
-                default: 1`,
-        }
-      );
-      break;
-  }
-  
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: \${{ env.DOCKER_REGISTRY }}
+        username: \${{ github.actor }}
+        password: \${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: \${{ env.DOCKER_REGISTRY }}/\${{ github.repository }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: \${{ steps.meta.outputs.tags }}
+        labels: \${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0
+      with:
+        image: \${{ env.DOCKER_REGISTRY }}/\${{ github.repository }}@\${{ steps.build.outputs.digest }}
+        format: spdx-json
+        output-file: sbom.spdx.json
+        
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: sbom.spdx.json
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: \${{ env.DOCKER_REGISTRY }}/\${{ github.repository }}@\${{ needs.build.outputs.digest }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [test, build, security-scan]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: \${{ secrets.KUBE_CONFIG_STAGING }}
+        
+    - name: Deploy to staging
+      run: |
+        helm upgrade --install \${{ env.PROJECT_NAME }}-staging ./deploy/helm \\
+          --namespace staging \\
+          --create-namespace \\
+          --set image.tag=\${{ env.VERSION }} \\
+          --set environment=staging \\
+          --wait --timeout=10m
+          
+    - name: Verify deployment
+      run: |
+        kubectl rollout status deployment/\${{ env.PROJECT_NAME }}-staging -n staging
+        kubectl get pods -n staging
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, build, security-scan]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: \${{ secrets.KUBE_CONFIG_PROD }}
+        
+    - name: Deploy to production
+      run: |
+        helm upgrade --install \${{ env.PROJECT_NAME }}-prod ./deploy/helm \\
+          --namespace production \\
+          --create-namespace \\
+          --set image.tag=\${{ env.VERSION }} \\
+          --set environment=production \\
+          --set replicaCount=3 \\
+          --wait --timeout=15m
+          
+    - name: Verify deployment
+      run: |
+        kubectl rollout status deployment/\${{ env.PROJECT_NAME }}-prod -n production
+        kubectl get pods -n production
+        
+    - name: Post-deployment health check
+      run: |
+        sleep 30
+        kubectl exec -n production deployment/\${{ env.PROJECT_NAME }}-prod -- curl -f http://localhost:8080/health`,
+    type: "file"
+  });
+
   return files;
 }
 
-function generateInfraFiles(config: ProjectConfig): GeneratedFile[] {
-  const files: GeneratedFile[] = [];
-  const envs = getEnvList(config);
+// Main enhanced project generation function
+export function generateEnhancedProject(config: ProjectConfig): GenerationResult {
+  const allFiles: GeneratedFile[] = [];
+  const components: string[] = [];
   
-  // Add environment-specific files
-  envs.forEach((env) => {
-    files.push({
-      path: `${config.projectName}/infrastructure/environments/${env}.tfvars`,
-      type: "file",
-      content: `# ${env} environment variables
-# Generated by DevOps Project Generator
-
-environment = "${env}"
-project_name = "${config.projectName}"
-region = "us-east-1"
-
-# Environment-specific settings
-instance_count = ${env === "prod" ? "3" : env === "stage" ? "2" : "1"}
-instance_type = "${env === "prod" ? "t3.medium" : "t3.small"}"
-`,
-    });
-  });
+  // Calculate complexity for realistic generation time
+  const complexity = calculateComplexity(config);
+  const estimatedTime = Math.max(2, complexity * 0.5); // Base time + complexity factor
   
-  // Add reusable modules
-  files.push({
-    path: `${config.projectName}/infrastructure/modules/networking/main.tf`,
-    type: "file",
-    content: `# Networking Module
-# Generated by DevOps Project Generator
-
-variable "project_name" {
-  type = string
-}
-
-variable "environment" {
-  type = string
-}
-
-variable "vpc_cidr" {
-  type    = string
-  default = "10.0.0.0/16"
-}
-
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+  // Generate base files (always included)
+  allFiles.push(...generateRealisticBaseFiles(config));
+  components.push("Base Files & Documentation");
   
-  tags = {
-    Name        = "\${var.project_name}-\${var.environment}-vpc"
-    Environment = var.environment
-  }
-}
-
-output "vpc_id" {
-  value = aws_vpc.main.id
-}
-`,
-  });
+  // Generate application files
+  allFiles.push(...generateRealisticApplicationFiles(config));
+  components.push("Application Code & Tests");
   
-  switch (config.infra) {
-    case "aws-vpc-eks":
-      files.push(
-        {
-          path: `${config.projectName}/infrastructure/vpc.tf`,
-          type: "file",
-          content: `# AWS VPC Configuration
-# Generated by DevOps Project Generator
-
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+  // Generate script files
+  allFiles.push(...generateRealisticScriptFiles(config));
+  components.push("Deployment & Utility Scripts");
   
-  tags = {
-    Name        = "${config.projectName}-vpc"
-    Environment = var.environment
-    Project     = var.project_name
-  }
-}
-
-resource "aws_subnet" "private" {
-  count = 3
-  
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.\${count.index + 1}.0/24"
-  availability_zone = data.aws_availability_zones.available.names[count.index]
-  
-  tags = {
-    Name                                              = "${config.projectName}-private-\${count.index + 1}"
-    "kubernetes.io/cluster/${config.projectName}-eks" = "shared"
-    Environment                                       = var.environment
-  }
-}
-
-resource "aws_eks_cluster" "main" {
-  name     = "${config.projectName}-eks"
-  role_arn = aws_iam_role.eks_cluster.arn
-  version  = "1.28"
-  
-  vpc_config {
-    subnet_ids = aws_subnet.private[*].id
+  // Generate CI/CD files if enabled
+  if (config.ci && config.ci !== "none") {
+    allFiles.push(...generateRealisticCIFiles(config));
+    components.push(`CI/CD Pipeline (${config.ci})`);
   }
   
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_policy,
-  ]
-}`,
-        }
-      );
-      break;
-      
-    case "terraform-multi-cloud":
-      files.push(
-        {
-          path: `${config.projectName}/infrastructure/main.tf`,
-          type: "file",
-          content: `# Multi-Cloud Infrastructure
-# Generated by DevOps Project Generator
-
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 4.0"
+  // TODO: Add infrastructure, deployment, monitoring, and security files
+  // These will be implemented in subsequent iterations
+  
+  // Ensure all directories exist
+  const directories: GeneratedFile[] = [];
+  const seenDirs = new Set<string>();
+  
+  for (const file of allFiles) {
+    const dirs = ensureDirectories(file.path);
+    for (const dir of dirs) {
+      if (!seenDirs.has(dir.path)) {
+        directories.push(dir);
+        seenDirs.add(dir.path);
+      }
     }
   }
-}
-
-# AWS Provider
-provider "aws" {
-  alias  = "aws"
-  region = var.aws_region
-}
-
-# Azure Provider
-provider "azurerm" {
-  alias  = "azure"
-  features {}
-}
-
-# GCP Provider
-provider "google" {
-  alias  = "gcp"
-  project = var.gcp_project
-  region  = var.gcp_region
-}
-
-# Multi-cloud networking example
-module "aws_network" {
-  source   = "./modules/aws-network"
-  providers = {
-    aws = aws.aws
-  }
   
-  project_name = var.project_name
-  environment  = var.environment
+  const finalFiles = [...directories, ...allFiles];
+  
+  return {
+    success: true,
+    projectName: config.projectName,
+    files: finalFiles,
+    summary: {
+      totalFiles: finalFiles.length,
+      totalDirs: directories.length,
+      components
+    }
+  };
 }
 
-module "azure_network" {
-  source     = "./modules/azure-network"
-  providers  = {
-    azurerm = azurerm.azure
-  }
-  
-  project_name = var.project_name
-  environment  = var.environment
-}`,
-        }
-      );
-      break;
-  }
-  
-  return files;
-}
+// Export the enhanced generator as default
+export default generateEnhancedProject;
+
+// Export with original name for backward compatibility
+export { generateEnhancedProject as generateProject };
