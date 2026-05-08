@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProjectConfig } from "@/lib/types";
 import {
   GitBranch,
@@ -573,8 +574,9 @@ export function AdvancedConfigBuilder({ config, onConfigChange }: ConfigBuilderP
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {requirements.map((req, idx) => (
+              <ScrollArea className="h-[300px] pr-4">
+                <div className="space-y-2">
+                  {requirements.map((req, idx) => (
                   <div key={idx} className="flex items-start gap-2 text-xs p-2 rounded-lg bg-blue-500/5 border border-blue-500/20">
                     <CheckCircle2 className="h-3 w-3 text-blue-500 mt-0.5 shrink-0" />
                     <div>
@@ -588,7 +590,8 @@ export function AdvancedConfigBuilder({ config, onConfigChange }: ConfigBuilderP
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         )}
@@ -606,8 +609,9 @@ export function AdvancedConfigBuilder({ config, onConfigChange }: ConfigBuilderP
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {recommendations.map((rec, idx) => (
+              <ScrollArea className="h-[300px] pr-4">
+                <div className="space-y-2">
+                  {recommendations.map((rec, idx) => (
                   <div key={idx} className="flex items-start gap-2 text-xs p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
                     <Info className="h-3 w-3 text-amber-500 mt-0.5 shrink-0" />
                     <div>
@@ -621,7 +625,8 @@ export function AdvancedConfigBuilder({ config, onConfigChange }: ConfigBuilderP
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         )}

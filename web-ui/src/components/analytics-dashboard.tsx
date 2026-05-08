@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   BarChart3,
   TrendingUp,
@@ -558,8 +559,9 @@ export function AnalyticsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {Object.entries(analyticsData.technologyStats.ci)
+              <ScrollArea className="h-[250px] pr-4">
+                <div className="space-y-3">
+                  {Object.entries(analyticsData.technologyStats.ci)
                   .sort(([, a], [, b]) => b - a)
                   .map(([tech, count]) => {
                     const total = Object.values(analyticsData.technologyStats.ci).reduce((a, b) => a + b, 0);
@@ -580,7 +582,8 @@ export function AnalyticsDashboard() {
                       </div>
                     );
                   })}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
 
@@ -596,8 +599,9 @@ export function AnalyticsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {Object.entries(analyticsData.technologyStats.infra)
+              <ScrollArea className="h-[250px] pr-4">
+                <div className="space-y-3">
+                  {Object.entries(analyticsData.technologyStats.infra)
                   .sort(([, a], [, b]) => b - a)
                   .map(([tech, count]) => {
                     const total = Object.values(analyticsData.technologyStats.infra).reduce((a, b) => a + b, 0);
@@ -618,7 +622,8 @@ export function AnalyticsDashboard() {
                       </div>
                     );
                   })}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
 
@@ -634,8 +639,9 @@ export function AnalyticsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {Object.entries(analyticsData.technologyStats.deploy)
+              <ScrollArea className="h-[250px] pr-4">
+                <div className="space-y-3">
+                  {Object.entries(analyticsData.technologyStats.deploy)
                   .sort(([, a], [, b]) => b - a)
                   .map(([tech, count]) => {
                     const total = Object.values(analyticsData.technologyStats.deploy).reduce((a, b) => a + b, 0);
@@ -656,7 +662,8 @@ export function AnalyticsDashboard() {
                       </div>
                     );
                   })}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
 
@@ -672,8 +679,9 @@ export function AnalyticsDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {Object.entries(analyticsData.technologyStats.observability)
+              <ScrollArea className="h-[250px] pr-4">
+                <div className="space-y-3">
+                  {Object.entries(analyticsData.technologyStats.observability)
                   .sort(([, a], [, b]) => b - a)
                   .map(([tech, count]) => {
                     const total = Object.values(analyticsData.technologyStats.observability).reduce((a, b) => a + b, 0);
@@ -694,7 +702,8 @@ export function AnalyticsDashboard() {
                       </div>
                     );
                   })}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>

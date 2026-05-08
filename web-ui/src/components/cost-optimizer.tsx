@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProjectConfig } from "@/lib/types";
 import {
   TrendingDown,
@@ -636,8 +637,9 @@ export function CostOptimizer({ config }: CostOptimizerProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {costEstimates.map((estimate, idx) => {
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-3">
+              {costEstimates.map((estimate, idx) => {
               const Icon = estimate.icon;
               const percentage = totalMonthlyCost > 0 ? (estimate.monthlyCost / totalMonthlyCost) * 100 : 0;
               
@@ -682,6 +684,7 @@ export function CostOptimizer({ config }: CostOptimizerProps) {
               );
             })}
           </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 
