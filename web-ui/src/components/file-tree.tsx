@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface FileTreeProps {
   files: GeneratedFile[];
@@ -419,10 +420,13 @@ export function FileTree({ files, projectName }: FileTreeProps) {
               </div>
             </div>
             
-            <div className="relative">
-              <pre className="p-4 text-xs font-mono overflow-auto h-[250px] lg:h-[calc(100%-73px)] leading-relaxed text-foreground/90 bg-muted/20">
-                {selectedFile.content}
-              </pre>
+            <div className="relative h-[250px] lg:h-[calc(100%-73px)]">
+              <ScrollArea className="h-full w-full">
+                <pre className="p-4 text-xs font-mono leading-relaxed text-foreground/90 bg-muted/20 whitespace-pre overflow-x-auto min-w-full">
+                  {selectedFile.content}
+                </pre>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
               
               {copiedPath === selectedFile.path && (
                 <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-md animate-in fade-in slide-in-from-top-2 duration-200">
