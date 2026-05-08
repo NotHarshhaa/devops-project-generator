@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: containers/Dockerfile
+      dockerfile: deploy/Dockerfile
     container_name: {{ project_name }}-app
     ports:
       - "8000:8000"

@@ -69,7 +69,7 @@ deploy_docker() {
     log "Deploying with Docker..."
     
     # Build Docker image
-    docker build -t ${PROJECT_NAME}:latest ./containers/
+    docker build -t ${PROJECT_NAME}:latest ./deploy/
     
     # Tag image for deployment
     docker tag ${PROJECT_NAME}:latest ${PROJECT_NAME}:${ENVIRONMENT}
@@ -81,7 +81,7 @@ deploy_docker() {
     {% endif %}
     
     # Deploy with docker-compose
-    docker-compose -f containers/docker-compose.yml up -d
+    docker-compose -f deploy/docker-compose.yml up -d
     
     # Wait for services to be ready
     log "Waiting for services to be ready..."
@@ -238,7 +238,7 @@ backup_deployment() {
     # Backup configuration files
     cp -r .env ${BACKUP_DIR}/ 2>/dev/null || true
     cp -r k8s/ ${BACKUP_DIR}/ 2>/dev/null || true
-    cp -r containers/ ${BACKUP_DIR}/ 2>/dev/null || true
+    cp -r deploy/ ${BACKUP_DIR}/ 2>/dev/null || true
     
     log "Backup completed: ${BACKUP_DIR}"
 }
@@ -256,7 +256,7 @@ rollback_deployment() {
         # Restore from backup
         cp backups/${LATEST_BACKUP}/.env . 2>/dev/null || true
         cp -r backups/${LATEST_BACKUP}/k8s/ . 2>/dev/null || true
-        cp -r backups/${LATEST_BACKUP}/containers/ . 2>/dev/null || true
+        cp -r backups/${LATEST_BACKUP}/deploy/ . 2>/dev/null || true
         
         # Re-deploy
         main

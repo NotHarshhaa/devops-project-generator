@@ -73,7 +73,7 @@ security-scan: ## Run security scans
 # Docker commands
 build: ## Build Docker image
 	@echo "$(GREEN)Building Docker image...$(RESET)"
-	@docker build -t $(PROJECT_NAME):latest ./containers/
+	@docker build -t $(PROJECT_NAME):latest ./deploy/
 	@docker tag $(PROJECT_NAME):latest $(PROJECT_NAME):$(ENVIRONMENT)
 
 push: ## Push Docker image to registry
@@ -83,14 +83,14 @@ push: ## Push Docker image to registry
 
 docker-run: ## Run application with Docker
 	@echo "$(GREEN)Running application with Docker...$(RESET)"
-	@docker-compose -f containers/docker-compose.yml up -d
+	@docker-compose -f deploy/docker-compose.yml up -d
 
 docker-stop: ## Stop Docker containers
 	@echo "$(GREEN)Stopping Docker containers...$(RESET)"
-	@docker-compose -f containers/docker-compose.yml down
+	@docker-compose -f deploy/docker-compose.yml down
 
 docker-logs: ## Show Docker logs
-	@docker-compose -f containers/docker-compose.yml logs -f
+	@docker-compose -f deploy/docker-compose.yml logs -f
 {% endif %}
 
 {% if has_kubernetes %}
@@ -141,7 +141,7 @@ tf-destroy: ## Destroy Terraform infrastructure
 start: ## Start the application
 	@echo "$(GREEN)Starting application...$(RESET)"
 	{% if has_docker %}
-	@docker-compose -f containers/docker-compose.yml up -d
+	@docker-compose -f deploy/docker-compose.yml up -d
 	{% else %}
 	@. $(ACTIVATE); python app/sample-app/main.py
 	{% endif %}
@@ -149,7 +149,7 @@ start: ## Start the application
 stop: ## Stop the application
 	@echo "$(GREEN)Stopping application...$(RESET)"
 	{% if has_docker %}
-	@docker-compose -f containers/docker-compose.yml down
+	@docker-compose -f deploy/docker-compose.yml down
 	{% else %}
 	@pkill -f "main.py" || true
 	{% endif %}
@@ -158,7 +158,7 @@ restart: stop start ## Restart the application
 
 logs: ## Show application logs
 	{% if has_docker %}
-	@docker-compose -f containers/docker-compose.yml logs -f
+	@docker-compose -f deploy/docker-compose.yml logs -f
 	{% else %}
 	@tail -f logs/app.log
 	{% endif %}
@@ -307,7 +307,7 @@ backup: ## Backup configuration and data
 	@tar -czf backups/backup-$(shell date +%Y%m%d_%H%M%S).tar.gz \
 		.env \
 		k8s/ \
-		containers/ \
+		deploy/ \
 		infra/ \
 		monitoring/ \
 		security/ \

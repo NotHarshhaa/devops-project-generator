@@ -57,7 +57,7 @@ jobs:
     - name: Container security scan
       if: ${{ has_docker }}
       run: |
-        docker build -t {{ project_name }}:scan ./containers/
+        docker build -t {{ project_name }}:scan ./deploy/
         trivy image --format json --output container-trivy-report.json {{ project_name }}:scan
     
     - name: Generate security summary

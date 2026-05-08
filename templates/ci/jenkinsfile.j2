@@ -52,7 +52,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://registry.hub.docker.com", 'docker-registry') {
-                        def image = docker.build("${env.DOCKER_REGISTRY_USR}/${env.PROJECT_NAME}:${env.BUILD_NUMBER}", "./containers/")
+                        def image = docker.build("${env.DOCKER_REGISTRY_USR}/${env.PROJECT_NAME}:${env.BUILD_NUMBER}", "./deploy/")
                         image.push()
                         image.push('latest')
                     }

@@ -70,7 +70,7 @@ jobs:
       if: ${{ '{{' }} has_docker {{ '}}' }}
       run: |
         # Build container for scanning
-        docker build -t {{ project_name }}:scan ./containers/
+        docker build -t {{ project_name }}:scan ./deploy/
         
         # Trivy comprehensive scan
         trivy image --format json --output container-trivy-report.json \

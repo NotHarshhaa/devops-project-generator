@@ -112,7 +112,7 @@ create_startup_scripts() {
     log "Creating startup scripts..."
     
     # Create start script
-    cat > start.sh << 'EOF'
+    cat > start.sh << EOF
 #!/bin/bash
 # Start script for {{ project_name }}
 
@@ -122,25 +122,25 @@ set -euo pipefail
 source venv/bin/activate
 
 # Set environment variables
-export $(cat .env | xargs)
+export \$(cat .env | xargs)
 
 # Start the application
 {% if has_docker %}
-docker-compose up -d
+docker-compose -f deploy/docker-compose.yml up -d
 {% else %}
 python app/sample-app/main.py
 {% endif %}
 EOF
     
     # Create stop script
-    cat > stop.sh << 'EOF'
+    cat > stop.sh << EOF
 #!/bin/bash
 # Stop script for {{ project_name }}
 
 set -euo pipefail
 
 {% if has_docker %}
-docker-compose down
+docker-compose -f deploy/docker-compose.yml down
 {% else %}
 # Kill the application process
 pkill -f "main.py"
