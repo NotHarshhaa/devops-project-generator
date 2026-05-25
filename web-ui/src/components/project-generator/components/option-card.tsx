@@ -48,11 +48,7 @@ interface OptionCardProps {
   onSelect: (value: string) => void;
 }
 
-export function OptionCardComponent({
-  option,
-  selected,
-  onSelect,
-}: OptionCardProps) {
+export function OptionCard({ option, selected, onSelect }: OptionCardProps) {
   const Icon = iconMap[option.icon] || Box;
 
   return (
@@ -104,9 +100,7 @@ export function OptionCardComponent({
       <div
         className={cn(
           "absolute top-4 right-4 h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center",
-          selected
-            ? "border-primary bg-primary"
-            : "border-muted-foreground/30"
+          selected ? "border-primary bg-primary" : "border-muted-foreground/30"
         )}
       >
         {selected && (
@@ -117,11 +111,7 @@ export function OptionCardComponent({
             stroke="currentColor"
             strokeWidth={3}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 13l4 4L19 7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         )}
       </div>

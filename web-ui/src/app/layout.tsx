@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider, ErrorBoundary } from "@/components";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ConfigProvider } from "@/lib/config-context";
-import { ErrorBoundary } from "@/components/error-boundary";
 import "./globals.css";
 
 const inter = Inter({

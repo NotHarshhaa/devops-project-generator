@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ProjectGenerator } from "@/components/project-generator";
-import { AdvancedConfigBuilder } from "@/components/advanced-config-builder";
-import { CostOptimizer } from "@/components/cost-optimizer";
-import { AnalyticsDashboard } from "@/components/analytics-dashboard";
-import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  ProjectGenerator,
+  AdvancedConfigBuilder,
+  CostOptimizer,
+  AnalyticsDashboard,
+  ThemeToggle,
+} from "@/components";
 import { useConfig } from "@/lib/config-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
