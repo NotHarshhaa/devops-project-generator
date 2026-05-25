@@ -2,17 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { ProjectConfig } from "./types";
-
-const defaultConfig: ProjectConfig = {
-  projectName: "",
-  pipeline: "nodejs-typescript",
-  ci: "github-actions",
-  infra: "aws-vpc-eks",
-  deploy: "blue-green",
-  envs: "dev,stage,prod",
-  observability: "prometheus-grafana",
-  security: "nist-csf",
-};
+import { DEFAULT_PROJECT_CONFIG } from "./constants";
 
 interface ConfigContextType {
   config: ProjectConfig;
@@ -23,14 +13,14 @@ interface ConfigContextType {
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<ProjectConfig>(defaultConfig);
+  const [config, setConfig] = useState<ProjectConfig>(DEFAULT_PROJECT_CONFIG);
 
   const updateConfig = (newConfig: ProjectConfig) => {
     setConfig(newConfig);
   };
 
   const resetConfig = () => {
-    setConfig(defaultConfig);
+    setConfig(DEFAULT_PROJECT_CONFIG);
   };
 
   return (

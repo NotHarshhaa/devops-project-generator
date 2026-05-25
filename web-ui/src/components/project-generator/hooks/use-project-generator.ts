@@ -6,6 +6,7 @@ import { steps } from "@/lib/options";
 import { generateProject } from "@/lib/generator";
 import { useConfig } from "@/lib/config-context";
 import { trackProjectGeneration, trackUserSession, trackInteraction } from "@/lib/analytics";
+import { canProceedToNextStep } from "@/lib/validation";
 import { DEFAULT_CONFIG } from "../constants";
 import { calculateComplexity } from "../utils";
 import JSZip from "jszip";
@@ -41,17 +42,7 @@ export function useProjectGenerator() {
   );
 
   const canProceed = useCallback(() => {
-    const step = steps[currentStep];
-    const value = config[step.field];
-    if (step.field === "projectName") {
-      return (
-        typeof value === "string" &&
-        value.trim().length > 0 &&
-        value.length <= 50 &&
-        /^[a-zA-Z0-9_-]+$/.test(value)
-      );
-    }
-    return value !== undefined && value !== "";
+    return canProceedToNextStep(config, currentStep);
   }, [currentStep, config]);
 
   const handleGenerate = useCallback(async () => {

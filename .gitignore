@@ -15,7 +15,10 @@ downloads/
 eggs/
 .eggs/
 lib/
-!web-ui/src/lib
+!web-ui/src/lib/
+!web-ui/src/lib/**
+!web-ui/src/components/**/lib/
+!web-ui/src/components/**/lib/**
 lib64/
 parts/
 sdist/
