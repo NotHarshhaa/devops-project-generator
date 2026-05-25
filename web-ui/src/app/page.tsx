@@ -73,44 +73,50 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Gradient background effect */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-1/2 left-1/2 -translate-x-1/2 h-[800px] w-[800px] rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute top-1/4 -left-1/4 h-[600px] w-[600px] rounded-full bg-blue-500/3 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[500px] w-[500px] rounded-full bg-purple-500/3 blur-3xl" />
+    <div id="top" className="min-h-screen bg-background">
+      <div className="fixed inset-0 -z-10 overflow-hidden grid-bg">
+        <div className="absolute -top-1/3 left-1/2 -translate-x-1/2 h-[900px] w-[900px] rounded-full bg-brand/8 blur-[120px]" />
+        <div className="absolute top-1/3 -right-1/4 h-[500px] w-[500px] rounded-full bg-cyan-500/5 blur-[100px]" />
+        <div className="absolute bottom-0 -left-1/4 h-[400px] w-[400px] rounded-full bg-teal-500/5 blur-[80px]" />
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-lg">
-        <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <header className="sticky top-0 z-50 border-b border-border/60 glass-panel !rounded-none !shadow-none">
+        <div className="container mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           <a
             href="/"
-            className="flex items-center gap-2 sm:gap-2.5 transition-opacity hover:opacity-80 min-w-0"
+            className="flex items-center gap-2.5 transition-opacity hover:opacity-80 min-w-0 group"
           >
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-              <Rocket className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-foreground" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground brand-glow">
+              <Rocket className="h-4 w-4" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs sm:text-sm font-bold leading-none tracking-tight truncate">
+              <span className="text-sm font-bold leading-none tracking-tight truncate">
                 DevOps Project Generator
               </span>
-              <span className="text-[10px] text-muted-foreground leading-tight">
+              <span className="text-[10px] text-muted-foreground font-mono leading-tight">
                 v1.6.0
               </span>
             </div>
           </a>
 
           <div className="flex items-center gap-2">
-            <Button asChild variant="default" size="sm">
+            <Button asChild variant="outline" size="sm" className="gap-1.5 border-border/80 hidden sm:flex">
               <a
                 href="https://github.com/NotHarshhaa/devops-project-generator"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="gap-1.5"
               >
                 <Github className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">GitHub</span>
+              </a>
+            </Button>
+            <Button asChild size="sm" className="gap-1.5 bg-brand hover:bg-brand/90 text-brand-foreground sm:hidden">
+              <a
+                href="https://github.com/NotHarshhaa/devops-project-generator"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github className="h-3.5 w-3.5" />
               </a>
             </Button>
             <ThemeToggle />
@@ -118,69 +124,74 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="container mx-auto max-w-5xl px-4 pt-8 sm:pt-12 pb-6 sm:pb-8 text-center">
-        <Badge variant="secondary" className="mb-3 sm:mb-4 gap-1.5 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs">
-          <Rocket className="h-3 w-3" />
+      <section className="container mx-auto max-w-7xl px-4 pt-10 sm:pt-14 pb-8 text-center">
+        <Badge
+          variant="outline"
+          className="mb-4 gap-1.5 px-3 py-1 text-xs border-brand/30 bg-brand/5 text-brand"
+        >
+          <Sparkles className="h-3 w-3" />
           Production-Ready DevOps Scaffolding
         </Badge>
 
-        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight">
-          Build your DevOps project
-          <br />
-          <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            in seconds, not hours
-          </span>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.15] max-w-3xl mx-auto">
+          Build your DevOps stack{" "}
+          <span className="text-brand-gradient">in seconds, not hours</span>
         </h1>
 
-        <p className="mx-auto mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed px-2">
-          Configure your CI/CD, infrastructure, deployment, observability, and
-          security stack — then download a complete, production-ready project
-          structure.
+        <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed">
+          Configure CI/CD, infrastructure, deployment, observability, and security — then download a
+          complete, production-ready project structure.
         </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+          {["GitHub Actions", "Terraform", "Kubernetes", "Prometheus"].map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-[10px] font-mono px-2.5 py-0.5">
+              {tag}
+            </Badge>
+          ))}
+        </div>
       </section>
 
-      {/* Main Generator with Tabs */}
-      <main id="generator-section" className="container mx-auto max-w-5xl px-3 sm:px-4 pb-10 sm:pb-16">
+      <main id="generator-section" className="container mx-auto max-w-7xl px-3 sm:px-4 pb-12 sm:pb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex justify-center mb-6">
-            <TabsList className="inline-flex h-auto p-1.5 bg-muted/80 backdrop-blur-sm border border-border/60 rounded-xl shadow-lg shadow-black/5">
-              <TabsTrigger 
-                value="generator" 
-                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <TabsList className="inline-flex h-auto p-1 glass-panel rounded-2xl">
+              <TabsTrigger
+                value="generator"
+                className="gap-2 py-2.5 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-xl transition-all data-[state=active]:bg-brand data-[state=active]:text-brand-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground"
               >
-                <Rocket className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline whitespace-nowrap">Generator</span>
+                <Rocket className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Generator</span>
                 <span className="sm:hidden">Gen</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="config" 
-                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+              <TabsTrigger
+                value="config"
+                className="gap-2 py-2.5 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-xl transition-all data-[state=active]:bg-brand data-[state=active]:text-brand-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground"
               >
-                <Network className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline whitespace-nowrap">Config Builder</span>
+                <Network className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Config Builder</span>
                 <span className="sm:hidden">Config</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="cost" 
-                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+              <TabsTrigger
+                value="cost"
+                className="gap-2 py-2.5 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-xl transition-all data-[state=active]:bg-brand data-[state=active]:text-brand-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground"
               >
-                <DollarSign className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline whitespace-nowrap">Cost Advisor</span>
+                <DollarSign className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Cost Advisor</span>
                 <span className="sm:hidden">Cost</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="analytics" 
-                className="relative gap-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-medium bg-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground items-center justify-center rounded-lg transition-all duration-200 data-[state=active]:scale-[1.02]"
+              <TabsTrigger
+                value="analytics"
+                className="gap-2 py-2.5 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-xl transition-all data-[state=active]:bg-brand data-[state=active]:text-brand-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground"
               >
-                <BarChart3 className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline whitespace-nowrap">Analytics</span>
+                <BarChart3 className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Analytics</span>
                 <span className="sm:hidden">Stats</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <div className="rounded-xl sm:rounded-2xl border bg-card/50 backdrop-blur-sm p-4 sm:p-6 md:p-8 shadow-xl shadow-black/5">
+          <div className="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8">
             <TabsContent value="generator" className="mt-0">
               <ProjectGenerator />
             </TabsContent>
@@ -897,7 +908,7 @@ export default function Home() {
         <Button
           onClick={scrollToTop}
           size="sm"
-          className="fixed bottom-8 right-8 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 transition-all duration-300 z-50"
+          className="fixed bottom-8 right-8 h-11 w-11 rounded-full shadow-lg bg-brand hover:bg-brand/90 text-brand-foreground transition-all duration-300 z-50 brand-glow"
           aria-label="Scroll to top"
         >
           <ChevronUp className="h-4 w-4" />

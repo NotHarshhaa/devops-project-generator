@@ -96,6 +96,17 @@ export function useProjectGenerator() {
     }
   }, [isFirstStep, isResultView]);
 
+  const goToStep = useCallback(
+    (step: number) => {
+      if (step < 0 || step >= steps.length) return;
+      if (step <= currentStep || completedSteps.has(step)) {
+        setCurrentStep(step);
+        trackInteraction();
+      }
+    },
+    [currentStep, completedSteps]
+  );
+
   const handleDownload = useCallback(async () => {
     if (!result) return;
 
@@ -161,6 +172,7 @@ export function useProjectGenerator() {
     canProceed,
     handleNext,
     handleBack,
+    goToStep,
     handleDownload,
     handleCopyCommand,
     handleReset,

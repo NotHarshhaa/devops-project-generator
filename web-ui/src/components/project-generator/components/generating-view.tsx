@@ -2,82 +2,83 @@
 
 import { ProjectConfig } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import {
-  Loader2,
-  Clock,
-  GitBranch,
-  Layers,
-  Package,
-  Activity,
-  Shield,
-} from "lucide-react";
+import { Loader2, Terminal } from "lucide-react";
 import { calculateComplexity } from "../utils";
 
 interface GeneratingViewProps {
   config: ProjectConfig;
 }
 
+const buildSteps = (complexity: number) => [
+  { label: "Initializing workspace", status: "done" as const },
+  { label: "Generating CI/CD pipelines", status: complexity > 2 ? ("done" as const) : ("active" as const) },
+  { label: "Provisioning infrastructure templates", status: complexity > 3 ? ("done" as const) : ("pending" as const) },
+  { label: "Packaging deployment manifests", status: "pending" as const },
+  { label: "Finalizing security policies", status: "pending" as const },
+];
+
 export function GeneratingView({ config }: GeneratingViewProps) {
   const complexity = calculateComplexity(config);
-  const estimatedTime = 1 + complexity * 0.5;
+  const steps = buildSteps(complexity);
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 sm:py-24 gap-4 sm:gap-6 animate-fade-in px-2">
-      <div className="relative">
-        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-          <Loader2 className="h-10 w-10 text-primary animate-spin" />
-        </div>
-      </div>
-
-      <div className="text-center space-y-2">
-        <h3 className="text-lg sm:text-xl font-semibold">Generating your project...</h3>
-        <p className="text-sm text-muted-foreground">
-          Creating {config.projectName} with your selected stack
-        </p>
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          <span>Estimated time: {estimatedTime}s</span>
-        </div>
-      </div>
-
-      <div className="w-full max-w-md space-y-3">
-        {[
-          { label: "Setting up base structure", done: true, width: "100%", color: "bg-green-500" },
-          { label: "Generating pipeline files", done: complexity > 2, width: complexity > 2 ? "100%" : "60%", color: "bg-blue-500" },
-          { label: "Configuring infrastructure", done: complexity > 3, width: complexity > 3 ? "100%" : "40%", color: "bg-purple-500" },
-          { label: "Setting up deployment", done: false, width: "20%", color: "bg-cyan-500" },
-        ].map((step) => (
-          <div key={step.label} className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span>{step.label}</span>
-              <span>{step.done ? "✓" : "..."}</span>
+    <div className="flex flex-col items-center justify-center py-8 sm:py-16 animate-fade-in px-2">
+      <div className="w-full max-w-lg">
+        <div className="rounded-2xl border border-border/60 bg-[oklch(0.12_0.02_250)] dark:bg-[oklch(0.1_0.02_250)] overflow-hidden shadow-2xl brand-glow">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
+            <div className="flex gap-1.5">
+              <div className="h-3 w-3 rounded-full bg-red-500/70" />
+              <div className="h-3 w-3 rounded-full bg-amber-500/70" />
+              <div className="h-3 w-3 rounded-full bg-emerald-500/70" />
             </div>
-            <div className="h-1 bg-muted rounded-full overflow-hidden">
-              <div className={`h-full ${step.color} transition-all duration-1000`} style={{ width: step.width }} />
-            </div>
+            <span className="text-[11px] font-mono text-white/50 ml-2">generator — bash</span>
           </div>
-        ))}
-      </div>
 
-      <div className="flex flex-wrap justify-center gap-2 mt-2">
-        {config.ci !== "none" && (
-          <Badge variant="secondary" className="gap-1">
-            <GitBranch className="h-3 w-3" /> {config.ci}
-          </Badge>
-        )}
-        <Badge variant="secondary" className="gap-1">
-          <Layers className="h-3 w-3" /> {config.infra}
-        </Badge>
-        <Badge variant="secondary" className="gap-1">
-          <Package className="h-3 w-3" /> {config.deploy}
-        </Badge>
-        <Badge variant="secondary" className="gap-1">
-          <Activity className="h-3 w-3" /> {config.observability}
-        </Badge>
-        <Badge variant="secondary" className="gap-1">
-          <Shield className="h-3 w-3" /> {config.security}
-        </Badge>
+          <div className="p-5 font-mono text-xs space-y-2 min-h-[280px]">
+            <p className="text-brand">
+              <span className="text-emerald-400">$</span> devops-project-generator init --name {config.projectName}
+            </p>
+            <p className="text-white/40">→ Resolving stack configuration...</p>
+
+            {steps.map((step, i) => (
+              <p
+                key={step.label}
+                className={
+                  step.status === "done"
+                    ? "text-emerald-400"
+                    : step.status === "active"
+                      ? "text-brand animate-pulse"
+                      : "text-white/25"
+                }
+              >
+                {step.status === "done" ? "✓" : step.status === "active" ? "▸" : "○"} {step.label}
+                {step.status === "active" && i === steps.findIndex((s) => s.status === "active") && (
+                  <Loader2 className="inline h-3 w-3 ml-2 animate-spin" />
+                )}
+              </p>
+            ))}
+
+            <p className="text-white/30 pt-2">pipeline={config.pipeline} · infra={config.infra}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 mt-6 text-center">
+          <div className="flex items-center gap-2">
+            <Terminal className="h-4 w-4 text-brand" />
+            <h3 className="text-lg font-semibold">Building {config.projectName}</h3>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Badge variant="outline" className="font-mono text-[10px] border-brand/30">
+              {config.ci}
+            </Badge>
+            <Badge variant="outline" className="font-mono text-[10px] border-brand/30">
+              {config.deploy}
+            </Badge>
+            <Badge variant="outline" className="font-mono text-[10px] border-brand/30">
+              {config.security}
+            </Badge>
+          </div>
+        </div>
       </div>
     </div>
   );

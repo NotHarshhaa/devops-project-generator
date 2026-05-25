@@ -21,6 +21,7 @@ export function ProjectGenerator() {
     canProceed,
     handleNext,
     handleBack,
+    goToStep,
     handleDownload,
     handleCopyCommand,
     handleReset,
@@ -55,6 +56,7 @@ export function ProjectGenerator() {
       onUpdateConfig={updateConfig}
       onNext={handleNext}
       onBack={handleBack}
+      onGoToStep={goToStep}
     />
   );
 }
