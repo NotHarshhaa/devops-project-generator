@@ -27,7 +27,13 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
   const { config } = useConfig();
 
   return (
-    <main id="generator-section" className="container mx-auto max-w-7xl px-3 sm:px-4 pb-12 sm:pb-20">
+    <main id="generator-section" className="container mx-auto max-w-7xl px-3 sm:px-4 pb-12 sm:pb-20 scroll-mt-16">
+      <div className="text-center mb-6 sm:mb-8 animate-fade-in">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Workspace</p>
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+          Configure your <span className="text-brand-gradient">DevOps stack</span>
+        </h2>
+      </div>
       <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as WorkspaceTab)} className="w-full">
         <div className="flex justify-center mb-6 sm:mb-8">
           <TabsList className="inline-flex h-auto p-1 glass-panel rounded-2xl">

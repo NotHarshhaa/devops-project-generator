@@ -188,6 +188,38 @@
   .terminal-line {
     @apply font-mono text-xs text-muted-foreground;
   }
+
+  .terminal-panel {
+    @apply bg-slate-100/90 text-foreground border-t border-border/40;
+  }
+
+  .dark .terminal-panel {
+    @apply bg-[oklch(0.1_0.02_250)] text-foreground border-t border-white/10;
+  }
+
+  .terminal-panel-header {
+    @apply bg-muted/60 border-b border-border/60;
+  }
+
+  .dark .terminal-panel-header {
+    @apply bg-white/5 border-white/10;
+  }
+
+  .terminal-accent {
+    @apply text-emerald-700;
+  }
+
+  .dark .terminal-accent {
+    @apply text-emerald-400;
+  }
+
+  .terminal-dim {
+    @apply text-muted-foreground;
+  }
+
+  .dark .terminal-dim {
+    @apply text-white/40;
+  }
 }
 
 @keyframes fadeIn {

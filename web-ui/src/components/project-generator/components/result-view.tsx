@@ -130,8 +130,8 @@ export function ResultView({
             {copied ? "Copied!" : "Copy"}
           </Button>
         </div>
-        <code className="block text-[11px] sm:text-xs font-mono p-4 overflow-x-auto text-foreground/80 bg-[oklch(0.12_0.02_250)] dark:bg-[oklch(0.1_0.02_250)] text-emerald-400/90">
-          <span className="text-brand">$</span> {cliCommand}
+        <code className="terminal-panel block text-[11px] sm:text-xs font-mono p-4 overflow-x-auto">
+          <span className="text-brand">$</span> <span className="terminal-accent">{cliCommand}</span>
         </code>
       </div>
 
