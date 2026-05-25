@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Zap, Info, CheckCircle2 } from "lucide-react";
@@ -12,34 +11,78 @@ interface DependencyListProps {
 }
 
 function DependencyItems({ items, variant }: { items: Dependency[]; variant: "required" | "recommended" }) {
-  const styles =
-    variant === "required"
-      ? { bg: "bg-blue-500/5", border: "border-blue-500/20", icon: CheckCircle2, iconColor: "text-blue-500" }
-      : { bg: "bg-amber-500/5", border: "border-amber-500/20", icon: Info, iconColor: "text-amber-500" };
-
-  const Icon = styles.icon;
+  const isRequired = variant === "required";
+  const Icon = isRequired ? CheckCircle2 : Info;
 
   return (
-    <ScrollArea className="h-[300px] pr-4">
-      <div className="space-y-2">
+    <ScrollArea className="h-[280px]">
+      <div className="space-y-2 pr-3">
         {items.map((item, idx) => (
-          <div key={idx} className={`flex items-start gap-2 text-xs p-2 rounded-lg ${styles.bg} border ${styles.border}`}>
-            <Icon className={`h-3 w-3 ${styles.iconColor} mt-0.5 shrink-0`} />
-            <div>
-              <div className="font-medium">
-                {item.from} → {item.to}
+          <div
+            key={idx}
+            className={`rounded-xl border p-3 transition-colors hover:border-brand/25 ${
+              isRequired
+                ? "border-brand/20 bg-brand/5"
+                : "border-amber-500/20 bg-amber-500/5"
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              <Icon
+                className={`h-4 w-4 shrink-0 mt-0.5 ${isRequired ? "text-brand" : "text-amber-500"}`}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-xs font-mono">
+                  {item.from} → {item.to}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{item.reason}</p>
+                {item.impact && (
+                  <Badge
+                    variant="outline"
+                    className="mt-2 text-[10px] capitalize border-border/80"
+                  >
+                    Impact: {item.impact}
+                  </Badge>
+                )}
               </div>
-              <div className="text-muted-foreground">{item.reason}</div>
-              {item.impact && (
-                <Badge variant="outline" className="mt-1 text-xs">
-                  Impact: {item.impact}
-                </Badge>
-              )}
             </div>
           </div>
         ))}
       </div>
     </ScrollArea>
+  );
+}
+
+function DependencyPanel({
+  title,
+  description,
+  icon: Icon,
+  iconColor,
+  items,
+  variant,
+}: {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  iconColor: string;
+  items: Dependency[];
+  variant: "required" | "recommended";
+}) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/50 overflow-hidden h-full flex flex-col">
+      <div className="px-4 py-3 border-b border-border/60 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${iconColor}`} />
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <Badge variant="outline" className="text-[10px] font-mono ml-auto">
+            {items.length}
+          </Badge>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-0.5">{description}</p>
+      </div>
+      <div className="p-4 flex-1">
+        <DependencyItems items={items} variant={variant} />
+      </div>
+    </div>
   );
 }
 
@@ -49,33 +92,24 @@ export function DependencyList({ requirements, recommendations }: DependencyList
   return (
     <div className="grid md:grid-cols-2 gap-4">
       {requirements.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="h-4 w-4 text-blue-500" />
-              Required Dependencies
-            </CardTitle>
-            <CardDescription className="text-xs">These dependencies must be satisfied</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DependencyItems items={requirements} variant="required" />
-          </CardContent>
-        </Card>
+        <DependencyPanel
+          title="Required dependencies"
+          description="These must be satisfied for a valid config"
+          icon={Zap}
+          iconColor="text-brand"
+          items={requirements}
+          variant="required"
+        />
       )}
-
       {recommendations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Info className="h-4 w-4 text-amber-500" />
-              Recommendations
-            </CardTitle>
-            <CardDescription className="text-xs">Consider these optimizations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DependencyItems items={recommendations} variant="recommended" />
-          </CardContent>
-        </Card>
+        <DependencyPanel
+          title="Recommendations"
+          description="Optional improvements to consider"
+          icon={Info}
+          iconColor="text-amber-500"
+          items={recommendations}
+          variant="recommended"
+        />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CheckCircle2, Download } from "lucide-react";
+import { BarChart3, CheckCircle2, Download, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsData } from "@/components/analytics/hooks/use-analytics-data";
@@ -23,7 +23,7 @@ export function AnalyticsDashboard() {
   } = useAnalyticsData();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <AnalyticsHeader
         hasData={hasData}
         showDetailed={showDetailed}
@@ -33,42 +33,55 @@ export function AnalyticsDashboard() {
 
       <MetricsGrid analyticsData={analyticsData} />
 
-      {hasData && showDetailed && <PerformanceMetrics analyticsData={analyticsData} />}
-
-      {hasData && showDetailed && <UserMetrics analyticsData={analyticsData} />}
-
-      {hasData && analyticsData.popularCombinations.length > 0 && (
-        <PopularCombinations analyticsData={analyticsData} />
-      )}
-
       {!hasData && <NoDataState />}
 
-      {hasData && <TechnologyStats analyticsData={analyticsData} />}
+      {hasData && (
+        <>
+          {showDetailed && (
+            <div className="grid gap-6 xl:grid-cols-2">
+              <PerformanceMetrics analyticsData={analyticsData} />
+              <UserMetrics analyticsData={analyticsData} />
+            </div>
+          )}
 
-      {hasData && analyticsData.trends.length > 0 && (
-        <TrendingTechnologies analyticsData={analyticsData} />
+          {analyticsData.popularCombinations.length > 0 && (
+            <PopularCombinations analyticsData={analyticsData} />
+          )}
+
+          <TechnologyStats analyticsData={analyticsData} />
+
+          {analyticsData.trends.length > 0 && (
+            <TrendingTechnologies analyticsData={analyticsData} />
+          )}
+
+          <Alert className="border-brand/20 bg-brand/5">
+            <CheckCircle2 className="h-4 w-4 text-brand" />
+            <AlertDescription className="text-sm">
+              <strong>Analytics summary:</strong> Based on {analyticsData.totalProjects} generated projects with{" "}
+              {analyticsData.successRate}% success rate. Users save an average of {analyticsData.avgTimeSaved} hours
+              per project. All data is stored locally in your browser.
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <Button variant="outline" className="flex-1 gap-2 border-border/80 h-11">
+              <Download className="h-4 w-4" />
+              Export Analytics Report
+            </Button>
+            <Button className="flex-1 gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
+              <BarChart3 className="h-4 w-4" />
+              Generate Insights
+            </Button>
+          </div>
+        </>
       )}
 
-      {hasData && (
-        <Alert>
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription className="text-sm">
-            <strong>Analytics Summary:</strong> Based on {analyticsData.totalProjects} generated projects with {analyticsData.successRate}% success rate.
-            Users save an average of {analyticsData.avgTimeSaved} hours per project. All analytics data is stored locally in your browser for privacy.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {hasData && (
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex-1">
-            <Download className="h-4 w-4 mr-2" />
-            Export Analytics Report
-          </Button>
-          <Button className="flex-1">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Generate Insights
-          </Button>
+      {hasData && !showDetailed && (
+        <div className="rounded-2xl border border-brand/20 bg-brand/5 p-4 text-center">
+          <Sparkles className="h-4 w-4 text-brand mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">
+            Switch to <strong className="text-foreground">Detailed</strong> view for performance and engagement metrics.
+          </p>
         </div>
       )}
     </div>

@@ -41,7 +41,41 @@ export function getCategoryColor(category: string) {
     case "security":
       return "text-red-500";
     default:
-      return "text-gray-500";
+      return "text-brand";
+  }
+}
+
+export function getCategoryBgColor(category: string) {
+  switch (category) {
+    case "ci-cd":
+      return "bg-blue-500/10";
+    case "infrastructure":
+      return "bg-purple-500/10";
+    case "deployment":
+      return "bg-cyan-500/10";
+    case "observability":
+      return "bg-amber-500/10";
+    case "security":
+      return "bg-red-500/10";
+    default:
+      return "bg-brand/10";
+  }
+}
+
+export function getCategoryBarColor(category: string) {
+  switch (category) {
+    case "ci-cd":
+      return "bg-blue-500";
+    case "infrastructure":
+      return "bg-purple-500";
+    case "deployment":
+      return "bg-cyan-500";
+    case "observability":
+      return "bg-amber-500";
+    case "security":
+      return "bg-red-500";
+    default:
+      return "bg-brand";
   }
 }
 
