@@ -11,6 +11,7 @@ env:
   PYTHON_VERSION: '3.11'
 
 jobs:
+{% raw %}
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -139,3 +140,4 @@ jobs:
         # Add your deployment commands here
         kubectl set image deployment/${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}=${{ needs.build.outputs.image-tag }}
         kubectl rollout status deployment/${{ env.PROJECT_NAME }}
+{% endraw %}

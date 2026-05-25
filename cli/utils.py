@@ -4,6 +4,7 @@ CLI utility functions for DevOps Project Generator
 """
 
 import os
+import sys
 import json
 import datetime
 import logging
@@ -17,7 +18,20 @@ from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 logger = logging.getLogger(__name__)
-console = Console()
+
+
+def create_console() -> Console:
+    """Create a Rich console with UTF-8 support on Windows."""
+    if sys.platform == "win32":
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+    return Console(force_terminal=True, legacy_windows=False)
+
+
+console = create_console()
 
 
 def format_duration(seconds: float) -> str:

@@ -5,6 +5,7 @@ CLI interface for DevOps Project Generator
 
 import os
 import sys
+import shutil
 import logging
 import time
 import traceback
@@ -13,7 +14,6 @@ from typing import Optional, List, Dict, Any
 from contextlib import contextmanager
 
 import typer
-from rich.console import Console
 from rich.panel import Panel
 from rich.traceback import install
 from rich.table import Table
@@ -23,11 +23,20 @@ from .utils import (
     format_duration, format_file_size, calculate_project_stats,
     show_success_message, show_error_message, show_warning_message,
     show_progress_spinner, safe_execute, validate_project_name,
-    validate_output_path, safe_print
+    validate_output_path, safe_print, console,
 )
 from .commands import (
-    validate, info, health, cleanup, config, template as template_cmd, backup,
-    profile as profile_cmd, test, scan, multi_env
+    validate as validate_project,
+    info as project_info,
+    health as project_health,
+    cleanup as cleanup_project,
+    config as config_command,
+    template as template_cmd,
+    backup as backup_command,
+    profile as profile_cmd,
+    test as test_project,
+    scan as scan_project,
+    multi_env as multi_env_command,
 )
 
 # Install rich traceback for better error display
@@ -56,9 +65,6 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
-
-console = Console()
-
 
 @contextmanager
 def handle_cli_errors():
@@ -176,13 +182,6 @@ def init(
             console.print(f"[red]❌ Configuration error: {str(e)}[/red]")
             raise typer.Exit(1)
         
-        # Validate configuration
-        if not config.validate():
-            console.print("[red]❌ Invalid configuration. Please check your options.[/red]")
-            console.print("[yellow]💡 Use 'devops-project-generator list-options' to see valid choices[/yellow]")
-            logger.error("Invalid configuration provided")
-            raise typer.Exit(1)
-        
         # Check if project directory already exists
         project_path = output_path / config.project_name
         if project_path.exists():
@@ -216,7 +215,7 @@ def init(
             generation_time = time.time() - start_time
             
             # Calculate project statistics
-            project_stats = _calculate_project_stats(project_path)
+            project_stats = calculate_project_stats(project_path)
             
             # Display success message with statistics
             success_msg = (
@@ -523,7 +522,7 @@ def validate(
 ) -> None:
     """Validate a DevOps project structure and configuration"""
     with handle_cli_errors():
-        validate(project_path, fix)
+        validate_project(project_path, fix)
 
 
 @app.command()
@@ -540,7 +539,7 @@ def info(
 ) -> None:
     """Show detailed information and statistics about a DevOps project"""
     with handle_cli_errors():
-        info(project_path, detailed)
+        project_info(project_path, detailed)
 
 
 @app.command()
@@ -562,7 +561,7 @@ def health(
 ) -> None:
     """Perform comprehensive health check on DevOps project"""
     with handle_cli_errors():
-        health(project_path, detailed, fix)
+        project_health(project_path, detailed, fix)
 
 
 @app.command()
@@ -584,7 +583,7 @@ def cleanup(
 ) -> None:
     """Clean up a DevOps project and remove generated resources"""
     with handle_cli_errors():
-        cleanup(project_path, force, keep_config)
+        cleanup_project(project_path, force, keep_config)
 
 
 @app.command()
@@ -601,7 +600,7 @@ def config(
 ) -> None:
     """Manage project configuration files"""
     with handle_cli_errors():
-        config(action, config_file)
+        config_command(action, config_file)
 
 
 @app.command()
@@ -611,7 +610,7 @@ def test(
 ) -> None:
     """Run integration tests on generated project"""
     with handle_cli_errors():
-        test(project_path, verbose)
+        test_project(project_path, verbose)
 
 
 @app.command()
@@ -638,7 +637,7 @@ def scan(
 ) -> None:
     """Scan project dependencies and security vulnerabilities"""
     with handle_cli_errors():
-        scan(project_path, export, format, detailed)
+        scan_project(project_path, export, format, detailed)
 
 
 @app.command()
@@ -665,7 +664,7 @@ def multi_env(
 ) -> None:
     """Generate multi-environment configurations with inheritance"""
     with handle_cli_errors():
-        multi_env(project_path, environments, config_type, with_secrets)
+        multi_env_command(project_path, environments, config_type, with_secrets)
 
 
 @app.command()
@@ -696,7 +695,7 @@ def backup(
 ) -> None:
     """Create and restore project backups"""
     with handle_cli_errors():
-        backup(action, project_path, backup_file, include_config, compress)
+        backup_command(action, project_path, backup_file, include_config, compress)
 
 
 @app.command()
@@ -745,109 +744,6 @@ def version() -> None:
     except ImportError:
         __version__ = "1.6.0"
     console.print(f"[bold blue]DevOps Project Generator[/bold blue] v{__version__}")
-
-
-@app.command()
-def list_options() -> None:
-    """List all available options"""
-    from .utils import format_file_size
-    
-    console.print(Panel.fit(
-        "[bold blue]📋 Available Options[/bold blue]",
-        border_style="blue"
-    ))
-    
-    # Pipeline Framework Options
-    console.print("\n[bold]🔄 Pipeline Frameworks:[/bold]")
-    pipeline_table = Table()
-    pipeline_table.add_column("Option", style="cyan")
-    pipeline_table.add_column("Description")
-    pipeline_table.add_row("nodejs-typescript", "Node.js + TypeScript pipelines")
-    pipeline_table.add_row("python", "Python application pipelines")
-    pipeline_table.add_row("java-maven", "Enterprise Java pipelines")
-    pipeline_table.add_row("go", "Go application pipelines")
-    pipeline_table.add_row("docker-multistage", "Containerized application pipelines")
-    pipeline_table.add_row("terraform-module", "Infrastructure module pipelines")
-    pipeline_table.add_row("kubernetes-operator", "Kubernetes operator pipelines")
-    pipeline_table.add_row("microservice", "Microservice architecture pipelines")
-    console.print(pipeline_table)
-    
-    # CI/CD Options
-    console.print("\n[bold]🔄 CI/CD Platforms:[/bold]")
-    ci_table = Table()
-    ci_table.add_column("Option", style="cyan")
-    ci_table.add_column("Description")
-    ci_table.add_row("github-actions", "GitHub Actions workflows")
-    ci_table.add_row("gitlab-ci", "GitLab CI/CD pipelines")
-    ci_table.add_row("jenkins", "Jenkins pipeline files")
-    ci_table.add_row("azure-pipelines", "Azure DevOps pipelines")
-    ci_table.add_row("gitlab-runners", "GitLab Runners")
-    ci_table.add_row("none", "No CI/CD")
-    console.print(ci_table)
-    
-    # Infrastructure Options
-    console.print("\n[bold]☁️ Infrastructure Patterns:[/bold]")
-    infra_table = Table()
-    infra_table.add_column("Option", style="cyan")
-    infra_table.add_column("Description")
-    infra_table.add_row("aws-vpc-eks", "Amazon EKS with VPC networking")
-    infra_table.add_row("azure-vnet-aks", "Azure AKS with virtual networking")
-    infra_table.add_row("gcp-vpc-gke", "Google GKE with VPC networking")
-    infra_table.add_row("multicloud-terraform", "Cross-cloud infrastructure")
-    infra_table.add_row("kubernetes-onprem", "On-premises Kubernetes")
-    infra_table.add_row("aws-ecs-fargate", "Serverless container orchestration")
-    infra_table.add_row("ansible-automation", "Configuration management")
-    console.print(infra_table)
-    
-    # Deployment Options
-    console.print("\n[bold]🚀 Deployment Strategies:[/bold]")
-    deploy_table = Table()
-    deploy_table.add_column("Option", style="cyan")
-    deploy_table.add_column("Description")
-    deploy_table.add_row("blue-green", "Zero-downtime deployments")
-    deploy_table.add_row("canary", "Gradual rollout deployments")
-    deploy_table.add_row("rolling", "Incremental updates")
-    deploy_table.add_row("gitops-argocd", "Git-based continuous deployment")
-    deploy_table.add_row("helm-charts", "Kubernetes package management")
-    deploy_table.add_row("kustomize", "Kubernetes configuration management")
-    deploy_table.add_row("serverless-lambda", "AWS Lambda deployments")
-    console.print(deploy_table)
-    
-    # Environment Options
-    console.print("\n[bold]🌍 Environment Options:[/bold]")
-    env_table = Table()
-    env_table.add_column("Option", style="cyan")
-    env_table.add_column("Description")
-    env_table.add_row("single", "Single environment")
-    env_table.add_row("dev", "Development environment")
-    env_table.add_row("dev,stage,prod", "Multi-environment setup")
-    console.print(env_table)
-    
-    # Observability Options
-    console.print("\n[bold]📊 Observability Stacks:[/bold]")
-    obs_table = Table()
-    obs_table.add_column("Option", style="cyan")
-    obs_table.add_column("Description")
-    obs_table.add_row("prometheus-grafana", "Metrics and visualization")
-    obs_table.add_row("elk-stack", "Elasticsearch, Logstash, Kibana")
-    obs_table.add_row("datadog", "Full-stack monitoring")
-    obs_table.add_row("jaeger-prometheus", "Distributed tracing and metrics")
-    obs_table.add_row("cloudwatch", "AWS native monitoring")
-    obs_table.add_row("new-relic", "Application performance monitoring")
-    console.print(obs_table)
-    
-    # Security Options
-    console.print("\n[bold]🔒 Security Frameworks:[/bold]")
-    sec_table = Table()
-    sec_table.add_column("Option", style="cyan")
-    sec_table.add_column("Description")
-    sec_table.add_row("nist-csf", "NIST Cybersecurity Framework")
-    sec_table.add_row("cis-benchmarks", "Center for Internet Security controls")
-    sec_table.add_row("zero-trust", "Zero Trust Architecture")
-    sec_table.add_row("soc2", "Service Organization Control 2")
-    sec_table.add_row("gdpr", "General Data Protection Regulation")
-    sec_table.add_row("hipaa", "Health Insurance Portability and Accountability Act")
-    console.print(sec_table)
 
 
 if __name__ == "__main__":

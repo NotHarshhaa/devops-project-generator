@@ -89,10 +89,7 @@ class MultiEnvConfigGenerator:
             
             # Initialize environment config
             if env not in self.environments:
-                self.environments[env] = EnvironmentConfig(
-                    name=env,
-                    description=f"Configuration for {env} environment"
-                )
+                self.environments[env] = EnvironmentConfig(name=env)
         
         logger.info(f"Created environment directories: {environments}")
     
@@ -419,7 +416,7 @@ echo "✅ Deployment to $ENVIRONMENT completed successfully!"
                 "project_name": self.project_path.name,
                 "project_path": str(self.project_path),
                 "environments": list(self.environments.keys()),
-                "exported_at": datetime.datetime.now().isoformat(),
+                "exported_at": datetime.now().isoformat(),
                 "version": "1.6.0"
             }
             

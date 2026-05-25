@@ -4,6 +4,7 @@ Template rendering engine with optimized caching and async support
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -83,8 +84,8 @@ class TemplateRenderer:
         common_templates = [
             "README.md.j2",
             "Dockerfile.j2",
-            "docker-compose.yml.j2",
-            ".gitignore.j2",
+            "deploy/docker-compose.yml.j2",
+            "gitignore.j2",
             "Makefile.j2"
         ]
         

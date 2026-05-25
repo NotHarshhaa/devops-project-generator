@@ -100,12 +100,38 @@ class ProjectConfig:
     VALID_DEPLOY_OPTIONS = [option.value for option in DeployOption]
     VALID_OBS_OPTIONS = [option.value for option in ObservabilityOption]
     VALID_SEC_OPTIONS = [option.value for option in SecurityOption]
+    VALID_ENV_OPTIONS = ["single", "dev", "stage", "prod", "dev,stage,prod"]
+    DEFAULT_PIPELINE = "python"
+    DEFAULT_CI = "github-actions"
+    DEFAULT_INFRA = "aws-vpc-eks"
+    DEFAULT_DEPLOY = "rolling"
+    DEFAULT_ENVS = "single"
+    DEFAULT_OBSERVABILITY = "prometheus-grafana"
+    DEFAULT_SECURITY = "nist-csf"
     
     def __post_init__(self):
-        """Validate configuration after initialization"""
+        """Apply defaults and validate configuration after initialization"""
+        self.apply_defaults()
         self.validate()
     
-    def validate(self) -> None:
+    def apply_defaults(self) -> None:
+        """Fill unset options with sensible defaults"""
+        if not self.pipeline:
+            self.pipeline = self.DEFAULT_PIPELINE
+        if not self.ci:
+            self.ci = self.DEFAULT_CI
+        if not self.infra:
+            self.infra = self.DEFAULT_INFRA
+        if not self.deploy:
+            self.deploy = self.DEFAULT_DEPLOY
+        if not self.envs:
+            self.envs = self.DEFAULT_ENVS
+        if not self.observability:
+            self.observability = self.DEFAULT_OBSERVABILITY
+        if not self.security:
+            self.security = self.DEFAULT_SECURITY
+    
+    def validate(self) -> bool:
         """Validate configuration using modular validation utilities"""
         errors = []
         
@@ -127,7 +153,7 @@ class ProjectConfig:
         if self.deploy and self.deploy not in self.VALID_DEPLOY_OPTIONS:
             errors.append(f"Invalid deployment option: {self.deploy}")
         
-        if self.envs and self.envs not in ["single", "dev", "dev,stage,prod"]:
+        if self.envs and not self._is_valid_envs(self.envs):
             errors.append(f"Invalid environment option: {self.envs}")
         
         if self.observability and self.observability not in self.VALID_OBS_OPTIONS:
@@ -138,6 +164,18 @@ class ProjectConfig:
         
         if errors:
             raise ValueError(f"Configuration validation failed:\n" + "\n".join(f"  - {error}" for error in errors))
+        
+        return True
+    
+    @staticmethod
+    def _is_valid_envs(envs: str) -> bool:
+        """Validate environment configuration string"""
+        if envs in ProjectConfig.VALID_ENV_OPTIONS:
+            return True
+        if "," in envs:
+            parts = [part.strip() for part in envs.split(",")]
+            return all(part in ("dev", "stage", "prod") for part in parts)
+        return False
     
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> 'ProjectConfig':
@@ -169,13 +207,13 @@ class ProjectConfig:
         """Get template context with all configuration variables"""
         context = {
             'project_name': self.project_name,
-            'pipeline': self.pipeline or 'python',
-            'ci': self.ci or 'github-actions',
-            'infra': self.infra or 'aws-vpc-eks',
-            'deploy': self.deploy or 'docker',
-            'envs': self.envs or 'single',
-            'observability': self.observability or 'logs',
-            'security': self.security or 'basic',
+            'pipeline': self.pipeline or self.DEFAULT_PIPELINE,
+            'ci': self.ci or self.DEFAULT_CI,
+            'infra': self.infra or self.DEFAULT_INFRA,
+            'deploy': self.deploy or self.DEFAULT_DEPLOY,
+            'envs': self.envs or self.DEFAULT_ENVS,
+            'observability': self.observability or self.DEFAULT_OBSERVABILITY,
+            'security': self.security or self.DEFAULT_SECURITY,
             'generated_at': datetime.datetime.now().isoformat(),
             'generator_version': '1.6.0'
         }
@@ -185,8 +223,8 @@ class ProjectConfig:
             'ci_enabled': self.ci != 'none',
             'infra_enabled': self.infra is not None,
             'multi_env': self.envs != 'single',
-            'monitoring_enabled': self.observability not in ['logs', 'none'],
-            'security_enabled': self.security != 'basic'
+            'monitoring_enabled': bool(self.observability),
+            'security_enabled': bool(self.security)
         })
         
         return context
@@ -208,15 +246,15 @@ class ProjectConfig:
     
     def get_deploy_strategy(self) -> str:
         """Get deployment strategy"""
-        return self.deploy or 'docker'
+        return self.deploy or self.DEFAULT_DEPLOY
     
     def has_monitoring(self) -> bool:
         """Check if monitoring is configured"""
-        return self.observability not in ['logs', 'none']
+        return bool(self.observability)
     
     def has_security_compliance(self) -> bool:
         """Check if security compliance is configured"""
-        return self.security not in ['basic']
+        return bool(self.security)
     
     def is_multi_environment(self) -> bool:
         """Check if multi-environment setup"""
@@ -321,12 +359,13 @@ def get_default_config() -> ProjectConfig:
     """Get default project configuration"""
     return ProjectConfig(
         project_name="my-devops-project",
-        ci="github-actions",
-        infra="aws-vpc-eks",
-        deploy="docker",
-        envs="single",
-        observability="logs",
-        security="basic"
+        pipeline=ProjectConfig.DEFAULT_PIPELINE,
+        ci=ProjectConfig.DEFAULT_CI,
+        infra=ProjectConfig.DEFAULT_INFRA,
+        deploy=ProjectConfig.DEFAULT_DEPLOY,
+        envs=ProjectConfig.DEFAULT_ENVS,
+        observability=ProjectConfig.DEFAULT_OBSERVABILITY,
+        security=ProjectConfig.DEFAULT_SECURITY,
     )
 
 

@@ -186,10 +186,10 @@ class DevOpsProjectGenerator:
         if self.config.ci != "none":
             directories.extend([f"ci/{self.config.ci}"])
         
-        if self.config.infra != "none":
+        if self.config.infra:
             directories.extend([f"infra/{self.config.infra}"])
         
-        if self.config.deploy != "vm":
+        if self.config.deploy:
             directories.extend([f"deploy/{self.config.deploy}"])
         
         # Add directories to structure manager
@@ -202,6 +202,8 @@ class DevOpsProjectGenerator:
         if results["failed"] > 0:
             logger.warning(f"Failed to create {results['failed']} directories")
         
+        self.structure_manager.clear_operations()
+        
         self.performance.end_timer("structure_creation")
     
     def _render_templates(self) -> None:
@@ -210,6 +212,12 @@ class DevOpsProjectGenerator:
         
         # Get template configurations based on project config
         template_configs = self._get_template_configurations()
+        
+        # Resolve outputs under the project directory
+        template_configs = [
+            {**config, "output": str(self.project_path / config["output"])}
+            for config in template_configs
+        ]
         
         # Get base template variables
         base_variables = self.config.get_template_context()
@@ -227,68 +235,170 @@ class DevOpsProjectGenerator:
         
         self.performance.end_timer("template_rendering")
     
+    def _template_dir(self) -> Path:
+        return Path(__file__).parent.parent / "templates"
+
+    def _template_exists(self, template: str) -> bool:
+        return (self._template_dir() / template).exists()
+
+    def _resolve_templates(
+        self, candidates: List[tuple[str, str]], variables: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Return template configs for the first existing template in each candidate group."""
+        resolved: List[Dict[str, Any]] = []
+        for template, output in candidates:
+            if self._template_exists(template):
+                resolved.append({
+                    "template": template,
+                    "output": output,
+                    "variables": variables or {},
+                })
+                break
+        return resolved
+
     def _get_template_configurations(self) -> List[Dict[str, Any]]:
         """Get template configurations based on project settings"""
-        templates = []
-        
+        templates: List[Dict[str, Any]] = []
+
         # Core templates
         templates.extend([
-            {
-                'template': 'README.md.j2',
-                'output': 'README.md',
-                'variables': {}
-            },
-            {
-                'template': '.gitignore.j2',
-                'output': '.gitignore',
-                'variables': {}
-            },
-            {
-                'template': 'Makefile.j2',
-                'output': 'Makefile',
-                'variables': {}
-            }
+            {"template": "README.md.j2", "output": "README.md", "variables": {}},
+            {"template": "gitignore.j2", "output": ".gitignore", "variables": {}},
+            {"template": "Makefile.j2", "output": "Makefile", "variables": {}},
         ])
-        
+
+        # Pipeline templates
+        pipeline_candidates = {
+            "python": [("pipelines/python.yml.j2", "ci/pipeline.yml")],
+            "nodejs-typescript": [
+                ("pipelines/nodejs-typescript.yml.j2", "ci/pipeline.yml"),
+                ("pipelines/nodejs-typescript-simple.yml.j2", "ci/pipeline.yml"),
+            ],
+            "java-maven": [("pipelines/python.yml.j2", "ci/pipeline.yml")],
+            "go": [("pipelines/python.yml.j2", "ci/pipeline.yml")],
+            "docker-multistage": [("deploy/Dockerfile.j2", "Dockerfile")],
+            "terraform-module": [("terraform/main.tf.j2", "infra/main.tf")],
+            "kubernetes-operator": [("deploy/k8s-deployment.yml.j2", "deploy/operator/deployment.yml")],
+            "microservice": [("pipelines/python.yml.j2", "ci/pipeline.yml")],
+        }
+        templates.extend(
+            self._resolve_templates(
+                pipeline_candidates.get(self.config.pipeline, []),
+                {"pipeline": self.config.pipeline},
+            )
+        )
+
         # CI/CD templates
         if self.config.ci != "none":
-            templates.append({
-                'template': f'ci/{self.config.ci}/pipeline.yml.j2',
-                'output': f'ci/{self.config.ci}/pipeline.yml',
-                'variables': {'ci_platform': self.config.ci}
-            })
-        
+            ci_candidates = {
+                "github-actions": [("ci/github-actions.yml.j2", "ci/github-actions.yml")],
+                "gitlab-ci": [("ci/gitlab-ci.yml.j2", "ci/gitlab-ci.yml")],
+                "jenkins": [("ci/jenkinsfile.j2", "ci/Jenkinsfile")],
+                "azure-pipelines": [("ci/github-actions.yml.j2", "ci/azure-pipelines.yml")],
+                "gitlab-runners": [("ci/gitlab-ci.yml.j2", "ci/gitlab-runners.yml")],
+            }
+            templates.extend(
+                self._resolve_templates(
+                    ci_candidates.get(self.config.ci, []),
+                    {"ci_platform": self.config.ci},
+                )
+            )
+
         # Infrastructure templates
-        if self.config.infra != "none":
-            templates.append({
-                'template': f'infra/{self.config.infra}/main.tf.j2',
-                'output': f'infra/{self.config.infra}/main.tf',
-                'variables': {'infra_type': self.config.infra}
-            })
-        
+        if self.config.infra:
+            infra_candidates = {
+                "aws-vpc-eks": [("infrastructure/aws-vpc-eks.tf.j2", f"infra/{self.config.infra}/main.tf")],
+                "aws-ecs-fargate": [("terraform/main.tf.j2", f"infra/{self.config.infra}/main.tf")],
+                "multicloud-terraform": [("terraform/main.tf.j2", f"infra/{self.config.infra}/main.tf")],
+                "azure-vnet-aks": [("terraform/main.tf.j2", f"infra/{self.config.infra}/main.tf")],
+                "gcp-vpc-gke": [("terraform/main.tf.j2", f"infra/{self.config.infra}/main.tf")],
+                "kubernetes-onprem": [("terraform/main.tf.j2", f"infra/{self.config.infra}/main.tf")],
+                "ansible-automation": [("infra/environment-terraform.j2", f"infra/{self.config.infra}/main.tf")],
+            }
+            infra_templates = self._resolve_templates(
+                infra_candidates.get(self.config.infra, [("terraform/main.tf.j2", f"infra/{self.config.infra}/main.tf")]),
+                {"infra_type": self.config.infra},
+            )
+            templates.extend(infra_templates)
+            if infra_templates and self._template_exists("terraform/variables.tf.j2"):
+                templates.append({
+                    "template": "terraform/variables.tf.j2",
+                    "output": f"infra/{self.config.infra}/variables.tf",
+                    "variables": {"infra_type": self.config.infra},
+                })
+            if infra_templates and self._template_exists("terraform/outputs.tf.j2"):
+                templates.append({
+                    "template": "terraform/outputs.tf.j2",
+                    "output": f"infra/{self.config.infra}/outputs.tf",
+                    "variables": {"infra_type": self.config.infra},
+                })
+
         # Deployment templates
-        if self.config.deploy != "vm":
-            templates.append({
-                'template': f'deploy/{self.config.deploy}/deployment.yml.j2',
-                'output': f'deploy/{self.config.deploy}/deployment.yml',
-                'variables': {'deploy_type': self.config.deploy}
-            })
-        
+        if self.config.deploy:
+            deploy_candidates = {
+                "blue-green": [("deployments/blue-green.yaml.j2", f"deploy/{self.config.deploy}/deployment.yaml")],
+                "canary": [("deploy/k8s-deployment.yml.j2", f"deploy/{self.config.deploy}/deployment.yml")],
+                "rolling": [("deploy/k8s-deployment.yml.j2", f"deploy/{self.config.deploy}/deployment.yml")],
+                "gitops-argocd": [("deploy/k8s-deployment.yml.j2", f"deploy/{self.config.deploy}/deployment.yml")],
+                "helm-charts": [("deploy/k8s-deployment.yml.j2", f"deploy/{self.config.deploy}/deployment.yml")],
+                "kustomize": [("deploy/k8s-overlay.yml.j2", f"deploy/{self.config.deploy}/kustomization.yml")],
+                "serverless-lambda": [("cloudformation/template.yml.j2", f"deploy/{self.config.deploy}/template.yml")],
+            }
+            templates.extend(
+                self._resolve_templates(
+                    deploy_candidates.get(self.config.deploy, []),
+                    {"deploy_type": self.config.deploy},
+                )
+            )
+
         # Application templates
         templates.extend([
-            {
-                'template': 'app/main.py.j2',
-                'output': 'app/main.py',
-                'variables': {}
-            },
-            {
-                'template': 'app/requirements.txt.j2',
-                'output': 'app/requirements.txt',
-                'variables': {}
-            }
+            {"template": "app/sample-app/main.py.j2", "output": "app/main.py", "variables": {}},
+            {"template": "app/sample-app/requirements.txt.j2", "output": "app/requirements.txt", "variables": {}},
         ])
-        
-        return templates
+
+        # Observability templates
+        if self.config.observability:
+            obs_candidates = {
+                "prometheus-grafana": [
+                    ("monitoring/prometheus.yml.j2", "monitoring/prometheus.yml"),
+                    ("monitoring/metrics.yml.j2", "monitoring/metrics.yml"),
+                ],
+                "elk-stack": [("monitoring/logging.yml.j2", "monitoring/logging.yml")],
+                "datadog": [("monitoring/metrics.yml.j2", "monitoring/datadog.yml")],
+                "jaeger-prometheus": [
+                    ("monitoring/prometheus.yml.j2", "monitoring/prometheus.yml"),
+                    ("monitoring/metrics.yml.j2", "monitoring/tracing.yml"),
+                ],
+                "cloudwatch": [("monitoring/logging.yml.j2", "monitoring/cloudwatch.yml")],
+                "new-relic": [("monitoring/metrics.yml.j2", "monitoring/new-relic.yml")],
+            }
+            for template, output in obs_candidates.get(self.config.observability, []):
+                if self._template_exists(template):
+                    templates.append({
+                        "template": template,
+                        "output": output,
+                        "variables": {"observability": self.config.observability},
+                    })
+
+        # Security templates
+        if self.config.security:
+            sec_candidates = {
+                "nist-csf": [("security/nist-csf.yaml.j2", "security/nist-csf.yaml")],
+                "cis-benchmarks": [("security/standard-scan.yml.j2", "security/cis-scan.yml")],
+                "zero-trust": [("security/security-policy.yml.j2", "security/zero-trust-policy.yml")],
+                "soc2": [("security/compliance.yml.j2", "security/soc2-compliance.yml")],
+                "gdpr": [("security/compliance.yml.j2", "security/gdpr-compliance.yml")],
+                "hipaa": [("security/strict-scan.yml.j2", "security/hipaa-scan.yml")],
+            }
+            templates.extend(
+                self._resolve_templates(
+                    sec_candidates.get(self.config.security, []),
+                    {"security": self.config.security},
+                )
+            )
+
+        return [t for t in templates if self._template_exists(t["template"])]
     
     def _setup_configuration_files(self) -> None:
         """Setup project configuration files"""
@@ -316,6 +426,8 @@ class DevOpsProjectGenerator:
         
         if results["failed"] > 0:
             logger.warning(f"Failed to create {results['failed']} configuration files")
+        
+        self.structure_manager.clear_operations()
         
         self.performance.end_timer("config_setup")
     
@@ -379,6 +491,16 @@ class DevOpsProjectGenerator:
                     'logging_level': 'WARN'
                 }
             })
+        else:
+            env_name = {
+                "dev": "development",
+                "stage": "staging",
+                "prod": "production",
+            }.get(self.config.envs, self.config.envs)
+            environments[env_name] = {
+                'debug': self.config.envs == "dev",
+                'logging_level': 'DEBUG' if self.config.envs == "dev" else 'INFO'
+            }
         
         return yaml.dump({'environments': environments}, default_flow_style=False, indent=2)
     
@@ -436,6 +558,8 @@ class DevOpsProjectGenerator:
         if results["failed"] > 0:
             logger.warning(f"Failed to create {results['failed']} scripts/docs")
         
+        self.structure_manager.clear_operations()
+        
         self.performance.end_timer("scripts_docs_creation")
     
     def _generate_setup_script(self) -> str:
@@ -482,17 +606,15 @@ echo "🧪 Running tests..."
 
 # Deploy based on strategy
 case "{self.config.deploy}" in
-    "kubernetes")
-        echo "☸️  Deploying to Kubernetes..."
+    "serverless-lambda")
+        echo "Deploying serverless stack..."
+        ;;
+    "blue-green"|"canary"|"rolling"|"gitops-argocd"|"helm-charts"|"kustomize")
+        echo "Deploying to Kubernetes..."
         kubectl apply -f deploy/
         ;;
-    "docker")
-        echo "🐳 Building and deploying Docker containers..."
-        docker-compose -f docker/docker-compose.yml up -d
-        ;;
     *)
-        echo "🖥️  Deploying to VM..."
-        ./scripts/setup.sh
+        echo "Running deployment..."
         ;;
 esac
 

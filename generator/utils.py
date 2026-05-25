@@ -182,26 +182,26 @@ class ValidationUtils:
     def validate_output_path(path: Path) -> tuple[bool, List[str]]:
         """Validate output path for project generation"""
         errors = []
-        
-        if not path.parent.exists():
-            errors.append(f"Parent directory does not exist: {path.parent}")
-        
+
         if path.exists() and not path.is_dir():
             errors.append(f"Path exists but is not a directory: {path}")
-        
-        if path.exists():
-            # Check if directory is empty
-            if any(path.iterdir()):
-                errors.append(f"Directory is not empty: {path}")
-        
-        # Check write permissions
+            return False, errors
+
+        if path.exists() and any(path.iterdir()):
+            errors.append(f"Directory is not empty: {path}")
+
+        write_target = path if path.exists() else path.parent
+        if not write_target.exists():
+            errors.append(f"Parent directory does not exist: {path.parent}")
+            return len(errors) == 0, errors
+
         try:
-            test_file = path / ".write_test"
+            test_file = write_target / ".write_test"
             test_file.touch()
             test_file.unlink()
         except Exception:
-            errors.append(f"No write permission for directory: {path}")
-        
+            errors.append(f"No write permission for directory: {write_target}")
+
         return len(errors) == 0, errors
 
 
