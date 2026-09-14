@@ -1,79 +1,85 @@
 import Image from "next/image";
-import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AUTHOR_STATS, AUTHOR_SOCIAL_LINKS } from "../data/landing-content";
 import { SectionHeader } from "./section-header";
 
 export function AuthorSection() {
   return (
-    <section className="border-y border-border/60 bg-muted/10">
-      <div className="container mx-auto max-w-7xl px-4 py-16 sm:py-24">
+    <section className="border-y-2 border-foreground bg-background py-20 sm:py-28">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeader
-          badge={
-            <>
-              <Heart className="h-3 w-3" />
-              Meet the Creator
-            </>
-          }
-          title={
-            <>
-              Built by a <span className="text-brand-gradient">passionate engineer</span>
-            </>
-          }
+          badge="AUTHORIAL STATEMENT"
+          title="Designed for Engineers by Engineers"
+          description="A solo pursuit in distilling cloud architecture into concise, reproducible, production-ready code."
         />
 
-        <div className="max-w-2xl mx-auto">
-          <div className="rounded-2xl border border-border/60 glass-panel overflow-hidden">
-            <div className="relative px-5 sm:px-8 pt-6 sm:pt-8 pb-6 sm:pb-8">
-              <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
+        <div className="max-w-3xl mx-auto border-2 border-foreground bg-card p-6 sm:p-10 relative">
+          {/* Bold Choice #6: Editorial Pull Quote with Oversized Quotation Marks */}
+          <div className="relative mb-8 pb-8 border-b border-foreground/20">
+            <span className="font-display text-7xl sm:text-8xl text-foreground/20 leading-none absolute -top-8 -left-3 select-none pointer-events-none">
+              “
+            </span>
+            <blockquote className="relative z-10 font-serif italic text-lg sm:text-2xl text-foreground leading-relaxed pl-6">
+              True elegance in cloud architecture is not how many components you can add, but how much friction and bloat you can eliminate.
+            </blockquote>
+          </div>
 
-              <div className="relative flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
-                <div className="shrink-0">
-                  <div className="relative">
-                    <Image
-                      src="https://github.com/notharshhaa.png"
-                      alt="H A R S H H A A"
-                      width={96}
-                      height={96}
-                      className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-2 border-brand/30 shadow-lg object-cover brand-glow"
-                    />
-                  </div>
-                </div>
-                <div className="pb-1">
-                  <h3 className="text-lg sm:text-xl font-bold tracking-wide">H A R S H H A A</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-                    Development Platform &amp; Automation Enthusiast | Cloud, DevOps &amp; MLops Engineer |
-                    Platform Engineering
-                  </p>
-                </div>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
+            {/* Bold Choice #14: Image Borders Thicken & Grayscale to Scale on Hover */}
+            <div className="group/avatar shrink-0">
+              <div className="border-2 border-foreground group-hover/avatar:border-4 transition-all duration-100 overflow-hidden bg-background">
+                <Image
+                  src="https://github.com/notharshhaa.png"
+                  alt="H A R S H H A A"
+                  width={112}
+                  height={112}
+                  className="h-24 w-24 sm:h-28 sm:w-28 grayscale transition-all duration-300 group-hover/avatar:scale-105 group-hover/avatar:grayscale-0 object-cover"
+                />
               </div>
+            </div>
 
-              <div className="relative grid grid-cols-3 gap-3 sm:gap-4 my-6 sm:my-8">
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="font-display font-bold text-2xl tracking-wide text-foreground">
+                H A R S H H A A
+              </h3>
+              <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mt-1">
+                PLATFORM ARCHITECT &amp; SYSTEMS AUTOMATION
+              </p>
+              <p className="font-serif text-sm text-foreground/80 mt-3 leading-relaxed">
+                Platform Engineering specialist focused on declarative infrastructure, Kubernetes ecosystems, and developer tooling.
+              </p>
+
+              {/* Stats Inversion Row */}
+              <div className="grid grid-cols-3 gap-3 my-6">
                 {AUTHOR_STATS.map((stat) => (
                   <div
                     key={stat.label}
-                    className="text-center rounded-xl border border-border/60 bg-background/50 p-3 sm:p-4"
+                    className="group/stat border border-foreground bg-background p-3 text-center transition-colors duration-100 hover:bg-foreground hover:text-background"
                   >
-                    <div className="text-lg sm:text-2xl font-bold font-mono text-brand">{stat.value}</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{stat.sub}</div>
+                    <div className="text-xl sm:text-2xl font-display font-bold">
+                      {stat.value}
+                    </div>
+                    <div className="text-[9px] font-mono uppercase tracking-wider opacity-70 mt-0.5">
+                      {stat.sub}
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="relative flex flex-wrap gap-2 sm:gap-3">
+              {/* Social Links */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                 {AUTHOR_SOCIAL_LINKS.map((link) => {
                   const Icon = link.icon;
-                  const isPrimary = link.variant === "default";
                   return (
                     <Button
                       key={link.href}
                       asChild
-                      variant={link.variant ?? "outline"}
+                      variant="outline"
                       size="sm"
-                      className={`gap-1.5 ${isPrimary ? "bg-brand hover:bg-brand/90 text-brand-foreground" : "border-border/80"}`}
+                      className="font-mono text-[11px] uppercase tracking-wider gap-2 h-9"
                     >
                       <a href={link.href} target="_blank" rel="noopener noreferrer">
-                        <Icon className="h-3.5 w-3.5" />
+                        <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
                         {link.label}
                       </a>
                     </Button>

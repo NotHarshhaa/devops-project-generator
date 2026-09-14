@@ -21,8 +21,8 @@ export function ThemeToggle() {
 
   const getThemeIcon = () => {
     if (!mounted) return <div className="h-4 w-4" />;
-    if (theme === "system") return <Monitor className="h-4 w-4" />;
-    return theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />;
+    if (theme === "system") return <Monitor className="h-4 w-4" strokeWidth={1.5} />;
+    return theme === "dark" ? <Moon className="h-4 w-4" strokeWidth={1.5} /> : <Sun className="h-4 w-4" strokeWidth={1.5} />;
   };
 
   const getThemeLabel = () => {
@@ -36,7 +36,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="rounded-full"
+      className="rounded-none border border-foreground/40 hover:border-foreground transition-colors duration-100"
       title={mounted ? `Current: ${getThemeLabel()}. Click to cycle themes.` : "Loading theme..."}
     >
       {getThemeIcon()}

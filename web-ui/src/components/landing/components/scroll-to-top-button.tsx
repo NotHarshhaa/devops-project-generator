@@ -14,11 +14,11 @@ export function ScrollToTopButton({ visible, onClick }: ScrollToTopButtonProps) 
   return (
     <Button
       onClick={onClick}
-      size="sm"
-      className="fixed bottom-8 right-8 h-11 w-11 rounded-full shadow-lg bg-brand hover:bg-brand/90 text-brand-foreground transition-all duration-300 z-50 brand-glow"
+      size="icon"
+      className="fixed bottom-6 right-6 h-10 w-10 rounded-none border-2 border-foreground bg-foreground text-background hover:bg-background hover:text-foreground transition-colors duration-100 z-50 shadow-none cursor-pointer"
       aria-label="Scroll to top"
     >
-      <ChevronUp className="h-4 w-4" />
+      <ChevronUp className="h-4 w-4" strokeWidth={1.5} />
     </Button>
   );
 }

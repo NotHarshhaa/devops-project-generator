@@ -5,39 +5,61 @@ import { APP_VERSION, GITHUB_REPO } from "../data/landing-content";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 glass-panel !rounded-none !shadow-none">
-      <div className="container mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <a href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80 min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground brand-glow">
-            <Rocket className="h-4 w-4" />
+    <header className="sticky top-0 z-50 border-b border-foreground bg-background/95">
+      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <a href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-foreground text-background border border-foreground">
+            <Rocket className="h-4 w-4" strokeWidth={1.5} />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-bold leading-none tracking-tight truncate">
-              DevOps Project Generator
+            <span className="font-display text-sm sm:text-base font-bold leading-none tracking-tight truncate">
+              DEVOPS ARCHITECT
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono leading-tight">{APP_VERSION}</span>
+            <span className="text-[10px] text-muted-foreground font-mono tracking-widest uppercase mt-0.5">
+              {APP_VERSION} · MANIFEST GENERATOR
+            </span>
           </div>
         </a>
 
-        <nav className="hidden md:flex items-center gap-6 text-xs text-muted-foreground">
-          <a href="#generator-section" className="hover:text-brand transition-colors">
+        <nav className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-widest">
+          <a
+            href="#generator-section"
+            className="hover:underline underline-offset-4 decoration-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+          >
             Workspace
           </a>
-          <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer" className="hover:text-brand transition-colors">
-            GitHub
+          <a
+            href="#features-section"
+            className="hover:underline underline-offset-4 decoration-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+          >
+            Capabilities
+          </a>
+          <a
+            href="#output-section"
+            className="hover:underline underline-offset-4 decoration-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+          >
+            Specification
+          </a>
+          <a
+            href={GITHUB_REPO}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline underline-offset-4 decoration-1 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+          >
+            Repository
           </a>
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm" className="gap-1.5 border-border/80 hidden sm:flex">
+        <div className="flex items-center gap-2.5">
+          <Button asChild variant="outline" size="sm" className="hidden sm:flex gap-2">
             <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
-              <Github className="h-3.5 w-3.5" />
+              <Github className="h-3.5 w-3.5" strokeWidth={1.5} />
               GitHub
             </a>
           </Button>
-          <Button asChild size="sm" className="gap-1.5 bg-brand hover:bg-brand/90 text-brand-foreground sm:hidden">
-            <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
-              <Github className="h-3.5 w-3.5" />
+          <Button asChild variant="outline" size="icon-sm" className="sm:hidden">
+            <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository">
+              <Github className="h-4 w-4" strokeWidth={1.5} />
             </a>
           </Button>
           <ThemeToggle />

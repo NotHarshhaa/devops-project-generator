@@ -1,64 +1,72 @@
-import { FolderTree } from "lucide-react";
 import { OUTPUT_HIGHLIGHTS, PROJECT_STRUCTURE } from "../data/landing-content";
 import { SectionHeader } from "./section-header";
 
 export function GeneratedOutputSection() {
   return (
-    <section className="container mx-auto max-w-7xl px-4 py-16 sm:py-24">
+    <section id="output-section" className="container mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
       <SectionHeader
-        badge={
-          <>
-            <FolderTree className="h-3 w-3" />
-            Generated Output
-          </>
-        }
-        title={
-          <>
-            What you <span className="text-brand-gradient">get</span>
-          </>
-        }
-        description="A complete, well-organized project structure following industry best practices."
+        badge="ARTIFACT STRUCTURE"
+        title="Predictable Repository Tree"
+        description="A completely configured, self-documenting repository structure. Ready for immediate version control and automated execution."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-        <div className="rounded-2xl border border-border/60 overflow-hidden shadow-lg dark:brand-glow">
-          <div className="terminal-panel-header px-4 py-3 flex items-center gap-2">
-            <div className="flex gap-1.5">
-              <div className="h-3 w-3 rounded-full bg-red-500/70" />
-              <div className="h-3 w-3 rounded-full bg-amber-500/70" />
-              <div className="h-3 w-3 rounded-full bg-emerald-500/70" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Sharp File Tree Terminal */}
+        <div className="lg:col-span-7 border-2 border-foreground bg-background">
+          <div className="px-4 py-3 border-b-2 border-foreground bg-muted flex items-center justify-between font-mono text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 border border-foreground bg-foreground" />
+              <div className="w-2.5 h-2.5 border border-foreground bg-background" />
+              <div className="w-2.5 h-2.5 border border-foreground bg-muted-foreground/40" />
+              <span className="font-bold tracking-wider ml-1">repository-hierarchy</span>
             </div>
-            <span className="text-[11px] font-mono text-muted-foreground ml-2">project-structure</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">SCANNED</span>
           </div>
-          <div className="terminal-panel p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed">
-            <div className="text-brand font-semibold mb-2">my-devops-project/</div>
+
+          <div className="p-5 font-mono text-xs sm:text-sm leading-relaxed bg-background">
+            <div className="font-bold text-foreground mb-3 pb-1 border-b border-foreground/15 flex items-center justify-between">
+              <span>my-devops-project/</span>
+              <span className="text-[10px] text-muted-foreground uppercase">ROOT DIRECTORY</span>
+            </div>
             {PROJECT_STRUCTURE.map((item) => (
-              <div key={item.name} className="flex items-center gap-2 py-0.5">
-                <span className="select-none shrink-0">
-                  {"\u00A0".repeat(item.indent * 3)}
+              <div key={item.name} className="flex items-center gap-2 py-0.5 group">
+                <span className="select-none shrink-0 opacity-40">
+                  {"\u00A0\u00A0".repeat(item.indent)}
                   {item.icon}
                 </span>
-                <span className="terminal-accent font-medium">{item.name}</span>
-                <span className="terminal-dim text-[10px] hidden sm:inline truncate">— {item.desc}</span>
+                <span className="font-medium text-foreground underline-offset-2 group-hover:underline">
+                  {item.name}
+                </span>
+                <span className="text-muted-foreground text-[11px] hidden sm:inline truncate opacity-70">
+                  — {item.desc}
+                </span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="space-y-3 sm:space-y-4">
-          {OUTPUT_HIGHLIGHTS.map((item) => (
+        {/* Right Column: Editorial Highlight Cards */}
+        <div className="lg:col-span-5 space-y-4">
+          {OUTPUT_HIGHLIGHTS.map((item, idx) => (
             <div
               key={item.title}
-              className="flex gap-4 rounded-2xl border border-border/60 bg-card/50 p-4 sm:p-5 transition-all hover:border-brand/30 hover:shadow-sm"
+              className="group flex gap-4 border border-foreground bg-card p-5 transition-colors duration-100 hover:bg-foreground hover:text-background"
             >
-              <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${item.bg} border border-border/40`}
-              >
-                <item.icon className={`h-5 w-5 ${item.color}`} />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-foreground group-hover:border-background bg-background group-hover:bg-foreground">
+                <item.icon className="h-4 w-4 text-foreground group-hover:text-background" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-semibold text-sm mb-1">{item.title}</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-display font-bold text-base mb-1">
+                    {item.title}
+                  </h4>
+                  <span className="font-mono text-[10px] opacity-50">
+                    [0{idx + 1}]
+                  </span>
+                </div>
+                <p className="font-serif text-xs sm:text-sm opacity-80 leading-relaxed">
+                  {item.description}
+                </p>
               </div>
             </div>
           ))}
