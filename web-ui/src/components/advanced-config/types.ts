@@ -9,6 +9,8 @@ export interface Dependency {
   type: DependencyType;
   reason: string;
   fix?: string;
+  fixAction?: Partial<ProjectConfig>;
+  actionLabel?: string;
   impact?: ImpactLevel;
 }
 

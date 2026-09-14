@@ -24,7 +24,7 @@ const tabs: { value: WorkspaceTab; icon: typeof Rocket; label: string; shortLabe
 ];
 
 export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionProps) {
-  const { config } = useConfig();
+  const { config, updateConfig } = useConfig();
 
   return (
     <main id="generator-section" className="container mx-auto max-w-7xl px-3 sm:px-4 pb-12 sm:pb-20 scroll-mt-16">
@@ -56,7 +56,11 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
             <ProjectGenerator />
           </TabsContent>
           <TabsContent value="config" className="mt-0">
-            <AdvancedConfigBuilder config={config} onNavigateToGenerator={() => onTabChange("generator")} />
+            <AdvancedConfigBuilder
+              config={config}
+              onConfigChange={updateConfig}
+              onNavigateToGenerator={() => onTabChange("generator")}
+            />
           </TabsContent>
           <TabsContent value="cost" className="mt-0">
             <CostOptimizer config={config} />

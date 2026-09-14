@@ -1,8 +1,9 @@
 "use client";
 
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calculator, Target, DollarSign, Sparkles } from "lucide-react";
+import { Calculator, Target, DollarSign, Sparkles, FileSpreadsheet } from "lucide-react";
 import { saveAs } from "file-saver";
 import { CostOptimizerProps } from "./types";
 import { useCostAnalysis } from "./hooks/use-cost-analysis";
@@ -61,6 +62,38 @@ export function CostOptimizer({ config }: CostOptimizerProps) {
 
     const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
     saveAs(blob, `${config.projectName || "devops-project"}-cost-report.md`);
+    toast.success("Cost report exported as Markdown");
+  };
+
+  const handleExportCsv = () => {
+    const csvRows = [
+      ["Component", "Category", "Monthly Cost (USD)", "Annual Cost (USD)", "Description"],
+      ...costEstimates.map((c) => [
+        `"${c.component}"`,
+        `"${c.category}"`,
+        c.monthlyCost.toFixed(2),
+        (c.monthlyCost * 12).toFixed(2),
+        `"${c.description.replace(/"/g, '""')}"`,
+      ]),
+      [
+        "TOTAL",
+        "All Categories",
+        totalMonthlyCost.toFixed(2),
+        (totalMonthlyCost * 12).toFixed(2),
+        "Total estimated stack cost",
+      ],
+      [
+        "POTENTIAL SAVINGS",
+        "Optimizations",
+        totalPotentialSavings.toFixed(2),
+        (totalPotentialSavings * 12).toFixed(2),
+        `Reduced to $${optimizedCost.toFixed(2)}/mo (${savingsPercent}% savings)`,
+      ],
+    ];
+    const csvContent = csvRows.map((e) => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, `${config.projectName || "devops-project"}-costs.csv`);
+    toast.success("Cost breakdown exported as CSV");
   };
 
   const handleCreateOptimizationPlan = () => {
@@ -152,14 +185,18 @@ export function CostOptimizer({ config }: CostOptimizerProps) {
 
       <CostInsights totalMonthlyCost={totalMonthlyCost} />
 
-      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <Button onClick={handleExportCostReport} variant="outline" className="flex-1 gap-2 border-border/80 h-11">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        <Button onClick={handleExportCostReport} variant="outline" className="gap-2 border-border/80 h-11">
           <Calculator className="h-4 w-4" />
-          Export Cost Report
+          Export Markdown
         </Button>
-        <Button onClick={handleCreateOptimizationPlan} className="flex-1 gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
+        <Button onClick={handleExportCsv} variant="outline" className="gap-2 border-border/80 h-11">
+          <FileSpreadsheet className="h-4 w-4" />
+          Export CSV
+        </Button>
+        <Button onClick={handleCreateOptimizationPlan} className="gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
           <Target className="h-4 w-4" />
-          Create Optimization Plan
+          Optimization Plan
         </Button>
       </div>
     </div>

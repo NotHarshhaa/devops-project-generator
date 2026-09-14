@@ -29,6 +29,8 @@ export function analyzeDependencies(config: ProjectConfig): Dependency[] {
         reason: "Kubernetes deployment strategy requires Kubernetes infrastructure",
         impact: "high",
         fix: "Choose AWS EKS, Azure AKS, GCP GKE, or Kubernetes on-prem",
+        fixAction: { infra: "aws-vpc-eks" },
+        actionLabel: "Switch to AWS EKS",
       });
     }
   }
@@ -41,7 +43,22 @@ export function analyzeDependencies(config: ProjectConfig): Dependency[] {
         type: "conflict",
         reason: "AWS Lambda requires AWS infrastructure",
         impact: "high",
-        fix: "Switch to AWS EKS Fargate or other AWS infrastructure",
+        fix: "Switch to AWS ECS Fargate or other AWS infrastructure",
+        fixAction: { infra: "aws-ecs-fargate" },
+        actionLabel: "Switch to AWS ECS Fargate",
+      });
+    }
+
+    if (config.observability === "prometheus-grafana") {
+      deps.push({
+        from: config.deploy,
+        to: config.observability,
+        type: "conflict",
+        reason: "Prometheus scraping is incompatible with ephemeral, short-lived AWS Lambda executions",
+        impact: "high",
+        fix: "Switch observability to CloudWatch for native serverless metrics",
+        fixAction: { observability: "cloudwatch" },
+        actionLabel: "Switch to CloudWatch",
       });
     }
   }
@@ -95,7 +112,9 @@ export function analyzeDependencies(config: ProjectConfig): Dependency[] {
         type: "warning",
         reason: "Multi-environment setup benefits from automated CI/CD",
         impact: "high",
-        fix: "Consider adding GitHub Actions, GitLab CI, or Jenkins",
+        fix: "Enable automated CI/CD pipeline",
+        fixAction: { ci: "github-actions" },
+        actionLabel: "Enable GitHub Actions",
       });
     }
   }
@@ -108,7 +127,9 @@ export function analyzeDependencies(config: ProjectConfig): Dependency[] {
         type: "required",
         reason: "Compliance frameworks require comprehensive observability",
         impact: "high",
-        fix: "Add Prometheus/Grafana, ELK stack, or Datadog",
+        fix: "Add Prometheus/Grafana or Datadog observability",
+        fixAction: { observability: "prometheus-grafana" },
+        actionLabel: "Add Prometheus/Grafana",
       });
     }
 
@@ -117,9 +138,11 @@ export function analyzeDependencies(config: ProjectConfig): Dependency[] {
         from: config.security,
         to: config.deploy,
         type: "warning",
-        reason: "Compliance frameworks benefit from safer deployment strategies",
+        reason: "Compliance frameworks benefit from zero-downtime deployment strategies",
         impact: "medium",
-        fix: "Consider blue-green or canary deployment",
+        fix: "Switch to Blue-Green deployment",
+        fixAction: { deploy: "blue-green" },
+        actionLabel: "Switch to Blue-Green",
       });
     }
   }
@@ -138,6 +161,8 @@ export function analyzeDependencies(config: ProjectConfig): Dependency[] {
         reason: "Kubernetes operator pipeline requires Kubernetes infrastructure",
         impact: "high",
         fix: "Choose Kubernetes-based infrastructure",
+        fixAction: { infra: "aws-vpc-eks" },
+        actionLabel: "Switch to AWS EKS",
       });
     }
   }
@@ -150,6 +175,8 @@ export function analyzeDependencies(config: ProjectConfig): Dependency[] {
       reason: "Terraform module pipeline works best with Terraform infrastructure",
       impact: "medium",
       fix: "Consider Terraform multi-cloud infrastructure",
+      fixAction: { infra: "multicloud-terraform" },
+      actionLabel: "Switch to Multi-Cloud Terraform",
     });
   }
 

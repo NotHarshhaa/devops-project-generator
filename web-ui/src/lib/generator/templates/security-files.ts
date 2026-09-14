@@ -35,6 +35,58 @@ scan:
     type: "file",
   });
 
+  files.push({
+    path: `${projectName}/security/policies/security-policy.yaml`,
+    content: `# Enterprise Security & Encryption Policy
+# Project: ${config.projectName}
+# Framework: ${config.security}
+
+policy:
+  name: "${config.projectName}-security-policy"
+  version: "2.0.0"
+
+authentication:
+  methods:
+    - jwt
+    - mTLS
+    - oauth2
+  jwt:
+    algorithm: "ES384"
+    token_expiry: "1h"
+    refresh_token_expiry: "7d"
+
+authorization:
+  rbac:
+    enabled: true
+    default_role: "viewer"
+    roles:
+      - name: "admin"
+        permissions: ["*"]
+      - name: "operator"
+        permissions: ["read", "write", "deploy"]
+      - name: "viewer"
+        permissions: ["read"]
+
+encryption:
+  at_rest:
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+    kms_managed: true
+  in_transit:
+    tls_version: "1.3"
+    cipher_suites:
+      - "TLS_AES_256_GCM_SHA384"
+      - "TLS_CHACHA20_POLY1305_SHA256"
+
+audit:
+  enabled: true
+  log_all_access: true
+  retention_days: 365
+  export_target: "s3://${config.projectName}-security-audit"
+`,
+    type: "file",
+  });
+
   if (security === "nist-csf") {
     files.push({
       path: `${projectName}/security/nist-csf/controls-matrix.md`,

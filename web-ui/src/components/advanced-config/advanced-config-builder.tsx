@@ -1,11 +1,13 @@
 "use client";
 
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, Download, Rocket, Network, Sparkles } from "lucide-react";
+import { CheckCircle2, Download, Rocket, Network, Sparkles, FileText, Code2 } from "lucide-react";
 import { saveAs } from "file-saver";
 import { AdvancedConfigBuilderProps } from "./types";
+import { ProjectConfig } from "@/lib/types";
 import { useConfigAnalysis } from "./hooks/use-config-analysis";
 import { ComplexityCard } from "./components/complexity-card";
 import { DependencyAlerts } from "./components/dependency-alerts";
@@ -13,14 +15,25 @@ import { DependencyList } from "./components/dependency-list";
 import { ArchitectureFlow } from "./components/architecture-flow";
 import { OptimizationPanel } from "./components/optimization-panel";
 
-export function AdvancedConfigBuilder({ config, onNavigateToGenerator }: AdvancedConfigBuilderProps) {
+export function AdvancedConfigBuilder({
+  config,
+  onConfigChange,
+  onNavigateToGenerator,
+}: AdvancedConfigBuilderProps) {
   const { complexityMetrics, optimizations, conflicts, warnings, recommendations, requirements } =
     useConfigAnalysis(config);
 
   const isValid = conflicts.length === 0 && warnings.length === 0;
   const issueCount = conflicts.length + warnings.length;
 
-  const handleExportConfig = () => {
+  const handleApplyFix = (fixAction: Partial<ProjectConfig>, label?: string) => {
+    if (!onConfigChange) return;
+    const updated = { ...config, ...fixAction };
+    onConfigChange(updated);
+    toast.success(label ? `Applied: ${label}` : "Applied recommended configuration fix");
+  };
+
+  const handleExportJson = () => {
     const data = JSON.stringify(
       {
         projectName: config.projectName || "devops-project",
@@ -34,6 +47,33 @@ export function AdvancedConfigBuilder({ config, onNavigateToGenerator }: Advance
     );
     const blob = new Blob([data], { type: "application/json" });
     saveAs(blob, `${config.projectName || "devops-project"}-config.json`);
+    toast.success("Exported configuration as JSON");
+  };
+
+  const handleExportYaml = () => {
+    const yamlLines = [
+      `# DevOps Project Generator Configuration`,
+      `# Generated: ${new Date().toISOString()}`,
+      `version: "2.0.0"`,
+      `project:`,
+      `  name: "${config.projectName || "devops-project"}"`,
+      `  pipeline: "${config.pipeline}"`,
+      `  ci: "${config.ci}"`,
+      `  infra: "${config.infra}"`,
+      `  deploy: "${config.deploy}"`,
+      `  environments: "${config.envs}"`,
+      `  observability: "${config.observability}"`,
+      `  security: "${config.security}"`,
+      ``,
+      `analysis:`,
+      `  complexityScore: ${complexityMetrics.score}`,
+      `  complexityLevel: "${complexityMetrics.level}"`,
+      `  estimatedScaffoldingTime: "${complexityMetrics.estimatedTime}"`,
+      `  estimatedMonthlyCost: "${complexityMetrics.monthlyCost}"`,
+    ];
+    const blob = new Blob([yamlLines.join("\n")], { type: "text/yaml" });
+    saveAs(blob, `${config.projectName || "devops-project"}-config.yaml`);
+    toast.success("Exported configuration as YAML");
   };
 
   return (
@@ -74,7 +114,7 @@ export function AdvancedConfigBuilder({ config, onNavigateToGenerator }: Advance
 
       <ComplexityCard config={config} metrics={complexityMetrics} />
 
-      <DependencyAlerts conflicts={conflicts} warnings={warnings} />
+      <DependencyAlerts conflicts={conflicts} warnings={warnings} onApplyFix={handleApplyFix} />
 
       {isValid && (
         <Alert className="border-emerald-500/20 bg-emerald-500/5">
@@ -105,12 +145,16 @@ export function AdvancedConfigBuilder({ config, onNavigateToGenerator }: Advance
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <Button onClick={handleExportConfig} variant="outline" className="flex-1 gap-2 border-border/80 h-11">
-          <Download className="h-4 w-4" />
-          Export Configuration
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        <Button onClick={handleExportJson} variant="outline" className="gap-2 border-border/80 h-11">
+          <Code2 className="h-4 w-4" />
+          Export JSON
         </Button>
-        <Button onClick={onNavigateToGenerator} className="flex-1 gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
+        <Button onClick={handleExportYaml} variant="outline" className="gap-2 border-border/80 h-11">
+          <FileText className="h-4 w-4" />
+          Export YAML
+        </Button>
+        <Button onClick={onNavigateToGenerator} className="gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
           <Rocket className="h-4 w-4" />
           Generate Project
         </Button>

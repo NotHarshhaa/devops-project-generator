@@ -21,6 +21,7 @@ export function ProjectGenerator() {
     copied,
     generationTime,
     generationError,
+    draftRestored,
     updateConfig,
     applyTemplate,
     canProceed,
@@ -79,6 +80,8 @@ export function ProjectGenerator() {
         canProceed={canProceed}
         onUpdateConfig={updateConfig}
         onApplyTemplate={applyTemplate}
+        onReset={handleReset}
+        draftRestored={draftRestored}
         onNext={handleNext}
         onBack={handleBack}
         onGoToStep={goToStep}

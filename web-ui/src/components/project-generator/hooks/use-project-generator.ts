@@ -13,6 +13,15 @@ import { calculateComplexity } from "../utils";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
+const DRAFT_STORAGE_KEY = "devops_generator_draft_v2";
+
+interface StoredDraft {
+  config: ProjectConfig;
+  currentStep: number;
+  completedSteps: number[];
+  timestamp: number;
+}
+
 export function useProjectGenerator() {
   const { updateConfig: updateGlobalConfig } = useConfig();
   const [currentStep, setCurrentStep] = useState(0);
@@ -23,10 +32,52 @@ export function useProjectGenerator() {
   const [copied, setCopied] = useState(false);
   const [generationTime, setGenerationTime] = useState(0);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
 
+  // Hydrate draft state from localStorage on client mount
   useEffect(() => {
     trackUserSession();
-  }, []);
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (saved) {
+        const parsed: StoredDraft = JSON.parse(saved);
+        if (parsed && parsed.config) {
+          setConfig(parsed.config);
+          updateGlobalConfig(parsed.config);
+          if (
+            typeof parsed.currentStep === "number" &&
+            parsed.currentStep >= 0 &&
+            parsed.currentStep < steps.length
+          ) {
+            setCurrentStep(parsed.currentStep);
+          }
+          if (Array.isArray(parsed.completedSteps)) {
+            setCompletedSteps(new Set(parsed.completedSteps));
+          }
+          setDraftRestored(true);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load draft from localStorage:", e);
+    }
+  }, [updateGlobalConfig]);
+
+  // Persist draft whenever config or navigation state updates
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const draft: StoredDraft = {
+        config,
+        currentStep,
+        completedSteps: Array.from(completedSteps),
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch (e) {
+      console.warn("Failed to save draft to localStorage:", e);
+    }
+  }, [config, currentStep, completedSteps]);
 
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
@@ -163,6 +214,13 @@ export function useProjectGenerator() {
   }, [config]);
 
   const handleReset = useCallback(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch (e) {
+        console.warn("Failed to clear draft from localStorage:", e);
+      }
+    }
     setConfig(DEFAULT_CONFIG);
     updateGlobalConfig(DEFAULT_CONFIG);
     setCurrentStep(0);
@@ -170,6 +228,7 @@ export function useProjectGenerator() {
     setCompletedSteps(new Set());
     setGenerationError(null);
     setGenerationTime(0);
+    setDraftRestored(false);
     trackInteraction();
   }, [updateGlobalConfig]);
 
@@ -185,6 +244,7 @@ export function useProjectGenerator() {
     copied,
     generationTime,
     generationError,
+    draftRestored,
     updateConfig,
     applyTemplate,
     canProceed,

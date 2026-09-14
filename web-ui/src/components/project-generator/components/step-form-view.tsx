@@ -42,6 +42,8 @@ interface StepFormViewProps {
   canProceed: () => boolean;
   onUpdateConfig: (field: keyof ProjectConfig, value: string) => void;
   onApplyTemplate?: (name: string, templateConfig: Partial<ProjectConfig>) => void;
+  onReset?: () => void;
+  draftRestored?: boolean;
   onNext: () => void;
   onBack: () => void;
   onGoToStep: (step: number) => void;
@@ -56,6 +58,8 @@ export function StepFormView({
   canProceed,
   onUpdateConfig,
   onApplyTemplate,
+  onReset,
+  draftRestored,
   onNext,
   onBack,
   onGoToStep,
@@ -129,9 +133,27 @@ export function StepFormView({
                 )}
 
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">
-                    Quick start templates
-                  </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Preset Architectures
+                      </p>
+                      <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1 font-mono">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Auto-saved
+                      </span>
+                    </div>
+                    {onReset && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={onReset}
+                        className="h-6 text-[11px] text-muted-foreground hover:text-foreground px-2"
+                      >
+                        Reset to blank
+                      </Button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {QUICK_START_TEMPLATES.map((template) => {
                       const Icon = templateIcons[template.iconKey];
