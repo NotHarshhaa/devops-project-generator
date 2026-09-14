@@ -92,6 +92,9 @@ class ProjectConfig:
     envs: Optional[str] = None
     observability: Optional[str] = None
     security: Optional[str] = None
+    devcontainer: bool = True
+    git_init: bool = False
+    security_addons: Optional[List[str]] = None
     
     # Valid options (using enums for better type safety)
     VALID_PIPELINE_OPTIONS = [option.value for option in PipelineOption]

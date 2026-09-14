@@ -59,10 +59,10 @@ pip install devops-project-generator
 
 Initialize a new project:
 ```bash
-# Interactive mode
+# Interactive mode (with DevContainer & Git options)
 devops-project-generator init
 
-# Direct flag-based generation
+# Direct flag-based generation with DevContainer sandbox & Git init
 devops-project-generator init \
   --name my-production-stack \
   --ci github-actions \
@@ -70,7 +70,18 @@ devops-project-generator init \
   --deploy kubernetes \
   --envs dev,stage,prod \
   --observability full \
-  --security strict
+  --security strict \
+  --devcontainer \
+  --git-init
+
+# Security & Compliance Audit (CIS, SOC 2, NIST, HIPAA, SLSA)
+devops-project-generator audit ./my-production-stack
+
+# Mermaid Architecture Topology & ADR-001 Generator
+devops-project-generator diagram ./my-production-stack --adr
+
+# One-step GitHub Repository Scaffolder
+devops-project-generator github ./my-production-stack
 ```
 
 ### 2. Web UI Studio

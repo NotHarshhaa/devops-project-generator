@@ -28,13 +28,16 @@ devops-project-generator init [OPTIONS]
 - `--envs TEXT`: Environments (single, dev,stage,prod)
 - `--observability TEXT`: Observability level (logs, logs-metrics, full)
 - `--security TEXT`: Security level (basic, standard, strict)
+- `--devcontainer / --no-devcontainer`: Generate VS Code / Cursor `.devcontainer` sandbox (default: enabled)
+- `--git-init / --no-git-init`: Initialize git repository and stage files automatically
+- `--gh-repo / --no-gh-repo`: Print or trigger `gh repo create` GitHub scaffolding command
 
 **Examples:**
 ```bash
-# Basic web app
-devops-project-generator init --name my-app --ci github-actions --deploy docker
+# Basic web app with DevContainer sandbox
+devops-project-generator init --name my-app --ci github-actions --deploy docker --devcontainer
 
-# Enterprise setup
+# Enterprise setup with git initialization
 devops-project-generator init \
   --name enterprise-app \
   --ci github-actions \
@@ -42,7 +45,68 @@ devops-project-generator init \
   --deploy kubernetes \
   --envs dev,stage,prod \
   --observability full \
-  --security strict
+  --security strict \
+  --git-init
+```
+
+### `audit`
+Audit a DevOps project's security posture and compliance readiness against CIS Kubernetes, SOC 2 Type II, NIST SP 800-53, HIPAA Security Rule, and SLSA Level 3.
+
+```bash
+devops-project-generator audit [PROJECT_PATH] [OPTIONS]
+```
+
+**Options:**
+- `--output / -o PATH`: Save compliance report to markdown file (default: `docs/COMPLIANCE-AUDIT.md`)
+
+**Examples:**
+```bash
+# Audit project in current directory
+devops-project-generator audit
+
+# Audit specific project and export report
+devops-project-generator audit ./my-project -o ./my-project/AUDIT.md
+```
+
+### `diagram`
+Generate Mermaid.js architecture topology or Architecture Decision Record (ADR-001) for the project.
+
+```bash
+devops-project-generator diagram [PROJECT_PATH] [OPTIONS]
+```
+
+**Options:**
+- `--adr`: Output complete Architecture Decision Record (ADR-001) markdown instead of raw Mermaid
+- `--output / -o PATH`: Save output directly to file
+
+**Examples:**
+```bash
+# View Mermaid pipeline & cloud topology
+devops-project-generator diagram ./my-project
+
+# View full Architecture Decision Record
+devops-project-generator diagram ./my-project --adr
+```
+
+### `github`
+Scaffold or push project directly to GitHub using GitHub CLI (`gh`).
+
+```bash
+devops-project-generator github [PROJECT_PATH] [OPTIONS]
+```
+
+**Options:**
+- `--name / -n TEXT`: GitHub repository name (defaults to folder name)
+- `--private / --public`: Repository visibility (default: private)
+- `--push / --no-push`: Directly execute `gh repo create` (default: no-push, prints one-liner)
+
+**Examples:**
+```bash
+# Print copy-paste GitHub CLI command
+devops-project-generator github ./my-project
+
+# Directly create and push to private GitHub repo
+devops-project-generator github ./my-project --push
 ```
 
 ### `list-options`

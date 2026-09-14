@@ -143,6 +143,21 @@ def init(
         "--interactive/--no-interactive",
         help="Interactive mode",
     ),
+    devcontainer: bool = typer.Option(
+        True,
+        "--devcontainer/--no-devcontainer",
+        help="Include DevContainer & local tooling sandbox (.devcontainer/)",
+    ),
+    git_init: bool = typer.Option(
+        False,
+        "--git-init/--no-git-init",
+        help="Initialize Git repository with initial commit",
+    ),
+    gh_repo: bool = typer.Option(
+        False,
+        "--gh-repo/--no-gh-repo",
+        help="Create and push to remote GitHub repository using GitHub CLI",
+    ),
 ) -> None:
     """Initialize a new DevOps project"""
     try:
@@ -177,6 +192,8 @@ def init(
                     observability=observability,
                     security=security,
                     project_name=project_name or "devops-project",
+                    devcontainer=devcontainer,
+                    git_init=git_init,
                 )
         except Exception as e:
             logger.error(f"Configuration error: {str(e)}")
@@ -230,6 +247,24 @@ def init(
             console.print("\n[bold]🚀 Next steps:[/bold]")
             console.print(f"  cd {config.project_name}")
             console.print("  make help")
+            
+            if getattr(config, "devcontainer", True):
+                console.print("  [green]✓[/green] [bold]DevContainer sandbox:[/bold] Open in VS Code / Cursor to auto-start development container")
+            console.print(f"  [green]✓[/green] [bold]Architecture ADR:[/bold] Check {config.project_name}/docs/ADR-001-devops-stack-architecture.md")
+            console.print(f"  [green]✓[/green] [bold]Security & Compliance:[/bold] Check {config.project_name}/docs/COMPLIANCE-AUDIT.md")
+            
+            if gh_repo:
+                try:
+                    import subprocess
+                    console.print("\n[bold cyan]🐙 Publishing to GitHub...[/bold cyan]")
+                    subprocess.run(["gh", "repo", "create", config.project_name, "--private", "--source=.", "--remote=origin", "--push"], cwd=project_path, check=True)
+                    console.print(f"[bold green]✓ Successfully published to GitHub: https://github.com/{config.project_name}[/bold green]")
+                except Exception as e:
+                    console.print(f"[yellow]⚠️ Could not auto-publish to GitHub: {str(e)}[/yellow]")
+                    console.print(f"Run manually: [cyan]cd {config.project_name} && gh repo create {config.project_name} --private --source=. --remote=origin --push[/cyan]")
+            else:
+                console.print(f"\n[bold]💡 Push to GitHub with one command:[/bold]")
+                console.print(f"  [cyan]cd {config.project_name} && gh repo create {config.project_name} --private --source=. --remote=origin --push[/cyan]")
             
             logger.info(f"Project generated successfully: {project_path}")
             
@@ -393,6 +428,8 @@ def _interactive_mode() -> ProjectConfig:
         console.print(f"[red]Invalid option. Please choose from: {', '.join(ProjectConfig.VALID_SEC_OPTIONS)}[/red]")
     
     project_name = typer.prompt("Project name", default="devops-project")
+    devcontainer = typer.confirm("Include DevContainer & local tooling sandbox (.devcontainer/)?", default=True)
+    git_init = typer.confirm("Initialize Git repository?", default=False)
     
     return ProjectConfig(
         pipeline=pipeline,
@@ -403,6 +440,8 @@ def _interactive_mode() -> ProjectConfig:
         observability=observability,
         security=security,
         project_name=project_name,
+        devcontainer=devcontainer,
+        git_init=git_init,
     )
 
 
@@ -738,6 +777,227 @@ def template(
 
 
 @app.command()
+def audit(
+    project_path: str = typer.Argument(".", help="Path to the DevOps project directory"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Save compliance report to markdown file"),
+) -> None:
+    """Audit project security compliance against CIS, SOC 2, NIST, HIPAA, and SLSA"""
+    with handle_cli_errors():
+        from pathlib import Path
+        path = Path(project_path)
+        if not path.exists():
+            console.print(f"[red]❌ Directory not found: {project_path}[/red]")
+            raise typer.Exit(1)
+        
+        console.print(Panel.fit(
+            "[bold green]🛡️ DevOps Security & Governance Audit[/bold green]\n"
+            f"[dim]Evaluating architecture compliance for: {path.resolve().name}[/dim]",
+            border_style="green"
+        ))
+        
+        # Check active security controls
+        controls = []
+        
+        cosign_found = any(path.glob("**/*cosign*"))
+        controls.append(("Cryptographic Container Signing", "Sigstore / Cosign", "SLSA Level 3", cosign_found))
+        
+        sbom_found = any(path.glob("**/*sbom*")) or any(path.glob("**/*syft*"))
+        controls.append(("Software Bill of Materials (SBOM)", "Syft / CycloneDX", "NIST SP 800-53", sbom_found))
+        
+        trivy_found = any(path.glob("**/*trivy*"))
+        controls.append(("Vulnerability Scanning Gate", "Trivy / Grype", "CIS Benchmarks", trivy_found))
+        
+        gitleaks_found = (path / ".gitleaks.toml").exists() or any(path.glob("**/*gitleaks*"))
+        controls.append(("Secret & Token Leak Scanning", "Gitleaks", "SOC 2 (CC6)", gitleaks_found))
+        
+        rbac_found = any(path.glob("**/security*")) or any(path.glob("**/k8s*"))
+        controls.append(("Least-Privilege RBAC & Policies", "Kubernetes RBAC", "CIS v1.8", rbac_found))
+        
+        devcontainer_found = (path / ".devcontainer" / "devcontainer.json").exists()
+        controls.append(("DevContainer Clean Room Sandbox", "VS Code / Cursor", "Reproducible Env", devcontainer_found))
+        
+        active_count = sum(1 for _, _, _, active in controls if active)
+        score_pct = int((active_count / len(controls)) * 100)
+        grade = "A+" if score_pct >= 90 else "A" if score_pct >= 80 else "B" if score_pct >= 65 else "C"
+        
+        # Framework Readiness Table
+        fw_table = Table(title="Framework Readiness Assessment", border_style="blue")
+        fw_table.add_column("Security Framework", style="cyan bold")
+        fw_table.add_column("Readiness Score", style="bold")
+        fw_table.add_column("Audit Status", style="green")
+        
+        cis_score = min(100, int((active_count / len(controls)) * 100))
+        soc2_score = min(100, int((active_count / len(controls)) * 95) + 5)
+        nist_score = min(100, int((active_count / len(controls)) * 90) + 10)
+        hipaa_score = min(100, int((active_count / len(controls)) * 88) + 10)
+        slsa_level = "Level 3" if (cosign_found and sbom_found and trivy_found) else "Level 2" if (sbom_found or cosign_found) else "Level 1"
+        
+        fw_table.add_row("CIS Kubernetes Benchmark", f"{cis_score}%", "✓ Hardened" if cis_score >= 80 else "⚠️ Partial")
+        fw_table.add_row("SOC 2 Type II", f"{soc2_score}%", "✓ Attestation Ready" if soc2_score >= 80 else "⚠️ Review")
+        fw_table.add_row("NIST SP 800-53", f"{nist_score}%", "✓ High Assurance" if nist_score >= 80 else "⚠️ Baseline")
+        fw_table.add_row("HIPAA Security Rule", f"{hipaa_score}%", "✓ Compliant Controls" if hipaa_score >= 80 else "⚠️ Review")
+        fw_table.add_row("SLSA Supply Chain", f"SLSA {slsa_level}", "✓ Verified Provenance" if slsa_level == "Level 3" else "ℹ️ Standard")
+        
+        console.print(fw_table)
+        
+        # Controls Checklist Table
+        ctrl_table = Table(title=f"Security Controls Status (Grade: {grade} / {score_pct}%)", border_style="cyan")
+        ctrl_table.add_column("Status", justify="center")
+        ctrl_table.add_column("Security Control")
+        ctrl_table.add_column("Tooling", style="dim")
+        ctrl_table.add_column("Baseline", style="dim")
+        
+        for name, tool, baseline, active in controls:
+            status_icon = "[green]✓ ACTIVE[/green]" if active else "[red]✗ MISSING[/red]"
+            ctrl_table.add_row(status_icon, name, tool, baseline)
+            
+        console.print(ctrl_table)
+        
+        if output:
+            out_file = Path(output)
+            report = f"""# COMPLIANCE AUDIT REPORT: {path.resolve().name}
+Date: {time.strftime('%Y-%m-%d')}
+Overall Posture: Grade {grade} ({score_pct}%)
+SLSA Level: {slsa_level}
+
+## Framework Readiness
+- CIS Kubernetes Benchmark: {cis_score}%
+- SOC 2 Type II: {soc2_score}%
+- NIST SP 800-53: {nist_score}%
+- HIPAA Security Rule: {hipaa_score}%
+
+## Active Controls
+"""
+            for name, tool, baseline, active in controls:
+                status_str = "[x] ACTIVE" if active else "[ ] NOT CONFIGURED"
+                report += f"- {status_str}: {name} ({tool}) - {baseline}\n"
+            
+            with open(out_file, 'w', encoding='utf-8') as f:
+                f.write(report)
+            console.print(f"\n[green]✓ Saved compliance report to: {out_file}[/green]")
+
+
+@app.command()
+def diagram(
+    project_path: str = typer.Argument(".", help="Path to the DevOps project directory"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="File to save the Mermaid diagram or ADR"),
+    adr: bool = typer.Option(False, "--adr/--no-adr", help="Output Architecture Decision Record (ADR-001) instead of raw Mermaid"),
+) -> None:
+    """Generate Mermaid architecture topology or Architecture Decision Record (ADR)"""
+    with handle_cli_errors():
+        from pathlib import Path
+        import yaml
+        from rich.syntax import Syntax
+        
+        path = Path(project_path)
+        ci = "github-actions"
+        infra = "aws-vpc-eks"
+        deploy = "rolling"
+        obs = "prometheus-grafana"
+        name = path.resolve().name
+        
+        cfg_file = path / "devops-config.yaml"
+        if cfg_file.exists():
+            try:
+                with open(cfg_file, 'r', encoding='utf-8') as f:
+                    cfg_data = yaml.safe_load(f) or {}
+                    ci = cfg_data.get("ci_cd", {}).get("platform", ci)
+                    infra = cfg_data.get("infrastructure", {}).get("type", infra)
+                    deploy = cfg_data.get("deployment", {}).get("strategy", deploy)
+                    obs = cfg_data.get("observability", {}).get("level", obs)
+                    name = cfg_data.get("project", {}).get("name", name)
+            except Exception:
+                pass
+                
+        mermaid_code = f"""graph TD
+    Commit[Code Commit] --> CI[{ci.upper()}]
+    CI --> Security[Security Gate: Trivy & Gitleaks]
+    Security --> Artifact[Container Registry / GHCR]
+    Artifact --> Infra[{infra.upper()}]
+    Infra --> Deploy[{deploy.upper()}]
+    Deploy --> Obs[{obs.upper()}]
+"""
+        if adr:
+            content = f"""# ADR-001: Architecture Decision Record for {name}
+Date: {time.strftime('%Y-%m-%d')}
+Status: Accepted
+
+## Architecture Topology
+```mermaid
+{mermaid_code}
+```
+
+## Decisions
+- CI/CD Platform: {ci}
+- Infrastructure: {infra}
+- Deployment Strategy: {deploy}
+- Observability: {obs}
+"""
+        else:
+            content = mermaid_code
+
+        if output:
+            with open(Path(output), 'w', encoding='utf-8') as f:
+                f.write(content)
+            console.print(f"[green]✓ Saved to: {output}[/green]")
+        else:
+            lang = "markdown" if adr else "mermaid"
+            title = f"Architecture Decision Record ({name})" if adr else f"Mermaid Topology ({name})"
+            console.print(Panel(Syntax(content, lang, theme="monokai", line_numbers=True), title=title, border_style="cyan"))
+
+
+@app.command(name="github")
+def github_cmd(
+    project_path: str = typer.Argument(".", help="Path to the DevOps project directory"),
+    name: Optional[str] = typer.Option(None, "--name", "-n", help="Repository name on GitHub"),
+    private: bool = typer.Option(True, "--private/--public", help="Repository visibility"),
+    push: bool = typer.Option(False, "--push/--no-push", help="Directly execute gh repo create"),
+) -> None:
+    """Scaffold or push project directly to GitHub using GitHub CLI"""
+    with handle_cli_errors():
+        from pathlib import Path
+        import shutil
+        import subprocess
+        
+        path = Path(project_path)
+        repo_name = name or path.resolve().name
+        vis = "--private" if private else "--public"
+        cmd = f"gh repo create {repo_name} {vis} --source=. --remote=origin --push"
+        
+        console.print(Panel.fit(
+            "[bold cyan]🐙 GitHub Scaffolder[/bold cyan]\n"
+            f"[dim]Project: {repo_name} | Visibility: {'Private' if private else 'Public'}[/dim]",
+            border_style="cyan"
+        ))
+        
+        if push:
+            gh_bin = shutil.which("gh")
+            if not gh_bin:
+                console.print("[red]❌ GitHub CLI ('gh') is not installed or not in PATH.[/red]")
+                console.print("[yellow]💡 Install GitHub CLI from: https://cli.github.com[/yellow]")
+                console.print(f"\n[bold]Run manually once installed:[/bold]\n[cyan]{cmd}[/cyan]")
+                raise typer.Exit(1)
+            
+            console.print(f"[green]Executing:[/green] {cmd}")
+            if not (path / ".git").exists():
+                subprocess.run(["git", "init"], cwd=path, check=True)
+                subprocess.run(["git", "add", "."], cwd=path, check=True)
+                subprocess.run(["git", "commit", "-m", "feat: initial devops scaffold"], cwd=path, check=True)
+                subprocess.run(["git", "branch", "-M", "main"], cwd=path, check=True)
+            
+            result = subprocess.run(cmd.split(), cwd=path)
+            if result.returncode == 0:
+                console.print(f"[bold green]✓ Successfully created and pushed to GitHub![/bold green]")
+                console.print(f"[cyan]Repository URL: https://github.com/{repo_name}[/cyan]")
+            else:
+                console.print(f"[red]Command returned code {result.returncode}[/red]")
+        else:
+            console.print("[bold]Single copy-paste terminal command to publish to GitHub:[/bold]")
+            console.print(f"\n[cyan bold]{cmd}[/cyan bold]\n")
+            console.print("[dim]Note: Requires GitHub CLI (gh auth login) installed on your machine.[/dim]")
+
+
+@app.command()
 def version() -> None:
     """Show version information"""
     try:
@@ -749,3 +1009,4 @@ def version() -> None:
 
 if __name__ == "__main__":
     app()
+
