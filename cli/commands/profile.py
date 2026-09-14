@@ -116,7 +116,7 @@ def _save_profile(name: str) -> None:
         "description": typer.prompt("Description (optional)", default=""),
         "created_at": datetime.datetime.now().isoformat(),
         "config": config,
-        "version": "1.6.0"
+        "version": "2.0.0"
     }
     
     with open(profile_file, 'w', encoding='utf-8') as f:

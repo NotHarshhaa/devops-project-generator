@@ -6,7 +6,7 @@ Complete reference for all DevOps Project Generator commands.
 
 - [Core Commands](#core-commands)
 - [Management Commands](#management-commands)
-- [New Features (v1.5.0)](#new-features-v150)
+- [New Features (v2.0.0)](#new-features-v200)
 - [Utility Commands](#utility-commands)
 
 ---
@@ -137,7 +137,7 @@ devops-project-generator info my-project --detailed --json
 
 ---
 
-## 🌟 New Features (v1.5.0)
+## 🌟 New Features (v2.0.0)
 
 ### `scan` ⭐ NEW
 Scan project dependencies and security vulnerabilities.
@@ -390,7 +390,7 @@ devops-project-generator version
 
 **Output:**
 ```
-DevOps Project Generator v1.5.0
+DevOps Project Generator v2.0.0
 ```
 
 ---

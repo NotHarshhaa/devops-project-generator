@@ -58,7 +58,7 @@ class ConfigTemplate:
 class MultiEnvConfigGenerator:
     """Enhanced multi-environment configuration generator with modular architecture"""
     
-    def __init__(self, project_path: str):
+    def __init__(self, project_path: str) -> None:
         self.project_path = Path(project_path).resolve()
         self.environments: Dict[str, EnvironmentConfig] = {}
         self.templates: List[ConfigTemplate] = []
@@ -417,7 +417,7 @@ echo "✅ Deployment to $ENVIRONMENT completed successfully!"
                 "project_path": str(self.project_path),
                 "environments": list(self.environments.keys()),
                 "exported_at": datetime.now().isoformat(),
-                "version": "1.6.0"
+                "version": "2.0.0"
             }
             
             metadata_file = export_path / "metadata.yaml"

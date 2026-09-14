@@ -83,7 +83,7 @@ export function HeroSection() {
               </p>
               <p>
                 <span className="terminal-dim">pipeline:</span>{" "}
-                <span className="text-foreground/85">github-actions</span>
+                <span className="text-foreground/85">nodejs-typescript</span>
               </p>
               <p>
                 <span className="terminal-dim">ci:</span>{" "}
@@ -91,19 +91,23 @@ export function HeroSection() {
               </p>
               <p>
                 <span className="terminal-dim">infra:</span>{" "}
-                <span className="text-foreground/85">terraform</span>
+                <span className="text-foreground/85">aws-vpc-eks</span>
               </p>
               <p>
                 <span className="terminal-dim">deploy:</span>{" "}
-                <span className="text-foreground/85">docker</span>
+                <span className="text-foreground/85">blue-green</span>
+              </p>
+              <p>
+                <span className="terminal-dim">environments:</span>{" "}
+                <span className="text-foreground/85">dev,stage,prod</span>
               </p>
               <p>
                 <span className="terminal-dim">observability:</span>{" "}
-                <span className="text-foreground/85">logs-metrics</span>
+                <span className="text-foreground/85">prometheus-grafana</span>
               </p>
               <p>
                 <span className="terminal-dim">security:</span>{" "}
-                <span className="text-foreground/85">standard</span>
+                <span className="text-foreground/85">nist-csf</span>
               </p>
               <p className="text-brand pt-2 animate-pulse">→ ready to generate...</p>
             </div>

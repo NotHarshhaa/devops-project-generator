@@ -25,16 +25,16 @@ console = Console()
 def backup(action: str, project_path: str = ".", backup_file: Optional[str] = None,
            include_config: bool = True, compress: bool = True) -> None:
     """Create and restore project backups"""
-    project_path = Path(project_path).resolve()
+    resolved_path = Path(project_path).resolve()
     
     if action == "create":
-        _create_backup(project_path, include_config, compress)
+        _create_backup(resolved_path, include_config, compress)
     elif action == "restore":
         if not backup_file:
             console.print("[red]❌ Backup file required for restore action[/red]")
             console.print("[yellow]Usage: devops-project-generator backup restore --file <backup-file>[/yellow]")
             raise typer.Exit(1)
-        _restore_backup(project_path, backup_file)
+        _restore_backup(resolved_path, backup_file)
     elif action == "list":
         _list_backups()
     else:
@@ -81,7 +81,7 @@ def _create_backup(project_path: Path, include_config: bool, compress: bool) -> 
             "include_config": include_config,
             "compressed": compress,
             "file_count": len(list(project_path.rglob("*"))),
-            "version": "1.6.0"
+            "version": "2.0.0"
         }
         
         metadata_file = backup_file.with_suffix(".json")

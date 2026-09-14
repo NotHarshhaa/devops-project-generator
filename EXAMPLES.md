@@ -179,7 +179,7 @@ devops-project-generator init \
 
 ---
 
-## 🌟 New Features Examples (v1.5.0)
+## 🌟 New Features Examples (v2.0.0)
 
 ### 🔍 Dependency Scanner Examples
 

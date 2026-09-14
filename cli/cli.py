@@ -10,7 +10,7 @@ import logging
 import time
 import traceback
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Generator
 from contextlib import contextmanager
 
 import typer
@@ -67,7 +67,7 @@ app = typer.Typer(
 )
 
 @contextmanager
-def handle_cli_errors():
+def handle_cli_errors() -> Generator[None, None, None]:
     """Context manager for consistent CLI error handling"""
     try:
         yield
@@ -127,13 +127,13 @@ def init(
         help="Security framework: nist-csf, cis-benchmarks, zero-trust, soc2, gdpr, hipaa",
         show_choices=True,
     ),
-    project_name: Optional[str] = typer.Option(
+    project_name: str = typer.Option(
         "devops-project",
         "--name",
         help="Project name",
         callback=lambda ctx, param, value: validate_project_name(value) if value else value,
     ),
-    output_dir: Optional[str] = typer.Option(
+    output_dir: str = typer.Option(
         ".",
         "--output",
         help="Output directory",
@@ -148,7 +148,8 @@ def init(
     try:
         # Validate output path
         try:
-            output_path = validate_output_path(output_dir)
+            output_dir_str = output_dir or "."
+            output_path = validate_output_path(output_dir_str)
         except typer.BadParameter as e:
             console.print(f"[red]❌ {str(e)}[/red]")
             raise typer.Exit(1)
@@ -175,7 +176,7 @@ def init(
                     envs=envs,
                     observability=observability,
                     security=security,
-                    project_name=project_name,
+                    project_name=project_name or "devops-project",
                 )
         except Exception as e:
             logger.error(f"Configuration error: {str(e)}")
@@ -592,7 +593,7 @@ def config(
         "create",
         help="Action: create, show, or validate"
     ),
-    config_file: Optional[str] = typer.Option(
+    config_file: str = typer.Option(
         "devops-config.yaml",
         "--file",
         help="Configuration file path"
@@ -600,7 +601,7 @@ def config(
 ) -> None:
     """Manage project configuration files"""
     with handle_cli_errors():
-        config_command(action, config_file)
+        config_command(action, config_file or "devops-config.yaml")
 
 
 @app.command()
@@ -742,7 +743,7 @@ def version() -> None:
     try:
         from . import __version__
     except ImportError:
-        __version__ = "1.6.0"
+        __version__ = "2.0.0"
     console.print(f"[bold blue]DevOps Project Generator[/bold blue] v{__version__}")
 
 

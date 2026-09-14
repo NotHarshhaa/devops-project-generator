@@ -438,7 +438,7 @@ class TestCLI:
 pip install devops-project-generator
 
 # Show expected output
-DevOps Project Generator v1.5.0
+DevOps Project Generator v2.0.0
 ```
 
 ---

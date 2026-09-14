@@ -41,6 +41,7 @@ interface StepFormViewProps {
   isLastStep: boolean;
   canProceed: () => boolean;
   onUpdateConfig: (field: keyof ProjectConfig, value: string) => void;
+  onApplyTemplate?: (name: string, templateConfig: Partial<ProjectConfig>) => void;
   onNext: () => void;
   onBack: () => void;
   onGoToStep: (step: number) => void;
@@ -54,6 +55,7 @@ export function StepFormView({
   isLastStep,
   canProceed,
   onUpdateConfig,
+  onApplyTemplate,
   onNext,
   onBack,
   onGoToStep,
@@ -137,18 +139,29 @@ export function StepFormView({
                         <button
                           key={template.name}
                           type="button"
-                          onClick={() => onUpdateConfig("projectName", template.name)}
+                          onClick={() => {
+                            if (onApplyTemplate) {
+                              onApplyTemplate(template.name, template.config);
+                            } else {
+                              onUpdateConfig("projectName", template.name);
+                            }
+                          }}
                           className={cn(
                             "rounded-xl border p-3 text-left transition-all hover:border-brand/40 hover:bg-brand/5",
                             config.projectName === template.name &&
                               "border-brand bg-brand/10 ring-1 ring-brand/20"
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4 text-brand" />
-                            <span className="text-sm font-medium font-mono">{template.name}</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Icon className="h-4 w-4 text-brand shrink-0" />
+                              <span className="text-sm font-semibold truncate">{template.title}</span>
+                            </div>
+                            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0 shrink-0">
+                              {template.name}
+                            </Badge>
                           </div>
-                          <span className="block text-xs text-muted-foreground mt-0.5">
+                          <span className="block text-xs text-muted-foreground mt-1 leading-relaxed">
                             {template.desc}
                           </span>
                         </button>

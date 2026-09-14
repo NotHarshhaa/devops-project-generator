@@ -42,6 +42,16 @@ export function useProjectGenerator() {
     [config, updateGlobalConfig]
   );
 
+  const applyTemplate = useCallback(
+    (templateName: string, templateConfig: Partial<ProjectConfig>) => {
+      const newConfig = { ...config, ...templateConfig, projectName: templateName };
+      setConfig(newConfig);
+      updateGlobalConfig(newConfig);
+      trackInteraction();
+    },
+    [config, updateGlobalConfig]
+  );
+
   const canProceed = useCallback(() => {
     return canProceedToNextStep(config, currentStep);
   }, [currentStep, config]);
@@ -176,6 +186,7 @@ export function useProjectGenerator() {
     generationTime,
     generationError,
     updateConfig,
+    applyTemplate,
     canProceed,
     handleNext,
     handleBack,

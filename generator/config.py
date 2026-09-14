@@ -109,7 +109,7 @@ class ProjectConfig:
     DEFAULT_OBSERVABILITY = "prometheus-grafana"
     DEFAULT_SECURITY = "nist-csf"
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Apply defaults and validate configuration after initialization"""
         self.apply_defaults()
         self.validate()
@@ -205,7 +205,7 @@ class ProjectConfig:
     
     def get_template_context(self) -> Dict[str, Any]:
         """Get template context with all configuration variables"""
-        context = {
+        context: Dict[str, Any] = {
             'project_name': self.project_name,
             'pipeline': self.pipeline or self.DEFAULT_PIPELINE,
             'ci': self.ci or self.DEFAULT_CI,
@@ -215,7 +215,7 @@ class ProjectConfig:
             'observability': self.observability or self.DEFAULT_OBSERVABILITY,
             'security': self.security or self.DEFAULT_SECURITY,
             'generated_at': datetime.datetime.now().isoformat(),
-            'generator_version': '1.6.0'
+            'generator_version': '2.0.0'
         }
         
         # Add derived values
@@ -238,7 +238,8 @@ class ProjectConfig:
             'gcp-vpc-gke': 'gcp',
             'multicloud-terraform': 'multi'
         }
-        return infra_mapping.get(self.infra, 'aws')
+        infra_name = self.infra or ''
+        return infra_mapping.get(infra_name, 'aws')
     
     def get_ci_platform(self) -> str:
         """Get CI platform name"""
@@ -278,14 +279,21 @@ class TemplateConfig:
     custom_templates: Dict[str, str] = field(default_factory=dict)
     template_cache: Dict[str, Any] = field(default_factory=dict)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize template directory"""
         if self.template_dir is None:
             self.template_dir = Path(__file__).parent.parent / "templates"
     
+    @property
+    def dir(self) -> Path:
+        """Get guaranteed Path for template directory"""
+        if self.template_dir is None:
+            self.template_dir = Path(__file__).parent.parent / "templates"
+        return self.template_dir
+    
     def get_template_path(self, template_name: str) -> Path:
         """Get full template path"""
-        return self.template_dir / template_name
+        return self.dir / template_name
     
     def template_exists(self, template_name: str) -> bool:
         """Check if template exists"""
@@ -303,9 +311,10 @@ class TemplateConfig:
         """List all available templates"""
         templates = []
         
-        if self.template_dir.exists():
+        template_dir = self.dir
+        if template_dir.exists():
             templates.extend([
-                f.name for f in self.template_dir.rglob("*.j2")
+                f.name for f in template_dir.rglob("*.j2")
                 if f.is_file()
             ])
         

@@ -22,6 +22,7 @@ export function ProjectGenerator() {
     generationTime,
     generationError,
     updateConfig,
+    applyTemplate,
     canProceed,
     handleNext,
     handleBack,
@@ -77,6 +78,7 @@ export function ProjectGenerator() {
         isLastStep={isLastStep}
         canProceed={canProceed}
         onUpdateConfig={updateConfig}
+        onApplyTemplate={applyTemplate}
         onNext={handleNext}
         onBack={handleBack}
         onGoToStep={goToStep}

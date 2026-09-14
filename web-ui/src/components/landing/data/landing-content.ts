@@ -17,6 +17,7 @@ import {
   Linkedin,
   Monitor,
   Network,
+  RefreshCw,
   Send,
   Server,
   Settings2,
@@ -24,6 +25,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Ship,
+  Terminal,
   Workflow,
   Zap,
   type LucideIcon,
@@ -31,7 +33,7 @@ import {
 
 export const HERO_TAGS = ["GitHub Actions", "Terraform", "Kubernetes", "Prometheus"] as const;
 
-export const APP_VERSION = "v1.6.0";
+export const APP_VERSION = "v2.0.0";
 export const GITHUB_REPO = "https://github.com/NotHarshhaa/devops-project-generator";
 
 export type WorkspaceTab = "generator" | "config" | "cost" | "analytics";
@@ -193,73 +195,81 @@ export const NEW_FEATURE_CARDS: NewFeatureCard[] = [
 
 export const TECH_OPTION_CATEGORIES: TechOptionCategory[] = [
   {
-    icon: GitBranch,
-    title: "CI/CD Platform",
-    subtitle: "Continuous integration & delivery",
+    icon: Terminal,
+    title: "Application Runtimes",
+    subtitle: "Language runtime & framework",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
+    items: [
+      { icon: Terminal, label: "Node.js + TypeScript", tag: "Popular" },
+      { icon: Cpu, label: "Python", tag: "Data & AI" },
+      { icon: Layers, label: "Java + Maven", tag: "Enterprise" },
+      { icon: Box, label: "Go", tag: "Cloud Native" },
+    ],
+  },
+  {
+    icon: GitBranch,
+    title: "CI/CD Platforms",
+    subtitle: "Continuous integration & delivery",
+    iconColor: "text-cyan-500",
+    iconBg: "bg-cyan-500/10",
     items: [
       { icon: Github, label: "GitHub Actions", tag: "Popular" },
       { icon: Server, label: "GitLab CI" },
       { icon: Settings2, label: "Jenkins" },
+      { icon: Workflow, label: "Azure Pipelines" },
     ],
   },
   {
     icon: Layers,
-    title: "Infrastructure",
-    subtitle: "Infrastructure as Code tools",
+    title: "Infrastructure as Code",
+    subtitle: "Terraform modules & cloud topology",
     iconColor: "text-purple-500",
     iconBg: "bg-purple-500/10",
     items: [
-      { icon: Layers, label: "Terraform", tag: "Multi-cloud" },
-      { icon: Cloud, label: "CloudFormation", tag: "AWS" },
+      { icon: Cloud, label: "AWS VPC + EKS", tag: "Production" },
+      { icon: Cloud, label: "Azure VNet + AKS", tag: "Enterprise" },
+      { icon: Cloud, label: "GCP VPC + GKE", tag: "Cloud Native" },
+      { icon: Layers, label: "Multi-Cloud Terraform", tag: "Universal" },
     ],
   },
   {
     icon: Container,
-    title: "Deployment",
-    subtitle: "How your app gets deployed",
-    iconColor: "text-cyan-500",
-    iconBg: "bg-cyan-500/10",
+    title: "Deployment Strategies",
+    subtitle: "Zero-downtime release methods",
+    iconColor: "text-emerald-500",
+    iconBg: "bg-emerald-500/10",
     items: [
-      { icon: Container, label: "Docker", tag: "Recommended" },
-      { icon: Ship, label: "Kubernetes", tag: "Production" },
-      { icon: Monitor, label: "Virtual Machine" },
-    ],
-  },
-  {
-    icon: Cpu,
-    title: "Environments",
-    subtitle: "Deployment environment strategy",
-    iconColor: "text-green-500",
-    iconBg: "bg-green-500/10",
-    items: [
-      { icon: Box, label: "Single Environment", tag: "Simple" },
-      { icon: GitBranch, label: "Dev / Stage / Prod", tag: "Best Practice" },
+      { icon: RefreshCw, label: "Blue-Green", tag: "Zero Downtime" },
+      { icon: Ship, label: "Canary Rollouts", tag: "Progressive" },
+      { icon: GitBranch, label: "GitOps ArgoCD", tag: "Recommended" },
+      { icon: Container, label: "Rolling Updates", tag: "Standard" },
     ],
   },
   {
     icon: Activity,
-    title: "Observability",
-    subtitle: "Monitoring & alerting setup",
+    title: "Observability Stack",
+    subtitle: "Metrics, tracing & dashboards",
     iconColor: "text-amber-500",
     iconBg: "bg-amber-500/10",
     items: [
-      { icon: FileText, label: "Logs Only" },
-      { icon: BarChart3, label: "Logs + Metrics", tag: "Recommended" },
-      { icon: Activity, label: "Full (Logs + Metrics + Alerts)" },
+      { icon: BarChart3, label: "Prometheus + Grafana", tag: "Standard" },
+      { icon: Activity, label: "OpenTelemetry + Jaeger", tag: "Tracing" },
+      { icon: FileText, label: "ELK Stack", tag: "Centralized" },
+      { icon: Monitor, label: "DataDog APM", tag: "Enterprise" },
     ],
   },
   {
     icon: Shield,
-    title: "Security",
-    subtitle: "Security posture & policies",
+    title: "Security & Compliance",
+    subtitle: "Hardened security benchmarks",
     iconColor: "text-red-500",
     iconBg: "bg-red-500/10",
     items: [
-      { icon: Shield, label: "Basic" },
-      { icon: ShieldCheck, label: "Standard", tag: "Recommended" },
-      { icon: ShieldAlert, label: "Strict", tag: "Enterprise" },
+      { icon: ShieldCheck, label: "NIST CSF Framework", tag: "Recommended" },
+      { icon: ShieldAlert, label: "Zero Trust Architecture", tag: "Strict" },
+      { icon: Shield, label: "CIS Benchmarks", tag: "Hardened" },
+      { icon: ShieldCheck, label: "SOC2 Compliance", tag: "Audited" },
     ],
   },
 ];
