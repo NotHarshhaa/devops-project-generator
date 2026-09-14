@@ -10,21 +10,21 @@ export function GeneratedOutputSection() {
         description="A completely configured, self-documenting repository structure. Ready for immediate version control and automated execution."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start w-full">
         {/* Left Column: Sharp File Tree Terminal */}
-        <div className="lg:col-span-7 border-2 border-foreground bg-background">
-          <div className="px-4 py-3 border-b-2 border-foreground bg-muted flex items-center justify-between font-mono text-xs">
+        <div className="lg:col-span-7 border-2 border-foreground bg-background w-full overflow-hidden">
+          <div className="px-4 py-2.5 sm:py-3 border-b-2 border-foreground bg-muted flex items-center justify-between font-mono text-xs">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 border border-foreground bg-foreground" />
               <div className="w-2.5 h-2.5 border border-foreground bg-background" />
               <div className="w-2.5 h-2.5 border border-foreground bg-muted-foreground/40" />
-              <span className="font-bold tracking-wider ml-1">repository-hierarchy</span>
+              <span className="font-bold tracking-wider ml-1 truncate">repository-hierarchy</span>
             </div>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">SCANNED</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground shrink-0">SCANNED</span>
           </div>
 
-          <div className="p-5 font-mono text-xs sm:text-sm leading-relaxed bg-background">
-            <div className="font-bold text-foreground mb-3 pb-1 border-b border-foreground/15 flex items-center justify-between">
+          <div className="p-4 sm:p-5 font-mono text-[11px] sm:text-xs leading-relaxed bg-background overflow-x-auto">
+            <div className="font-bold text-foreground mb-3 pb-1 border-b border-foreground/15 flex items-center justify-between whitespace-nowrap">
               <span>my-devops-project/</span>
               <span className="text-[10px] text-muted-foreground uppercase">ROOT DIRECTORY</span>
             </div>

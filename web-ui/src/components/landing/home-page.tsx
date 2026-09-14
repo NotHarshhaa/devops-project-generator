@@ -26,7 +26,7 @@ export function HomePage() {
   }, []);
 
   return (
-    <div id="top" className="min-h-screen bg-background text-foreground selection:bg-foreground selection:text-background">
+    <div id="top" className="min-h-screen bg-background text-foreground selection:bg-foreground selection:text-background w-full max-w-full overflow-x-hidden relative">
       <PageBackground />
       <SiteHeader />
       

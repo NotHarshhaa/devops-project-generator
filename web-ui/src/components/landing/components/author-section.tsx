@@ -13,18 +13,18 @@ export function AuthorSection() {
           description="A solo pursuit in distilling cloud architecture into concise, reproducible, production-ready code."
         />
 
-        <div className="max-w-3xl mx-auto border-2 border-foreground bg-card p-6 sm:p-10 relative">
+        <div className="max-w-3xl mx-auto border-2 border-foreground bg-card p-5 sm:p-10 relative overflow-hidden w-full max-w-full">
           {/* Bold Choice #6: Editorial Pull Quote with Oversized Quotation Marks */}
-          <div className="relative mb-8 pb-8 border-b border-foreground/20">
-            <span className="font-display text-7xl sm:text-8xl text-foreground/20 leading-none absolute -top-8 -left-3 select-none pointer-events-none">
+          <div className="relative mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-foreground/20">
+            <span className="font-display text-5xl sm:text-7xl lg:text-8xl text-foreground/20 leading-none absolute -top-4 sm:-top-8 left-0 select-none pointer-events-none">
               “
             </span>
-            <blockquote className="relative z-10 font-serif italic text-lg sm:text-2xl text-foreground leading-relaxed pl-6">
+            <blockquote className="relative z-10 font-serif italic text-base sm:text-xl lg:text-2xl text-foreground leading-relaxed pl-4 sm:pl-6">
               True elegance in cloud architecture is not how many components you can add, but how much friction and bloat you can eliminate.
             </blockquote>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-8">
             {/* Bold Choice #14: Image Borders Thicken & Grayscale to Scale on Hover */}
             <div className="group/avatar shrink-0">
               <div className="border-2 border-foreground group-hover/avatar:border-4 transition-all duration-100 overflow-hidden bg-background">
@@ -33,33 +33,33 @@ export function AuthorSection() {
                   alt="H A R S H H A A"
                   width={112}
                   height={112}
-                  className="h-24 w-24 sm:h-28 sm:w-28 grayscale transition-all duration-300 group-hover/avatar:scale-105 group-hover/avatar:grayscale-0 object-cover"
+                  className="h-20 w-20 sm:h-28 sm:w-28 grayscale transition-all duration-300 group-hover/avatar:scale-105 group-hover/avatar:grayscale-0 object-cover"
                 />
               </div>
             </div>
 
-            <div className="flex-1 text-center sm:text-left">
-              <h3 className="font-display font-bold text-2xl tracking-wide text-foreground">
+            <div className="flex-1 text-center sm:text-left min-w-0 w-full">
+              <h3 className="font-display font-bold text-xl sm:text-2xl tracking-wide text-foreground">
                 H A R S H H A A
               </h3>
-              <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mt-1">
+              <p className="font-mono text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest text-muted-foreground mt-1">
                 PLATFORM ARCHITECT &amp; SYSTEMS AUTOMATION
               </p>
-              <p className="font-serif text-sm text-foreground/80 mt-3 leading-relaxed">
+              <p className="font-serif text-xs sm:text-sm text-foreground/80 mt-3 leading-relaxed">
                 Platform Engineering specialist focused on declarative infrastructure, Kubernetes ecosystems, and developer tooling.
               </p>
 
               {/* Stats Inversion Row */}
-              <div className="grid grid-cols-3 gap-3 my-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 my-5 sm:my-6 w-full">
                 {AUTHOR_STATS.map((stat) => (
                   <div
                     key={stat.label}
-                    className="group/stat border border-foreground bg-background p-3 text-center transition-colors duration-100 hover:bg-foreground hover:text-background"
+                    className="group/stat border border-foreground bg-background p-2 sm:p-3 text-center transition-colors duration-100 hover:bg-foreground hover:text-background"
                   >
-                    <div className="text-xl sm:text-2xl font-display font-bold">
+                    <div className="text-lg sm:text-2xl font-display font-bold">
                       {stat.value}
                     </div>
-                    <div className="text-[9px] font-mono uppercase tracking-wider opacity-70 mt-0.5">
+                    <div className="text-[8px] sm:text-[9px] font-mono uppercase tracking-wider opacity-70 mt-0.5 truncate">
                       {stat.sub}
                     </div>
                   </div>

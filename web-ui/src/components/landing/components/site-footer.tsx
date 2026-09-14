@@ -4,8 +4,8 @@ import { APP_VERSION, GITHUB_REPO } from "../data/landing-content";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t-4 border-foreground bg-background">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-12">
+    <footer className="border-t-4 border-foreground bg-background w-full max-w-full overflow-hidden">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12 w-full">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 pb-8 border-b border-foreground/15">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center border border-foreground bg-foreground text-background">

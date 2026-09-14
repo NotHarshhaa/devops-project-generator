@@ -38,14 +38,14 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
         <div className="h-0.5 w-16 bg-foreground mx-auto mt-4" />
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as WorkspaceTab)} className="w-full">
-        <div className="flex justify-center mb-6 sm:mb-8">
-          <TabsList className="inline-flex h-auto p-0 border-2 border-foreground bg-background">
+      <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as WorkspaceTab)} className="w-full max-w-full overflow-hidden">
+        <div className="w-full overflow-x-auto pb-2 flex justify-start sm:justify-center mb-6 sm:mb-8">
+          <TabsList className="inline-flex shrink-0 h-auto p-0 border-2 border-foreground bg-background">
             {tabs.map(({ value, icon: Icon, label, shortLabel }) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="gap-2.5 py-3 px-5 sm:px-6 text-xs font-mono uppercase tracking-wider rounded-none border-r last:border-r-0 border-foreground/30 transition-colors duration-100 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:text-muted-foreground hover:text-foreground cursor-pointer"
+                className="gap-1.5 sm:gap-2.5 py-2.5 sm:py-3 px-3 sm:px-6 text-[11px] sm:text-xs font-mono uppercase tracking-wider rounded-none border-r last:border-r-0 border-foreground/30 transition-colors duration-100 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
                 <span className="hidden sm:inline">{label}</span>
@@ -55,7 +55,7 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
           </TabsList>
         </div>
 
-        <div className="border-2 border-foreground bg-card p-5 sm:p-8 shadow-none">
+        <div className="border-2 border-foreground bg-card p-3 sm:p-6 lg:p-8 shadow-none w-full max-w-full overflow-hidden">
           <TabsContent value="generator" className="mt-0 outline-none">
             <ProjectGenerator />
           </TabsContent>

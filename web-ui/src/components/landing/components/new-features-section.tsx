@@ -67,19 +67,19 @@ export function NewFeaturesSection({ onNavigate }: NewFeaturesSectionProps) {
         </div>
 
         {/* Bold Choice #3: Inverted Stats Section with vertical line texture */}
-        <div className="mt-14 relative border-2 border-foreground bg-foreground text-background p-8 sm:p-12 overflow-hidden">
+        <div className="mt-12 sm:mt-14 relative border-2 border-foreground bg-foreground text-background p-5 sm:p-10 lg:p-12 overflow-hidden w-full max-w-full">
           <div className="absolute inset-0 pattern-vertical-lines-white pointer-events-none" />
           
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 pb-6 border-b border-background/20 mb-8">
-            <div>
-              <span className="font-mono text-xs uppercase tracking-widest opacity-60">
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 pb-6 border-b border-background/20 mb-8">
+            <div className="text-center md:text-left">
+              <span className="font-mono text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest opacity-60">
                 AUDIT METRICS & BENCHMARKS
               </span>
-              <h3 className="font-display font-normal text-2xl sm:text-3xl text-background mt-1">
+              <h3 className="font-display font-normal text-xl sm:text-2xl lg:text-3xl text-background mt-1">
                 Zero Configuration Bloat.
               </h3>
             </div>
-            <p className="font-serif text-sm text-background/80 max-w-md md:text-right">
+            <p className="font-serif text-xs sm:text-sm text-background/80 max-w-md text-center md:text-right">
               All infrastructure evaluations run deterministic algorithms inside your browser. No telemetry or external server calls.
             </p>
           </div>
@@ -88,12 +88,12 @@ export function NewFeaturesSection({ onNavigate }: NewFeaturesSectionProps) {
             {NEW_FEATURE_HIGHLIGHTS.map(({ value, label }, index) => (
               <div
                 key={label}
-                className={`text-center ${index > 0 ? "pt-6 sm:pt-0 sm:pl-8" : ""}`}
+                className={`text-center ${index > 0 ? "pt-6 sm:pt-0 sm:pl-6 lg:pl-8" : ""}`}
               >
-                <div className="text-4xl sm:text-5xl font-display font-bold text-background mb-2">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-background mb-1 sm:mb-2">
                   {value}
                 </div>
-                <div className="font-mono text-xs uppercase tracking-widest text-background/70">
+                <div className="font-mono text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest text-background/70 break-words">
                   {label}
                 </div>
               </div>
