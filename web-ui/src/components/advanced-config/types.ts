@@ -33,4 +33,5 @@ export interface ConfigOptimization {
 export interface AdvancedConfigBuilderProps {
   config: ProjectConfig;
   onConfigChange?: (config: ProjectConfig) => void;
+  onNavigateToGenerator?: () => void;
 }

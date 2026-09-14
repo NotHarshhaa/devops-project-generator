@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, Wrench, Target, Clock, ArrowRight } from "lucide-react";
+import { Lightbulb, Wrench, Target, Clock, ArrowRight, ChevronUp, CheckCircle2, ShieldAlert } from "lucide-react";
 import { CostOptimization } from "../types";
 import { getDifficultyBadge, getImpactBadge, getRiskBadge } from "../utils/badges";
 
@@ -19,6 +20,7 @@ function getImplementationTime(difficulty: CostOptimization["difficulty"]) {
 }
 
 export function OptimizationList({ optimizations }: OptimizationListProps) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   return (
     <div className="rounded-2xl border border-border/60 bg-card/50 overflow-hidden h-full flex flex-col">
       <div className="px-5 py-4 border-b border-border/60 bg-muted/30">
@@ -74,11 +76,46 @@ export function OptimizationList({ optimizations }: OptimizationListProps) {
                 <Clock className="h-3 w-3" />
                 <span>Est. {getImplementationTime(opt.difficulty)}</span>
               </div>
-              <Button variant="ghost" size="sm" className="text-xs h-7 gap-1 text-brand hover:text-brand hover:bg-brand/10">
-                Learn more
-                <ArrowRight className="h-3 w-3" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
+                className="text-xs h-7 gap-1 text-brand hover:text-brand hover:bg-brand/10"
+              >
+                {expandedIdx === idx ? (
+                  <>
+                    Hide details
+                    <ChevronUp className="h-3 w-3" />
+                  </>
+                ) : (
+                  <>
+                    Learn more
+                    <ArrowRight className="h-3 w-3" />
+                  </>
+                )}
               </Button>
             </div>
+
+            {expandedIdx === idx && (
+              <div className="mt-3 pt-3 border-t border-border/60 bg-muted/20 rounded-lg p-3 space-y-2 animate-fade-in text-xs">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-foreground">Implementation Playbook:</strong>
+                    <p className="text-muted-foreground mt-0.5">{opt.implementation}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <ShieldAlert className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-foreground">Risk Assessment:</strong>
+                    <p className="text-muted-foreground mt-0.5">
+                      Classified as <span className="font-semibold uppercase text-amber-500">{opt.risk} risk</span>. Implement in a staging environment first to validate workload SLOs before production rollout.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

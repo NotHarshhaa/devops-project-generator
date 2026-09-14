@@ -31,6 +31,16 @@ export function validateProjectName(name: string): ValidationError | null {
   return null;
 }
 
+const ALIAS_MAP: Record<string, string> = {
+  "docker-multi-stage": "docker-multistage",
+  "terraform-multi-cloud": "multicloud-terraform",
+  "kubernetes-on-prem": "kubernetes-onprem",
+  "ecs-fargate": "aws-ecs-fargate",
+  "soc2-compliance": "soc2",
+  "gdpr-compliance": "gdpr",
+  "hipaa-compliance": "hipaa",
+};
+
 export function validateProjectConfig(config: Partial<ProjectConfig>): ValidationResult {
   const errors: ValidationError[] = [];
 
@@ -40,10 +50,15 @@ export function validateProjectConfig(config: Partial<ProjectConfig>): Validatio
   for (const step of steps) {
     if (step.field === "projectName") continue;
 
-    const value = config[step.field];
+    let value = config[step.field];
     if (value === undefined || (typeof value === "string" && !value.trim())) {
       errors.push({ field: step.field, message: `${step.title} is required` });
       continue;
+    }
+
+    if (typeof value === "string" && ALIAS_MAP[value]) {
+      value = ALIAS_MAP[value] as any;
+      (config as any)[step.field] = value;
     }
 
     const options = getOptionsForStep(step.id);

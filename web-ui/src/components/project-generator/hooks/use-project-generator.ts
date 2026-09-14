@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ProjectConfig, GenerationResult } from "@/lib/types";
 import { steps } from "@/lib/options";
 import { generateProject } from "@/lib/generator";
+import { generateProjectViaApi } from "@/lib/api/client";
 import { useConfig } from "@/lib/config-context";
 import { trackProjectGeneration, trackUserSession, trackInteraction } from "@/lib/analytics";
 import { canProceedToNextStep } from "@/lib/validation";
@@ -51,11 +52,17 @@ export function useProjectGenerator() {
     const startTime = Date.now();
 
     try {
-      const complexity = calculateComplexity(config);
-      const delay = Math.min(5000, 1000 + complexity * 200);
-      await new Promise((r) => setTimeout(r, delay));
+      // Small snappy animation delay for seamless UX
+      await new Promise((r) => setTimeout(r, 400));
 
-      const generationResult = generateProject(config);
+      let generationResult: GenerationResult;
+      try {
+        generationResult = await generateProjectViaApi(config);
+      } catch (apiError) {
+        console.warn("Backend API route error, using client-side generator fallback:", apiError);
+        generationResult = generateProject(config);
+      }
+
       setResult(generationResult);
       setCompletedSteps((prev) => new Set([...prev, steps.length - 1]));
 

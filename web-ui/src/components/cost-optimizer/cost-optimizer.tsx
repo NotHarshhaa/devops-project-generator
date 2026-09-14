@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calculator, Target, DollarSign, Sparkles } from "lucide-react";
+import { saveAs } from "file-saver";
 import { CostOptimizerProps } from "./types";
 import { useCostAnalysis } from "./hooks/use-cost-analysis";
 import { CostSummaryCards } from "./components/cost-summary-cards";
@@ -21,6 +22,80 @@ export function CostOptimizer({ config }: CostOptimizerProps) {
 
   const savingsPercent =
     totalMonthlyCost > 0 ? ((totalPotentialSavings / totalMonthlyCost) * 100).toFixed(0) : "0";
+
+  const handleExportCostReport = () => {
+    const lines = [
+      `# Infrastructure Cost & Optimization Report`,
+      ``,
+      `**Project Name**: ${config.projectName || "devops-project"}`,
+      `**Generated On**: ${new Date().toISOString()}`,
+      `**Current Estimated Cost**: $${totalMonthlyCost.toFixed(0)}/month ($${(totalMonthlyCost * 12).toFixed(0)}/year)`,
+      `**Potential Monthly Savings**: $${totalPotentialSavings.toFixed(0)}/month (${savingsPercent}%)`,
+      `**Target Optimized Cost**: $${optimizedCost.toFixed(0)}/month`,
+      ``,
+      `---`,
+      ``,
+      `## Monthly Cost Breakdown by Component`,
+      ``,
+      `| Component | Category | Monthly Cost | Description |`,
+      `| :--- | :--- | :--- | :--- |`,
+      ...costEstimates.map(
+        (c) => `| ${c.component} | ${c.category} | $${c.monthlyCost.toFixed(0)} | ${c.description} |`
+      ),
+      ``,
+      `---`,
+      ``,
+      `## Optimization Opportunities`,
+      ``,
+      ...optimizations.map(
+        (opt, i) => `### ${i + 1}. ${opt.title} (Save $${opt.savings}/mo)
+- **Difficulty**: ${opt.difficulty.toUpperCase()}
+- **Impact**: ${opt.impact.toUpperCase()}
+- **Risk**: ${opt.risk.toUpperCase()}
+- **Expected ROI**: ${opt.roi}
+- **Implementation**: ${opt.implementation}
+- **Description**: ${opt.description}
+`
+      ),
+    ];
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    saveAs(blob, `${config.projectName || "devops-project"}-cost-report.md`);
+  };
+
+  const handleCreateOptimizationPlan = () => {
+    const quickWins = optimizations.filter((o) => o.difficulty === "easy");
+    const mediumTerm = optimizations.filter((o) => o.difficulty === "medium");
+    const longTerm = optimizations.filter((o) => o.difficulty === "hard");
+
+    const lines = [
+      `# Cost Optimization Execution Roadmap`,
+      ``,
+      `**Project**: ${config.projectName || "devops-project"}`,
+      `**Target Total Savings**: $${totalPotentialSavings.toFixed(0)}/mo`,
+      ``,
+      `## Phase 1: Quick Wins (Weeks 1–2)`,
+      quickWins.length > 0
+        ? quickWins.map((q) => `- [ ] **${q.title}**: Save $${q.savings}/mo. ${q.implementation}`).join("\n")
+        : `- No quick win changes required.`,
+      ``,
+      `## Phase 2: Medium-Term Improvements (Months 1–2)`,
+      mediumTerm.length > 0
+        ? mediumTerm.map((m) => `- [ ] **${m.title}**: Save $${m.savings}/mo. ${m.implementation}`).join("\n")
+        : `- No medium-term items.`,
+      ``,
+      `## Phase 3: Long-Term Enterprise Architecture (Months 3+)`,
+      longTerm.length > 0
+        ? longTerm.map((l) => `- [ ] **${l.title}**: Save $${l.savings}/mo. ${l.implementation}`).join("\n")
+        : `- No long-term items.`,
+      ``,
+      `---`,
+      `*Generated automatically by DevOps Project Generator Cost Advisor*`,
+    ];
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    saveAs(blob, `${config.projectName || "devops-project"}-optimization-roadmap.md`);
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -78,11 +153,11 @@ export function CostOptimizer({ config }: CostOptimizerProps) {
       <CostInsights totalMonthlyCost={totalMonthlyCost} />
 
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <Button variant="outline" className="flex-1 gap-2 border-border/80 h-11">
+        <Button onClick={handleExportCostReport} variant="outline" className="flex-1 gap-2 border-border/80 h-11">
           <Calculator className="h-4 w-4" />
           Export Cost Report
         </Button>
-        <Button className="flex-1 gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
+        <Button onClick={handleCreateOptimizationPlan} className="flex-1 gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
           <Target className="h-4 w-4" />
           Create Optimization Plan
         </Button>

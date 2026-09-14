@@ -4,10 +4,10 @@ import { ComplexityMetrics } from "../types";
 export function calculateComplexityMetrics(config: ProjectConfig): ComplexityMetrics {
   let score = 0;
 
-  if (config.infra.includes("terraform-multi-cloud")) score += 35;
+  if (config.infra.includes("multicloud-terraform") || config.infra.includes("terraform-multi-cloud")) score += 35;
   else if (config.infra.includes("eks") || config.infra.includes("aks") || config.infra.includes("gke")) score += 25;
   else if (config.infra.includes("kubernetes")) score += 20;
-  else if (config.infra.includes("ecs-fargate")) score += 15;
+  else if (config.infra.includes("ecs-fargate") || config.infra.includes("aws-ecs-fargate")) score += 15;
   else score += 10;
 
   if (config.deploy === "gitops-argocd") score += 30;
@@ -21,7 +21,7 @@ export function calculateComplexityMetrics(config: ProjectConfig): ComplexityMet
   if (config.pipeline === "kubernetes-operator") score += 25;
   else if (config.pipeline === "terraform-module") score += 20;
   else if (config.pipeline === "microservice") score += 20;
-  else if (config.pipeline === "docker-multi-stage") score += 15;
+  else if (config.pipeline === "docker-multistage" || config.pipeline === "docker-multi-stage") score += 15;
   else score += 10;
 
   if (config.observability === "jaeger-prometheus" || config.observability === "elk-stack") score += 20;

@@ -6,6 +6,10 @@ import {
   generateRealisticApplicationFiles,
   generateRealisticScriptFiles,
   generateRealisticCIFiles,
+  generateRealisticInfraFiles,
+  generateRealisticDeployFiles,
+  generateRealisticMonitoringFiles,
+  generateRealisticSecurityFiles,
 } from './templates';
 
 // Main enhanced project generation function
@@ -13,9 +17,8 @@ export function generateEnhancedProject(config: ProjectConfig): GenerationResult
   const allFiles: GeneratedFile[] = [];
   const components: string[] = [];
   
-  // Calculate complexity for realistic generation time
-  const complexity = calculateComplexity(config);
-  const estimatedTime = Math.max(2, complexity * 0.5); // Base time + complexity factor
+  // Calculate complexity
+  calculateComplexity(config);
   
   // Generate base files (always included)
   allFiles.push(...generateRealisticBaseFiles(config));
@@ -35,8 +38,21 @@ export function generateEnhancedProject(config: ProjectConfig): GenerationResult
     components.push(`CI/CD Pipeline (${config.ci})`);
   }
   
-  // TODO: Add infrastructure, deployment, monitoring, and security files
-  // These will be implemented in subsequent iterations
+  // Generate Infrastructure as Code files
+  allFiles.push(...generateRealisticInfraFiles(config));
+  components.push(`Infrastructure as Code (${config.infra})`);
+  
+  // Generate Deployment & Container manifests
+  allFiles.push(...generateRealisticDeployFiles(config));
+  components.push(`Deployment Manifests (${config.deploy})`);
+  
+  // Generate Observability & Monitoring files
+  allFiles.push(...generateRealisticMonitoringFiles(config));
+  components.push(`Observability Stack (${config.observability})`);
+  
+  // Generate Security & Compliance files
+  allFiles.push(...generateRealisticSecurityFiles(config));
+  components.push(`Security Policies (${config.security})`);
   
   // Ensure all directories exist
   const directories: GeneratedFile[] = [];

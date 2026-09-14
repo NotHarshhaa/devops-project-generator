@@ -31,11 +31,11 @@ export function calculateCostEstimates(config: ProjectConfig): CostEstimate[] {
       { component: "GCP GKE Cluster", monthlyCost: 74 * regionMultiplier, category: "infrastructure", icon: Cloud, description: "GKE cluster management fee", variables: ["cluster_size", "region"] },
       { component: "GKE Worker Nodes (3x e2-medium)", monthlyCost: 3 * 48 * regionMultiplier, category: "infrastructure", icon: Server, description: "GCE instances for workloads", variables: ["machine_type", "instance_count", "utilization"] }
     );
-  } else if (config.infra.includes("ecs-fargate")) {
+  } else if (config.infra.includes("ecs-fargate") || config.infra.includes("aws-ecs-fargate")) {
     estimates.push({ component: "AWS ECS Fargate", monthlyCost: 120 * regionMultiplier, category: "infrastructure", icon: Cloud, description: "Serverless container compute", variables: ["vcpu_hours", "memory_gb", "tasks"] });
-  } else if (config.infra.includes("terraform-multi-cloud")) {
+  } else if (config.infra.includes("multicloud-terraform") || config.infra.includes("terraform-multi-cloud")) {
     estimates.push({ component: "Multi-Cloud Infrastructure", monthlyCost: 350 * regionMultiplier, category: "infrastructure", icon: Cloud, description: "Multiple cloud provider resources", variables: ["providers", "resource_count", "complexity"] });
-  } else if (config.infra.includes("kubernetes-on-prem")) {
+  } else if (config.infra.includes("kubernetes-onprem") || config.infra.includes("kubernetes-on-prem")) {
     estimates.push({ component: "On-Premises Kubernetes", monthlyCost: 800 * regionMultiplier, category: "infrastructure", icon: Server, description: "Hardware, maintenance, and operations", variables: ["hardware_cost", "maintenance", "staffing"] });
   } else {
     estimates.push({ component: "Basic Infrastructure", monthlyCost: 150 * regionMultiplier, category: "infrastructure", icon: Server, description: "Minimal infrastructure setup", variables: ["server_count", "basic_services"] });

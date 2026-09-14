@@ -56,7 +56,7 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
             <ProjectGenerator />
           </TabsContent>
           <TabsContent value="config" className="mt-0">
-            <AdvancedConfigBuilder config={config} />
+            <AdvancedConfigBuilder config={config} onNavigateToGenerator={() => onTabChange("generator")} />
           </TabsContent>
           <TabsContent value="cost" className="mt-0">
             <CostOptimizer config={config} />

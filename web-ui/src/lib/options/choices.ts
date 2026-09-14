@@ -5,7 +5,7 @@ export const pipelineOptions: OptionCard[] = [
   { value: "python", label: "Python", description: "CI/CD pipelines for Python applications with pytest and poetry", icon: "package" },
   { value: "java-maven", label: "Java + Maven", description: "Enterprise-grade CI/CD for Java applications with Maven", icon: "coffee" },
   { value: "go", label: "Go", description: "Fast CI/CD pipelines for Go applications with go mod", icon: "zap" },
-  { value: "docker-multi-stage", label: "Docker Multi-Stage", description: "Containerized pipelines with multi-stage Docker builds", icon: "container" },
+  { value: "docker-multistage", label: "Docker Multi-Stage", description: "Containerized pipelines with multi-stage Docker builds", icon: "container" },
   { value: "terraform-module", label: "Terraform Module", description: "CI/CD for Terraform modules with automated testing", icon: "layers" },
   { value: "kubernetes-operator", label: "Kubernetes Operator", description: "CI/CD for Kubernetes operators with OLM integration", icon: "ship" },
   { value: "microservice", label: "Microservice", description: "Complex pipelines for microservice architectures", icon: "git-branch" },
@@ -25,9 +25,9 @@ export const infraOptions: OptionCard[] = [
   { value: "aws-vpc-eks", label: "AWS VPC + EKS", description: "Production-ready VPC with EKS cluster and managed node groups", icon: "cloud", recommended: true },
   { value: "azure-vnet-aks", label: "Azure VNet + AKS", description: "Enterprise VNet with AKS cluster and Azure DevOps integration", icon: "database" },
   { value: "gcp-vpc-gke", label: "GCP VPC + GKE", description: "Secure VPC with GKE cluster and Cloud Build integration", icon: "cpu" },
-  { value: "terraform-multi-cloud", label: "Multi-Cloud Terraform", description: "Multi-cloud infrastructure with Terraform modules and state management", icon: "layers" },
-  { value: "kubernetes-on-prem", label: "Kubernetes On-Prem", description: "On-premises Kubernetes with metalLB and external storage", icon: "server" },
-  { value: "ecs-fargate", label: "AWS ECS Fargate", description: "Serverless container orchestration with AWS Fargate", icon: "container" },
+  { value: "multicloud-terraform", label: "Multi-Cloud Terraform", description: "Multi-cloud infrastructure with Terraform modules and state management", icon: "layers" },
+  { value: "kubernetes-onprem", label: "Kubernetes On-Prem", description: "On-premises Kubernetes with metalLB and external storage", icon: "server" },
+  { value: "aws-ecs-fargate", label: "AWS ECS Fargate", description: "Serverless container orchestration with AWS Fargate", icon: "container" },
   { value: "ansible-automation", label: "Ansible Automation", description: "Configuration management and automation with Ansible playbooks", icon: "terminal" },
 ];
 
@@ -61,7 +61,7 @@ export const securityOptions: OptionCard[] = [
   { value: "nist-csf", label: "NIST CSF", description: "NIST Cybersecurity Framework with comprehensive controls", icon: "shield", recommended: true },
   { value: "cis-benchmarks", label: "CIS Benchmarks", description: "Center for Internet Security benchmarks for hardening", icon: "shield-check" },
   { value: "zero-trust", label: "Zero Trust Architecture", description: "Zero Trust with mTLS, service mesh, and identity-based access", icon: "shield-x" },
-  { value: "soc2-compliance", label: "SOC2 Compliance", description: "SOC2 Type II compliance controls and documentation", icon: "file-check" },
-  { value: "gdpr-compliance", label: "GDPR Compliance", description: "GDPR data protection and privacy controls", icon: "lock" },
-  { value: "hipaa-compliance", label: "HIPAA Compliance", description: "HIPAA healthcare compliance and audit controls", icon: "heart" },
+  { value: "soc2", label: "SOC2 Compliance", description: "SOC2 Type II compliance controls and documentation", icon: "file-check" },
+  { value: "gdpr", label: "GDPR Compliance", description: "GDPR data protection and privacy controls", icon: "lock" },
+  { value: "hipaa", label: "HIPAA Compliance", description: "HIPAA healthcare compliance and audit controls", icon: "heart" },
 ];

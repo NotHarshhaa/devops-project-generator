@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, Download, Rocket, Network, Sparkles } from "lucide-react";
+import { saveAs } from "file-saver";
 import { AdvancedConfigBuilderProps } from "./types";
 import { useConfigAnalysis } from "./hooks/use-config-analysis";
 import { ComplexityCard } from "./components/complexity-card";
@@ -12,12 +13,28 @@ import { DependencyList } from "./components/dependency-list";
 import { ArchitectureFlow } from "./components/architecture-flow";
 import { OptimizationPanel } from "./components/optimization-panel";
 
-export function AdvancedConfigBuilder({ config }: AdvancedConfigBuilderProps) {
+export function AdvancedConfigBuilder({ config, onNavigateToGenerator }: AdvancedConfigBuilderProps) {
   const { complexityMetrics, optimizations, conflicts, warnings, recommendations, requirements } =
     useConfigAnalysis(config);
 
   const isValid = conflicts.length === 0 && warnings.length === 0;
   const issueCount = conflicts.length + warnings.length;
+
+  const handleExportConfig = () => {
+    const data = JSON.stringify(
+      {
+        projectName: config.projectName || "devops-project",
+        config,
+        complexity: complexityMetrics,
+        optimizations,
+        exportedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    );
+    const blob = new Blob([data], { type: "application/json" });
+    saveAs(blob, `${config.projectName || "devops-project"}-config.json`);
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -89,11 +106,11 @@ export function AdvancedConfigBuilder({ config }: AdvancedConfigBuilderProps) {
       )}
 
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <Button variant="outline" className="flex-1 gap-2 border-border/80 h-11">
+        <Button onClick={handleExportConfig} variant="outline" className="flex-1 gap-2 border-border/80 h-11">
           <Download className="h-4 w-4" />
           Export Configuration
         </Button>
-        <Button className="flex-1 gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
+        <Button onClick={onNavigateToGenerator} className="flex-1 gap-2 h-11 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20">
           <Rocket className="h-4 w-4" />
           Generate Project
         </Button>
