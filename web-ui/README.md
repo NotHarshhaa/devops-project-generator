@@ -1,84 +1,119 @@
-# DevOps Project Generator — Web UI
+# DevOps Project Generator — Web UI Studio
 
-A modern, beautiful web interface for the [DevOps Project Generator](https://github.com/NotHarshhaa/devops-project-generator) CLI tool. Scaffold production-ready DevOps repositories through an interactive multi-step form — no terminal required.
+An interactive, editorial web studio for the [DevOps Project Generator](https://github.com/NotHarshhaa/devops-project-generator). Scaffold production-grade DevOps repositories, explore generated manifests before downloading, inspect dependency graphs, optimize cloud costs, and export live architecture diagrams and ADR documentation — all from the browser.
 
-## Tech Stack
+---
 
-- **Next.js 16** — React framework with App Router
-- **shadcn/ui** — Accessible, composable component library
-- **Tailwind CSS v4** — Utility-first styling
-- **Lucide Icons** — Beautiful open-source icons
-- **JSZip + FileSaver** — Client-side ZIP generation & download
+## 🛠️ Tech Stack
 
-## Features
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
+- **UI & Components**: [React 19](https://react.dev/), [shadcn/ui](https://ui.shadcn.com/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Design System**: Minimalist Monochrome (0px border-radius, high-contrast black/white palette, `Playfair Display`, `Source Serif 4`, and `JetBrains Mono` typography)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Archive & Export**: [JSZip](https://stuk.github.io/jszip/) + [FileSaver](https://github.com/eligrey/FileSaver.js) for client-side bundle generation
 
-- **7-step guided wizard** — Project name, CI/CD, Infrastructure, Deployment, Environments, Observability, Security
-- **Live file preview** — Browse generated project structure and file contents before downloading
-- **ZIP download** — Download the entire scaffolded project as a `.zip` file
-- **CLI command export** — Copy the equivalent CLI command for reproducibility
-- **Dark / Light theme** — Toggle between themes with one click
-- **Fully responsive** — Works on desktop, tablet, and mobile
+---
 
-## Getting Started
+## 🌟 Workspace Suite & Capabilities
+
+### 1. 🚀 01. Project Generator
+- 7-step guided workflow (Project Name, CI/CD, Infrastructure, Deployment, Environments, Observability, Security).
+- Instant project compilation into a downloadable `.zip` archive.
+- One-click copy for equivalent CLI initialization commands.
+
+### 2. 🔧 02. Advanced Config Builder
+- Component dependency graph visualization.
+- Real-time compatibility checks and conflict detection.
+- Architectural complexity scoring (0–100) with intelligent recommendations.
+
+### 3. 💰 03. Cost Optimization Advisor
+- Categorized monthly cloud spend estimation (Infrastructure, Observability, CI/CD, Security).
+- Actionable cost-reduction levers saving up to 70% on infrastructure.
+- Difficulty and impact ratings for each recommendation.
+
+### 4. 📊 04. Project Analytics Dashboard
+- Real-time tracking of generated stacks and popular runtime configurations.
+- Technology distribution breakdowns.
+- 100% privacy-first: all statistics are persisted locally in browser storage.
+
+### 5. 🗺️ 05. Live Architecture Diagram & ADR Exporter
+- **Visual Topology Mode**: Vector SVG canvas mapping CI/CD pipelines, container registries, security gates, cloud platforms, and observability.
+- **Mermaid.js Mode**: Copyable `graph TD` flowchart syntax ready for GitHub/GitLab READMEs.
+- **Decision Record (ADR) Mode**: Formatted Michael Nygard MADR `ADR-001` documentation with one-click markdown download.
+- Zero heavy runtime graph libraries for lightning-fast rendering and zero hydration mismatches.
+
+### 6. 📄 In-Browser Code & Manifest Explorer
+- Interactive split-pane file browser with category filter chips (`All`, `CI/CD`, `Terraform`, `Deploy & K8s`, `Monitoring`).
+- Syntax-realistic manifest viewer with line-number gutters, one-click copy, and individual file downloads before full project generation.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18.17+ or later
+- npm or pnpm
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/NotHarshhaa/devops-project-generator.git
+cd devops-project-generator/web-ui
+
 # Install dependencies
 npm install
 
-# Run development server
+# Start development server
 npm run dev
-
-# Production build
-npm run build
-npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to use the generator.
+Visit [http://localhost:3000](http://localhost:3000) to open the studio.
 
-## Project Structure
+### Production Build
+
+```bash
+# Build optimized production bundle
+npm run build
+
+# Run production server
+npm run start
+```
+
+---
+
+## 📁 Project Structure
 
 ```
 web-ui/
 ├── src/
 │   ├── app/
-│   │   ├── api/generate/    # API route for project generation
-│   │   ├── globals.css      # Theme & animation styles
-│   │   ├── layout.tsx       # Root layout with providers
-│   │   └── page.tsx         # Main page with hero + generator
+│   │   ├── api/generate/           # API route for server-side generation
+│   │   ├── api/health/             # Health check endpoint
+│   │   ├── globals.css             # Monochrome design system & tokens
+│   │   ├── layout.tsx              # Root layout & Google font configurations
+│   │   └── page.tsx                # Home page view
 │   ├── components/
-│   │   ├── ui/              # shadcn/ui primitives
-│   │   ├── file-tree.tsx    # Interactive file tree preview
-│   │   ├── option-card.tsx  # Selection card component
-│   │   ├── project-generator.tsx  # Main wizard form
-│   │   ├── step-indicator.tsx     # Step progress bar
-│   │   ├── theme-provider.tsx     # Dark/light theme context
-│   │   └── theme-toggle.tsx       # Theme switch button
+│   │   ├── architecture-diagram/   # Vector SVG topology, Mermaid, & ADR views
+│   │   ├── common/                 # Reusable components (CodeViewer, etc.)
+│   │   ├── config-builder/         # Graph, conflicts, and complexity tools
+│   │   ├── cost-optimizer/         # Cost estimation and savings calculators
+│   │   ├── generator/              # 7-step project generator wizard
+│   │   ├── landing/                # Editorial sections, header, colophon
+│   │   ├── project-analytics/      # Analytics charts and storage hooks
+│   │   ├── theme/                  # Theme provider and toggle
+│   │   └── ui/                     # shadcn/ui primitives (Button, Card, Tabs, etc.)
 │   └── lib/
-│       ├── generator.ts    # Project generation logic (mirrors Python CLI)
-│       ├── options.ts      # Step & option configurations
-│       ├── types.ts        # TypeScript type definitions
-│       └── utils.ts        # Utility functions
+│       ├── config-context.tsx      # Global project configuration state
+│       ├── diagram/                # Mermaid.js & ADR generator logic
+│       ├── generator/              # Client-side file generation & previews
+│       ├── options.ts              # DevOps option metadata & definitions
+│       └── types.ts                # TypeScript interfaces
 ```
 
-## Supported Options
+---
 
-| Category       | Options                                        |
-|----------------|------------------------------------------------|
-| CI/CD          | GitHub Actions, GitLab CI, Jenkins, None        |
-| Infrastructure | Terraform, CloudFormation, None                 |
-| Deployment     | Docker, Kubernetes, VM                          |
-| Environments   | Single, Dev / Stage / Prod                      |
-| Observability  | Logs, Logs + Metrics, Full                      |
-| Security       | Basic, Standard, Strict                         |
-
-## Deploy
-
-Deploy to Vercel, Netlify, or any platform that supports Next.js:
-
-```bash
-npm run build
-```
-
-## License
+## 📄 License
 
 MIT — Part of the [DevOps Project Generator](https://github.com/NotHarshhaa/devops-project-generator) project by [@NotHarshhaa](https://github.com/NotHarshhaa).
