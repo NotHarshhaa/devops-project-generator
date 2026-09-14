@@ -16,12 +16,15 @@ export function getPreviewableFiles(config: ProjectConfig): PreviewableFile[] {
 
   // Select top key files across all DevOps domains
   const previewPaths = [
+    { match: ".devcontainer/devcontainer.json", category: "app" as const, language: "json" as const },
     { match: ".github/workflows/ci.yml", category: "ci" as const, language: "yaml" as const },
+    { match: ".github/workflows/cosign-sign.yml", category: "security" as const, language: "yaml" as const },
     { match: "terraform/main.tf", category: "infra" as const, language: "hcl" as const },
     { match: "Dockerfile", category: "app" as const, language: "dockerfile" as const },
     { match: "docker-compose.yml", category: "deploy" as const, language: "yaml" as const },
     { match: "k8s/deployment.yaml", category: "deploy" as const, language: "yaml" as const },
     { match: "monitoring/prometheus.yml", category: "observability" as const, language: "yaml" as const },
+    { match: ".gitleaks.toml", category: "security" as const, language: "yaml" as const },
     { match: "security/policy.json", category: "security" as const, language: "json" as const },
     { match: "Makefile", category: "app" as const, language: "makefile" as const },
     { match: "README.md", category: "docs" as const, language: "markdown" as const },

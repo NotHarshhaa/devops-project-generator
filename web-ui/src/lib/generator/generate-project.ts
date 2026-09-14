@@ -10,6 +10,8 @@ import {
   generateRealisticDeployFiles,
   generateRealisticMonitoringFiles,
   generateRealisticSecurityFiles,
+  generateRealisticDevContainerFiles,
+  generateRealisticSecurityAddonFiles,
 } from './templates';
 
 // Main enhanced project generation function
@@ -31,6 +33,12 @@ export function generateEnhancedProject(config: ProjectConfig): GenerationResult
   // Generate script files
   allFiles.push(...generateRealisticScriptFiles(config));
   components.push("Deployment & Utility Scripts");
+
+  // Generate DevContainer sandbox files
+  if (config.devcontainer && config.devcontainer !== "none") {
+    allFiles.push(...generateRealisticDevContainerFiles(config));
+    components.push(`DevContainer Sandbox (${config.devcontainer})`);
+  }
   
   // Generate CI/CD files if enabled
   if (config.ci && config.ci !== "none") {
@@ -53,6 +61,13 @@ export function generateEnhancedProject(config: ProjectConfig): GenerationResult
   // Generate Security & Compliance files
   allFiles.push(...generateRealisticSecurityFiles(config));
   components.push(`Security Policies (${config.security})`);
+
+  // Generate Compliance & Governance Add-ons
+  const securityAddonFiles = generateRealisticSecurityAddonFiles(config);
+  if (securityAddonFiles.length > 0) {
+    allFiles.push(...securityAddonFiles);
+    components.push("Compliance & Supply Chain Hardening");
+  }
   
   // Ensure all directories exist
   const directories: GeneratedFile[] = [];

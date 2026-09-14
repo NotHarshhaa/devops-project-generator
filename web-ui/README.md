@@ -18,8 +18,9 @@ An interactive, editorial web studio for the [DevOps Project Generator](https://
 ## 🌟 Workspace Suite & Capabilities
 
 ### 1. 🚀 01. Project Generator
-- 7-step guided workflow (Project Name, CI/CD, Infrastructure, Deployment, Environments, Observability, Security).
+- 8-step guided workflow (Project Name, CI/CD, Infrastructure, Deployment, Environments, Observability, Security, DevContainer Sandbox).
 - Instant project compilation into a downloadable `.zip` archive.
+- Direct **Push to GitHub** integration via browser GitHub API and instant terminal CLI scripts.
 - One-click copy for equivalent CLI initialization commands.
 
 ### 2. 🔧 02. Advanced Config Builder
@@ -43,9 +44,19 @@ An interactive, editorial web studio for the [DevOps Project Generator](https://
 - **Decision Record (ADR) Mode**: Formatted Michael Nygard MADR `ADR-001` documentation with one-click markdown download.
 - Zero heavy runtime graph libraries for lightning-fast rendering and zero hydration mismatches.
 
-### 6. 📄 In-Browser Code & Manifest Explorer
-- Interactive split-pane file browser with category filter chips (`All`, `CI/CD`, `Terraform`, `Deploy & K8s`, `Monitoring`).
+### 6. 🛡️ 06. Compliance & Security Scorecard
+- **Real-Time Governance Gauge**: Assesses stack against CIS Kubernetes Benchmark, SOC 2 Type II, NIST 800-53, HIPAA, and SLSA Level 3.
+- **Interactive Security Controls**: Toggle Cosign cryptographic image signing, Syft SBOM generation, Trivy vulnerability gates, Gitleaks secret scanning, and Kubernetes RBAC.
+- **Audit Documentation**: One-click download of formal `COMPLIANCE-AUDIT.md`.
+
+### 7. 📦 DevContainer & Local Sandbox Generator
+- Pre-configured `.devcontainer/devcontainer.json` and multi-tool `Dockerfile`.
+- Injects language runtimes, matching DevOps CLIs (Terraform, Kubectl, Helm, AWS/GCP/Azure, Trivy), and VS Code / Cursor extensions.
+
+### 8. 📄 In-Browser Code & Manifest Explorer
+- Interactive split-pane file browser with category filter chips (`All`, `CI/CD`, `Terraform`, `Deploy & K8s`, `Monitoring`, `DevContainer`).
 - Syntax-realistic manifest viewer with line-number gutters, one-click copy, and individual file downloads before full project generation.
+
 
 ---
 

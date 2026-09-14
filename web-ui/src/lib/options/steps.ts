@@ -49,4 +49,10 @@ export const steps: StepConfig[] = [
     description: "Define your security and compliance framework",
     field: "security",
   },
+  {
+    id: "devcontainer",
+    title: "DevContainer Sandbox",
+    description: "Configure VS Code & Cursor local development tooling sandbox",
+    field: "devcontainer",
+  },
 ];

@@ -7,8 +7,11 @@ export interface ProjectConfig {
   envs: EnvOption;
   observability: ObservabilityOption;
   security: SecurityOption;
+  devcontainer?: DevContainerOption;
+  securityAddons?: string[];
 }
 
+export type DevContainerOption = "full" | "minimal" | "none";
 export type PipelineOption = "nodejs-typescript" | "python" | "java-maven" | "go" | "docker-multistage" | "docker-multi-stage" | "terraform-module" | "kubernetes-operator" | "microservice";
 export type CIOption = "github-actions" | "gitlab-ci" | "jenkins" | "azure-pipelines" | "circleci" | "bitrise" | "none";
 export type InfraOption = "aws-vpc-eks" | "azure-vnet-aks" | "gcp-vpc-gke" | "multicloud-terraform" | "terraform-multi-cloud" | "kubernetes-onprem" | "kubernetes-on-prem" | "aws-ecs-fargate" | "ecs-fargate" | "ansible-automation";

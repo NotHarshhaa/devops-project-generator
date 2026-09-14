@@ -6,10 +6,11 @@ import {
   CostOptimizer,
   AnalyticsDashboard,
   ArchitectureDiagramView,
+  SecurityScorecardView,
 } from "@/components";
 import { useConfig } from "@/lib/config-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Rocket, Network, DollarSign, BarChart3, Workflow } from "lucide-react";
+import { Rocket, Network, DollarSign, BarChart3, Workflow, ShieldCheck } from "lucide-react";
 import type { WorkspaceTab } from "../data/landing-content";
 
 interface WorkspaceSectionProps {
@@ -23,6 +24,7 @@ const tabs: { value: WorkspaceTab; icon: typeof Rocket; label: string; shortLabe
   { value: "cost", icon: DollarSign, label: "03. Cost Advisor", shortLabel: "Cost" },
   { value: "analytics", icon: BarChart3, label: "04. Analytics", shortLabel: "Stats" },
   { value: "diagram", icon: Workflow, label: "05. Diagram", shortLabel: "Diagram" },
+  { value: "security", icon: ShieldCheck, label: "06. Security Scorecard", shortLabel: "Security" },
 ];
 
 export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionProps) {
@@ -76,6 +78,9 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
           </TabsContent>
           <TabsContent value="diagram" className="mt-0 outline-none">
             <ArchitectureDiagramView config={config} />
+          </TabsContent>
+          <TabsContent value="security" className="mt-0 outline-none">
+            <SecurityScorecardView config={config} onUpdateConfig={updateConfig} />
           </TabsContent>
         </div>
       </Tabs>

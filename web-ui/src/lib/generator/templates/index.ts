@@ -6,4 +6,6 @@ export { generateRealisticInfraFiles } from './infra-files';
 export { generateRealisticDeployFiles } from './deploy-files';
 export { generateRealisticMonitoringFiles } from './monitoring-files';
 export { generateRealisticSecurityFiles } from './security-files';
+export { generateRealisticDevContainerFiles } from './devcontainer';
+export { generateRealisticSecurityAddonFiles } from './security-addons';
 

@@ -7,6 +7,7 @@ import {
   Cpu,
   Activity,
   Shield,
+  Container,
 } from "lucide-react";
 import { ProjectConfig } from "@/lib/types";
 
@@ -21,6 +22,7 @@ export const STEP_ICONS: Record<string, React.ElementType> = {
   envs: Cpu,
   observability: Activity,
   security: Shield,
+  devcontainer: Container,
 };
 
 export interface QuickStartTemplate {

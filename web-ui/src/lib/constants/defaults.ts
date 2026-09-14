@@ -9,6 +9,8 @@ export const DEFAULT_PROJECT_CONFIG: ProjectConfig = {
   envs: "dev,stage,prod",
   observability: "prometheus-grafana",
   security: "nist-csf",
+  devcontainer: "full",
+  securityAddons: ["cosign", "sbom", "trivy", "gitleaks", "rbac"],
 };
 
 /** @deprecated Use DEFAULT_PROJECT_CONFIG */

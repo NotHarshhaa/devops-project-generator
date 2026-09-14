@@ -6,6 +6,8 @@ export { HomePage } from "./landing";
 export { ThemeProvider, ThemeToggle, useTheme } from "./theme";
 export { ErrorBoundary } from "./common/error-boundary";
 export { ArchitectureDiagramView } from "./architecture-diagram";
+export { SecurityScorecardView } from "./security-scorecard";
+
 
 export type { AdvancedConfigBuilderProps, Dependency, ComplexityMetrics } from "./advanced-config";
 export type { CostOptimizerProps, CostEstimate, CostOptimization } from "./cost-optimizer";

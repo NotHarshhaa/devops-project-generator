@@ -36,7 +36,7 @@ export const HERO_TAGS = ["GitHub Actions", "Terraform", "Kubernetes", "Promethe
 export const APP_VERSION = "v2.0.0";
 export const GITHUB_REPO = "https://github.com/NotHarshhaa/devops-project-generator";
 
-export type WorkspaceTab = "generator" | "config" | "cost" | "analytics" | "diagram";
+export type WorkspaceTab = "generator" | "config" | "cost" | "analytics" | "diagram" | "security";
 
 export interface FeatureItem {
   icon: LucideIcon;
@@ -202,6 +202,18 @@ export const NEW_FEATURE_CARDS: NewFeatureCard[] = [
       "Inspect full-stack pipeline topology with zero runtime dependencies. Export GitHub-ready Mermaid syntax, vector SVGs, and formal Architecture Decision Records.",
     bullets: ["Vector pipeline topology graph", "Mermaid.js diagram syntax export", "Downloadable ADR-001 documentation"],
     cta: "View Topology",
+  },
+  {
+    tab: "security",
+    icon: ShieldCheck,
+    iconColor: "text-foreground",
+    iconBg: "bg-foreground/10",
+    hoverGradient: "from-foreground/10",
+    title: "Compliance & Security Scorecard",
+    description:
+      "Audit your stack against CIS Benchmarks, SOC 2 Type II, NIST 800-53, HIPAA, and SLSA Level 3 with interactive supply-chain security controls.",
+    bullets: ["Real-time governance gauge (A+ to D)", "Cosign, SBOM & Gitleaks toggles", "Downloadable COMPLIANCE-AUDIT.md"],
+    cta: "Audit Security",
   },
 ];
 

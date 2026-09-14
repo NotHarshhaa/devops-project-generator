@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ProjectConfig, GenerationResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +19,11 @@ import {
   Clock,
   Info,
   Sparkles,
+  Github,
 } from "lucide-react";
 import { FileTree } from "../file-tree";
 import { buildCliCommand } from "../utils";
+import { GitHubScaffoldDialog } from "./github-scaffold-dialog";
 
 interface ResultViewProps {
   config: ProjectConfig;
@@ -48,6 +51,7 @@ export function ResultView({
   onReset,
   onCopyCommand,
 }: ResultViewProps) {
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
   const cliCommand = buildCliCommand(config);
   const envCount = config.envs === "single" ? 1 : config.envs.split(",").length;
 
@@ -150,16 +154,32 @@ export function ResultView({
         <Button
           onClick={onDownload}
           size="lg"
-          className="gap-2 px-8 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20"
+          className="gap-2 px-6"
         >
           <Download className="h-4 w-4" />
           Download ZIP
         </Button>
-        <Button onClick={onReset} variant="outline" size="lg" className="gap-2 px-8 border-border/80">
+        <Button
+          onClick={() => setIsGitHubModalOpen(true)}
+          size="lg"
+          variant="outline"
+          className="gap-2 px-6 border-foreground"
+        >
+          <Github className="h-4 w-4" />
+          Push to GitHub
+        </Button>
+        <Button onClick={onReset} variant="outline" size="lg" className="gap-2 px-6">
           <RotateCcw className="h-4 w-4" />
           Generate Another
         </Button>
       </div>
+
+      <GitHubScaffoldDialog
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
+        projectName={result.projectName}
+        files={result.files}
+      />
     </div>
   );
 }

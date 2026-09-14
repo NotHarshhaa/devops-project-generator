@@ -65,3 +65,10 @@ export const securityOptions: OptionCard[] = [
   { value: "gdpr", label: "GDPR Compliance", description: "GDPR data protection and privacy controls", icon: "lock" },
   { value: "hipaa", label: "HIPAA Compliance", description: "HIPAA healthcare compliance and audit controls", icon: "heart" },
 ];
+
+export const devcontainerOptions: OptionCard[] = [
+  { value: "full", label: "Full Toolchain Sandbox", description: "Language runtime + stack CLIs (Terraform, Kubectl, Helm, Cloud) + Trivy & VS Code extensions", icon: "container", recommended: true },
+  { value: "minimal", label: "Minimal Runtime Sandbox", description: "Language runtime + git & zsh terminal, without heavy cloud provider CLIs", icon: "box" },
+  { value: "none", label: "None / Manual Setup", description: "Do not generate DevContainer configuration files", icon: "x" },
+];
+

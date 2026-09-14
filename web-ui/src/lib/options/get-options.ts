@@ -7,6 +7,7 @@ import {
   envOptions,
   observabilityOptions,
   securityOptions,
+  devcontainerOptions,
 } from "./choices";
 
 const optionsByStep: Record<string, OptionCard[]> = {
@@ -17,6 +18,7 @@ const optionsByStep: Record<string, OptionCard[]> = {
   envs: envOptions,
   observability: observabilityOptions,
   security: securityOptions,
+  devcontainer: devcontainerOptions,
 };
 
 export function getOptionsForStep(stepId: string): OptionCard[] {
