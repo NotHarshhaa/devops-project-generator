@@ -26,70 +26,59 @@ export function HomePage() {
   }, []);
 
   return (
-    <div id="top" className="min-h-screen bg-background text-foreground selection:bg-foreground selection:text-background w-full max-w-full overflow-x-hidden relative">
+    <div id="top" className="min-h-screen bg-background text-foreground w-full max-w-full overflow-x-hidden relative selection:bg-cyan-500/20 selection:text-cyan-700 dark:selection:text-cyan-300">
       <PageBackground />
       <SiteHeader />
       
-      {/* Editorial Hero Section */}
+      {/* Hero Section */}
       <HeroSection />
       
-      {/* Heavy 4px Section Rule */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="h-1 bg-foreground w-full" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full" />
       </div>
 
       {/* Main Workspace Section */}
       <WorkspaceSection activeTab={activeTab} onTabChange={setActiveTab} />
       
-      {/* Heavy 4px Section Rule */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="h-1 bg-foreground w-full" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full" />
       </div>
 
-      {/* New Capabilities & Inverted Stats */}
+      {/* New Capabilities & Interactive Cards */}
       <NewFeaturesSection onNavigate={handleNavigate} />
       
-      {/* Heavy 4px Section Rule */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="h-1 bg-foreground w-full" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full" />
       </div>
 
       {/* Principles & Features Grid */}
       <FeaturesSection />
       
-      {/* Heavy 4px Section Rule */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="h-1 bg-foreground w-full" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full" />
       </div>
 
       {/* Modular Architecture Matrix */}
       <SupportedOptionsSection />
       
-      {/* Heavy 4px Section Rule */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="h-1 bg-foreground w-full" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full" />
       </div>
 
       {/* Generated Artifacts & Terminal Hierarchy */}
       <GeneratedOutputSection />
       
-      {/* Heavy 4px Section Rule */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="h-1 bg-foreground w-full" />
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full" />
       </div>
 
-      {/* Authorial Philosophy & Pull Quotes */}
+      {/* Author Section */}
       <AuthorSection />
       
-      {/* Heavy 4px Section Rule */}
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="h-1 bg-foreground w-full" />
-      </div>
-
-      {/* Inverted Monolithic CTA */}
+      {/* Monolithic CTA */}
       <CtaSection />
       
-      {/* Colophon Footer */}
+      {/* Footer */}
       <SiteFooter />
       
       <ScrollToTopButton visible={showScrollTop} onClick={scrollToTop} />

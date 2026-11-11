@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowDown } from "lucide-react";
+import { ArrowRight, ArrowDown, Sparkles, Terminal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HERO_TAGS } from "../data/landing-content";
@@ -12,141 +12,140 @@ export function HeroSection() {
 
   return (
     <section className="container mx-auto max-w-7xl px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-24">
-      {/* Editorial Meta Header */}
-      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-3 mb-6 pb-3 border-b border-foreground/20 w-full overflow-hidden">
-        <span className="font-mono text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest text-muted-foreground truncate max-w-[240px] sm:max-w-none">
-          EDITION NO. 02 — ARCHITECTURAL RELEASE
-        </span>
-        <div className="hidden sm:block h-px flex-1 bg-foreground/10" />
-        <Badge variant="outline" className="text-[10px] shrink-0">
-          STRICT MONOCHROME
+      {/* Top Meta Status Bar */}
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 mb-8 pb-3 border-b border-border/60 w-full">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            v2.0 · Production Architecture Scaffolder
+          </span>
+        </div>
+        <div className="hidden sm:block h-px flex-1 bg-border/40 mx-4" />
+        <Badge variant="outline" className="text-[11px] font-mono border-brand/30 text-brand bg-brand/5 gap-1">
+          <Sparkles className="h-3 w-3" />
+          Zero-Config Topologies
         </Badge>
       </div>
 
-      <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-start w-full">
-        {/* Left Column: Dominated by Typography */}
+      <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center w-full">
+        {/* Left Column: Heading, description, and CTAs */}
         <div className="lg:col-span-7 flex flex-col min-w-0">
-          {/* Bold Choice #1: Oversized Hero Statement */}
-          <div className="space-y-1">
-            <span className="block font-mono text-xs uppercase tracking-widest text-muted-foreground">
-              [ 01 / INFRASTRUCTURE SCAFFOLD ]
+          <div className="space-y-3">
+            <span className="inline-block font-mono text-xs uppercase tracking-widest text-cyan-600 dark:text-cyan-400 font-semibold">
+              Platform Engineering &amp; IaC Automation
             </span>
-            <h1 className="font-display font-normal text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tighter leading-none text-foreground uppercase break-words">
-              SCAFFOLD
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08] text-foreground">
+              Scaffold Production{" "}
+              <span className="text-brand-gradient">DevOps Infrastructure.</span>
             </h1>
-            <h2 className="font-display italic text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-tight text-foreground">
-              Production DevOps.
-            </h2>
           </div>
 
-          {/* Bold Choice #2: Thick rule with small bordered square punctuation */}
-          <div className="flex items-center my-6 sm:my-8 max-w-full">
-            <div className="h-1 flex-1 bg-foreground" />
-            <div className="w-3.5 h-3.5 border-2 border-foreground bg-background mx-2 shrink-0" />
-            <div className="h-1 w-8 sm:w-12 bg-foreground" />
-          </div>
-
-          {/* Editorial lead paragraph */}
-          <p className="text-sm sm:text-base lg:text-lg text-foreground/80 leading-relaxed font-serif max-w-2xl">
-            A disciplined architecture generator for mission-critical infrastructure. Configure CI/CD pipelines,
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mt-6 max-w-2xl">
+            A production-grade architecture generator for mission-critical repositories. Configure CI/CD pipelines,
             cloud orchestration, observability, and compliance topologies—rendered into clean, deployable code in seconds.
           </p>
 
           {/* Technical Tags */}
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-6 sm:mt-8">
+          <div className="flex flex-wrap items-center gap-2 mt-6">
             {HERO_TAGS.map((tag) => (
               <span
                 key={tag}
-                className="font-mono text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest px-2 py-0.5 sm:px-2.5 sm:py-1 border border-foreground/30 bg-muted/40 text-foreground"
+                className="font-mono text-xs uppercase tracking-wider px-2.5 py-1 rounded-md border border-border/80 bg-muted/50 text-foreground transition-colors hover:border-brand/40 hover:bg-brand/5"
               >
                 {tag}
               </span>
             ))}
           </div>
 
-          {/* Sharp Primary and Secondary CTAs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mt-8 sm:mt-10">
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 mt-8 sm:mt-10">
             <Button
               size="lg"
               onClick={scrollToGenerator}
-              className="gap-3 font-mono text-xs uppercase tracking-widest h-11 sm:h-12 px-6 sm:px-8 w-full sm:w-auto"
+              className="gap-2.5 h-12 px-7 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/25 font-semibold cursor-pointer"
             >
               Start Generating
-              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+              <ArrowRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="lg"
               onClick={scrollToGenerator}
-              className="gap-3 font-mono text-xs uppercase tracking-widest h-11 sm:h-12 px-6 sm:px-8 w-full sm:w-auto"
+              className="gap-2.5 h-12 px-7 border-border/80 hover:bg-accent cursor-pointer"
             >
-              Examine Architecture
-              <ArrowDown className="h-4 w-4" strokeWidth={1.5} />
+              Explore Architecture
+              <ArrowDown className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Right Column: Architectural Manifest Box */}
+        {/* Right Column: Architectural Manifest Terminal Box */}
         <div className="lg:col-span-5 pt-2 w-full min-w-0">
-          <div className="border-2 border-foreground bg-background w-full overflow-hidden">
-            {/* Header with geometric window punctuation */}
-            <div className="border-b-2 border-foreground bg-muted px-4 py-2.5 sm:py-3 flex items-center justify-between font-mono text-xs">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950 text-slate-100 shadow-2xl shadow-black/40 overflow-hidden font-mono">
+            {/* macOS/Linux Terminal Header */}
+            <div className="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 border border-foreground bg-foreground" />
-                <div className="w-2.5 h-2.5 border border-foreground bg-background" />
-                <div className="w-2.5 h-2.5 border border-foreground bg-muted-foreground/30" />
-                <span className="font-bold tracking-wider ml-1 truncate">stack-manifest.yaml</span>
+                <div className="flex items-center gap-1.5 mr-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80 border border-red-600/40" />
+                  <div className="w-3 h-3 rounded-full bg-amber-500/80 border border-amber-600/40" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500/80 border border-emerald-600/40" />
+                </div>
+                <Terminal className="h-3.5 w-3.5 text-slate-400" />
+                <span className="font-semibold text-slate-300 ml-1 truncate">stack-manifest.yaml</span>
               </div>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest shrink-0">UTF-8</span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest shrink-0 font-medium">UTF-8</span>
             </div>
 
-            {/* Code Body: Pure Black & White typography */}
-            <div className="p-4 sm:p-6 font-mono text-[11px] sm:text-xs space-y-2 leading-relaxed bg-background overflow-x-auto">
-              <p className="text-muted-foreground pb-1 whitespace-nowrap"># SPECIFICATION : PRODUCTION SUITE</p>
-              <p className="flex justify-between gap-2 border-b border-foreground/10 pb-1 whitespace-nowrap">
-                <span className="text-muted-foreground">project_type:</span>
-                <span className="font-bold underline underline-offset-2">enterprise-monorepo</span>
+            {/* Code Body: Syntax-highlighted style */}
+            <div className="p-5 text-xs space-y-2.5 leading-relaxed bg-slate-950/90 overflow-x-auto">
+              <p className="text-slate-500 pb-1 whitespace-nowrap"># SPECIFICATION : ENTERPRISE SUITE</p>
+              <p className="flex justify-between gap-4 border-b border-slate-800/80 pb-1.5 whitespace-nowrap">
+                <span className="text-slate-400">project_type:</span>
+                <span className="text-cyan-400 font-semibold">enterprise-monorepo</span>
               </p>
-              <p className="flex justify-between gap-2 border-b border-foreground/10 pb-1 whitespace-nowrap">
-                <span className="text-muted-foreground">ci_engine:</span>
-                <span>github-actions / parallel</span>
+              <p className="flex justify-between gap-4 border-b border-slate-800/80 pb-1.5 whitespace-nowrap">
+                <span className="text-slate-400">ci_engine:</span>
+                <span className="text-emerald-400">github-actions / parallel</span>
               </p>
-              <p className="flex justify-between gap-2 border-b border-foreground/10 pb-1 whitespace-nowrap">
-                <span className="text-muted-foreground">infrastructure:</span>
-                <span>aws-vpc-eks-terraform</span>
+              <p className="flex justify-between gap-4 border-b border-slate-800/80 pb-1.5 whitespace-nowrap">
+                <span className="text-slate-400">infrastructure:</span>
+                <span className="text-indigo-400">aws-vpc-eks-terraform</span>
               </p>
-              <p className="flex justify-between gap-2 border-b border-foreground/10 pb-1 whitespace-nowrap">
-                <span className="text-muted-foreground">deployment:</span>
-                <span className="font-bold">blue-green-canary</span>
+              <p className="flex justify-between gap-4 border-b border-slate-800/80 pb-1.5 whitespace-nowrap">
+                <span className="text-slate-400">deployment:</span>
+                <span className="text-amber-400 font-medium">blue-green-canary</span>
               </p>
-              <p className="flex justify-between gap-2 border-b border-foreground/10 pb-1 whitespace-nowrap">
-                <span className="text-muted-foreground">observability:</span>
-                <span>prometheus + grafana + otel</span>
+              <p className="flex justify-between gap-4 border-b border-slate-800/80 pb-1.5 whitespace-nowrap">
+                <span className="text-slate-400">observability:</span>
+                <span className="text-teal-400">prometheus + grafana + otel</span>
               </p>
-              <p className="flex justify-between gap-2 border-b border-foreground/10 pb-1 whitespace-nowrap">
-                <span className="text-muted-foreground">security_spec:</span>
-                <span>nist-csf / trivy / cosign</span>
+              <p className="flex justify-between gap-4 border-b border-slate-800/80 pb-1.5 whitespace-nowrap">
+                <span className="text-slate-400">security_spec:</span>
+                <span className="text-purple-400">nist-csf / trivy / cosign</span>
               </p>
-              <div className="pt-2 sm:pt-3 flex items-center justify-between text-[10px] sm:text-[11px] text-foreground font-bold uppercase tracking-widest">
-                <span>STATUS: READY</span>
-                <span className="animate-pulse">● LIVE COMPILATION</span>
+              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-300 font-mono font-medium">
+                <span className="text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  STATUS: READY
+                </span>
+                <span className="text-cyan-400">● LIVE COMPILATION</span>
               </div>
             </div>
           </div>
 
-          {/* 3 Metric Inversion Boxes */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-3 sm:mt-4">
+          {/* 3 Metric Cards */}
+          <div className="grid grid-cols-3 gap-3 mt-4">
             {[
-              { value: "08", label: "STEPS" },
-              { value: "50+", label: "MANIFESTS" },
-              { value: "100%", label: "LOCAL" },
+              { value: "08", label: "Steps" },
+              { value: "50+", label: "Manifests" },
+              { value: "100%", label: "In-Browser" },
             ].map(({ value, label }) => (
               <div
                 key={label}
-                className="group border border-foreground bg-background p-2.5 sm:p-4 text-center transition-colors duration-100 hover:bg-foreground hover:text-background cursor-default"
+                className="rounded-xl border border-border/80 bg-card/80 p-3 sm:p-4 text-center transition-all hover:border-brand/40 hover:shadow-sm"
               >
-                <div className="text-lg sm:text-2xl font-display font-bold">{value}</div>
-                <div className="text-[8px] sm:text-[9px] font-mono tracking-wider sm:tracking-widest uppercase mt-0.5 sm:mt-1 opacity-80">{label}</div>
+                <div className="text-xl sm:text-2xl font-bold text-foreground">{value}</div>
+                <div className="text-[10px] sm:text-xs font-mono tracking-wider uppercase mt-0.5 text-muted-foreground">{label}</div>
               </div>
             ))}
           </div>

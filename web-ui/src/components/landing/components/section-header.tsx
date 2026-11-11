@@ -22,15 +22,15 @@ export function SectionHeader({
     <div className={`max-w-3xl ${alignClass} ${className}`}>
       <Badge
         variant="outline"
-        className="mb-4 gap-1.5 px-3 py-1 text-[10px] font-mono uppercase tracking-widest border-foreground text-foreground"
+        className="mb-3.5 gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider border-brand/30 text-brand bg-brand/5 rounded-full"
       >
         {badge}
       </Badge>
-      <h2 className="font-display font-normal text-3xl sm:text-4xl md:text-5xl tracking-tight leading-tight text-foreground">
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground">
         {title}
       </h2>
       {description && (
-        <p className="mt-4 font-serif text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+        <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
           {description}
         </p>
       )}

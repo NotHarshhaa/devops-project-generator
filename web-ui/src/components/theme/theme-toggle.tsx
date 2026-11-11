@@ -10,7 +10,8 @@ export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleTheme = () => {
@@ -20,13 +21,19 @@ export function ThemeToggle() {
   };
 
   const getThemeIcon = () => {
-    if (!mounted) return <div className="h-4 w-4" />;
-    if (theme === "system") return <Monitor className="h-4 w-4" strokeWidth={1.5} />;
-    return theme === "dark" ? <Moon className="h-4 w-4" strokeWidth={1.5} /> : <Sun className="h-4 w-4" strokeWidth={1.5} />;
+    if (!mounted) {
+      return <Sun className="h-4 w-4 text-muted-foreground opacity-60" />;
+    }
+    if (theme === "system") return <Monitor className="h-4 w-4" />;
+    return theme === "dark" ? (
+      <Moon className="h-4 w-4 text-cyan-400" />
+    ) : (
+      <Sun className="h-4 w-4 text-amber-500" />
+    );
   };
 
   const getThemeLabel = () => {
-    if (!mounted) return "Loading theme...";
+    if (!mounted) return "Theme";
     if (theme === "system") return "System theme";
     return theme === "dark" ? "Dark theme" : "Light theme";
   };
@@ -36,11 +43,11 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="rounded-none border border-foreground/40 hover:border-foreground transition-colors duration-100"
-      title={mounted ? `Current: ${getThemeLabel()}. Click to cycle themes.` : "Loading theme..."}
+      className="rounded-lg border border-border/60 hover:border-border hover:bg-muted/80 transition-colors cursor-pointer"
+      title={`Current: ${getThemeLabel()}. Click to switch theme.`}
     >
       {getThemeIcon()}
-      <span className="sr-only">Toggle theme (current: {mounted ? getThemeLabel() : "Loading..."})</span>
+      <span className="sr-only">Toggle theme (current: {getThemeLabel()})</span>
     </Button>
   );
 }

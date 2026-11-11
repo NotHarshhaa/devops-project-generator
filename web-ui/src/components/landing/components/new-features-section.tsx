@@ -11,43 +11,43 @@ interface NewFeaturesSectionProps {
 
 export function NewFeaturesSection({ onNavigate }: NewFeaturesSectionProps) {
   return (
-    <section className="border-y-2 border-foreground bg-background py-16 sm:py-24">
+    <section className="bg-background py-16 sm:py-24">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHeader
           badge="EXPANDED CAPABILITIES"
           title="Engineered for Precision"
-          description="Three specialized local utilities to design complex topologies, model cloud expenditure, and analyze repository architecture."
+          description="Six specialized in-browser utilities to design complex topologies, model cloud expenditure, verify compliance, and scaffold production repositories."
         />
 
-        {/* Feature Cards with Sharp 0px corners and Instant Invert on hover */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Feature Cards Grid (Symmetric 3x2) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {NEW_FEATURE_CARDS.map((feature, idx) => {
             const Icon = feature.icon;
             return (
               <div
-                key={feature.tab}
-                className="group relative border border-foreground bg-card p-6 sm:p-8 flex flex-col justify-between transition-colors duration-100 hover:bg-foreground hover:text-background"
+                key={feature.tab + feature.title}
+                className="group relative rounded-2xl border border-border/80 bg-card p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 hover:border-brand/40 hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/25"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-foreground/20 group-hover:border-background/20">
-                    <span className="font-mono text-xs uppercase tracking-widest opacity-60">
+                  <div className="flex items-center justify-between mb-5 pb-3 border-b border-border/60">
+                    <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                       TOOL {`0${idx + 1}`}
                     </span>
-                    <div className="w-9 h-9 border border-foreground group-hover:border-background flex items-center justify-center bg-background group-hover:bg-foreground">
-                      <Icon className="h-4 w-4 text-foreground group-hover:text-background" strokeWidth={1.5} />
+                    <div className="w-10 h-10 rounded-xl border border-border/60 flex items-center justify-center bg-muted/60 group-hover:border-brand/30 group-hover:bg-brand/10 transition-colors">
+                      <Icon className="h-4 w-4 text-brand" strokeWidth={1.8} />
                     </div>
                   </div>
 
-                  <h3 className="font-display font-bold text-xl mb-3">{feature.title}</h3>
-                  <p className="font-serif text-sm opacity-80 mb-6 leading-relaxed">
+                  <h3 className="font-bold text-lg text-foreground mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                     {feature.description}
                   </p>
 
-                  <ul className="space-y-2.5 mb-8 font-mono text-xs">
+                  <ul className="space-y-2.5 mb-8 text-xs font-mono">
                     {feature.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-2">
-                        <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" strokeWidth={2} />
-                        <span className="opacity-90">{bullet}</span>
+                      <li key={bullet} className="flex items-start gap-2.5">
+                        <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-emerald-500" strokeWidth={2.5} />
+                        <span className="text-muted-foreground font-sans">{bullet}</span>
                       </li>
                     ))}
                   </ul>
@@ -55,45 +55,43 @@ export function NewFeaturesSection({ onNavigate }: NewFeaturesSectionProps) {
 
                 <Button
                   variant="outline"
-                  className="w-full gap-2 font-mono text-xs uppercase tracking-widest border-foreground group-hover:border-background group-hover:bg-background group-hover:text-foreground hover:bg-background hover:text-foreground"
+                  className="w-full gap-2 text-xs font-semibold rounded-xl border-border/80 hover:bg-brand hover:text-brand-foreground hover:border-brand transition-all cursor-pointer"
                   onClick={() => onNavigate(feature.tab)}
                 >
                   {feature.cta}
-                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
                 </Button>
               </div>
             );
           })}
         </div>
 
-        {/* Bold Choice #3: Inverted Stats Section with vertical line texture */}
-        <div className="mt-12 sm:mt-14 relative border-2 border-foreground bg-foreground text-background p-5 sm:p-10 lg:p-12 overflow-hidden w-full max-w-full">
-          <div className="absolute inset-0 pattern-vertical-lines-white pointer-events-none" />
-          
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 pb-6 border-b border-background/20 mb-8">
+        {/* Highlight Stats Banner */}
+        <div className="mt-12 sm:mt-16 rounded-2xl border border-slate-800 bg-slate-950 text-slate-100 p-6 sm:p-10 shadow-2xl overflow-hidden w-full max-w-full">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-800 mb-8">
             <div className="text-center md:text-left">
-              <span className="font-mono text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest opacity-60">
-                AUDIT METRICS & BENCHMARKS
+              <span className="font-mono text-xs uppercase tracking-wider text-cyan-400 font-semibold">
+                AUDIT METRICS &amp; BENCHMARKS
               </span>
-              <h3 className="font-display font-normal text-xl sm:text-2xl lg:text-3xl text-background mt-1">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mt-1">
                 Zero Configuration Bloat.
               </h3>
             </div>
-            <p className="font-serif text-xs sm:text-sm text-background/80 max-w-md text-center md:text-right">
+            <p className="text-sm text-slate-400 max-w-md text-center md:text-right leading-relaxed">
               All infrastructure evaluations run deterministic algorithms inside your browser. No telemetry or external server calls.
             </p>
           </div>
 
-          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 divide-y sm:divide-y-0 sm:divide-x divide-background/20">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
             {NEW_FEATURE_HIGHLIGHTS.map(({ value, label }, index) => (
               <div
                 key={label}
                 className={`text-center ${index > 0 ? "pt-6 sm:pt-0 sm:pl-6 lg:pl-8" : ""}`}
               >
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-background mb-1 sm:mb-2">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400 mb-1">
                   {value}
                 </div>
-                <div className="font-mono text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest text-background/70 break-words">
+                <div className="font-mono text-xs uppercase tracking-wider text-slate-400">
                   {label}
                 </div>
               </div>

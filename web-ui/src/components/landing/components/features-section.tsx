@@ -5,7 +5,7 @@ export function FeaturesSection() {
   return (
     <section id="features-section" className="container mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
       <SectionHeader
-        badge="DISCIPLINED PRINCIPLES"
+        badge="CORE PRINCIPLES"
         title="Why Engineers Choose This Architecture"
         description="Eliminate guesswork and fragile boilerplate. Every generated file conforms to rigorous security, CI/CD, and infrastructure standards."
       />
@@ -14,30 +14,30 @@ export function FeaturesSection() {
         {WHY_CHOOSE_FEATURES.map((feature, idx) => (
           <div
             key={feature.title}
-            className="group relative border border-foreground bg-card p-6 sm:p-8 transition-colors duration-100 hover:bg-foreground hover:text-background flex flex-col justify-between"
+            className="group relative rounded-2xl border border-border/80 bg-card p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 hover:border-brand/40 hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/25"
           >
             <div>
-              <div className="flex items-center justify-between mb-6 pb-2 border-b border-foreground/20 group-hover:border-background/20">
-                <span className="font-mono text-[10px] uppercase tracking-widest opacity-60">
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-border/60">
+                <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                   {`PRIN. 0${idx + 1}`}
                 </span>
-                <div className="w-8 h-8 border border-foreground group-hover:border-background flex items-center justify-center bg-background group-hover:bg-foreground transition-colors duration-100">
-                  <feature.icon className="h-4 w-4 text-foreground group-hover:text-background" strokeWidth={1.5} />
+                <div className="w-10 h-10 rounded-xl border border-border/60 flex items-center justify-center bg-muted/60 group-hover:bg-brand/10 group-hover:border-brand/30 transition-colors">
+                  <feature.icon className="h-4 w-4 text-brand" strokeWidth={1.8} />
                 </div>
               </div>
 
-              <h3 className="font-display font-bold text-lg sm:text-xl mb-3">
+              <h3 className="font-bold text-lg text-foreground mb-2">
                 {feature.title}
               </h3>
               
-              <p className="font-serif text-sm opacity-80 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
             </div>
 
-            <div className="mt-6 pt-3 border-t border-foreground/10 group-hover:border-background/20 flex items-center justify-between font-mono text-[10px] uppercase tracking-widest opacity-50 group-hover:opacity-80">
+            <div className="mt-6 pt-3 border-t border-border/40 flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
               <span>STANDARDS COMPLIANT</span>
-              <span>→</span>
+              <span className="text-brand">→</span>
             </div>
           </div>
         ))}

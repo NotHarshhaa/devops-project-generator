@@ -59,7 +59,6 @@ export function StepFormView({
   onUpdateConfig,
   onApplyTemplate,
   onReset,
-  draftRestored,
   onNext,
   onBack,
   onGoToStep,
@@ -103,7 +102,7 @@ export function StepFormView({
 
           <div className="flex-1">
             {currentStepConfig.field === "projectName" ? (
-              <div className="space-y-5 max-w-xl">
+              <div className="space-y-6 max-w-2xl">
                 <div className="space-y-2">
                   <Label htmlFor="projectName" className="text-sm font-medium">
                     Project identifier
@@ -113,7 +112,7 @@ export function StepFormView({
                     value={config.projectName}
                     onChange={(e) => onUpdateConfig("projectName", e.target.value)}
                     placeholder="my-devops-project"
-                    className="text-lg h-12 font-mono border-border/80 focus-visible:ring-brand/40"
+                    className="text-base h-11 font-mono border-border/80 focus-visible:ring-brand/40"
                     autoFocus
                     onKeyDown={(e) => e.key === "Enter" && canProceed() && onNext()}
                     maxLength={50}
@@ -135,7 +134,7 @@ export function StepFormView({
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         Preset Architectures
                       </p>
                       <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1 font-mono">
@@ -154,9 +153,10 @@ export function StepFormView({
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {QUICK_START_TEMPLATES.map((template) => {
                       const Icon = templateIcons[template.iconKey];
+                      const isSelected = config.projectName === template.name;
                       return (
                         <button
                           key={template.name}
@@ -169,23 +169,31 @@ export function StepFormView({
                             }
                           }}
                           className={cn(
-                            "rounded-xl border p-3 text-left transition-all hover:border-brand/40 hover:bg-brand/5",
-                            config.projectName === template.name &&
-                              "border-brand bg-brand/10 ring-1 ring-brand/20"
+                            "group rounded-xl border p-3.5 text-left transition-all hover:border-brand/50 hover:bg-brand/5 cursor-pointer",
+                            isSelected
+                              ? "border-brand bg-brand/10 ring-2 ring-brand/30 shadow-sm"
+                              : "border-border/80 bg-card hover:shadow-xs"
                           )}
                         >
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
                             <div className="flex items-center gap-2 min-w-0">
-                              <Icon className="h-4 w-4 text-brand shrink-0" />
-                              <span className="text-sm font-semibold truncate">{template.title}</span>
+                              <div className={cn(
+                                "flex h-7 w-7 items-center justify-center rounded-lg shrink-0 transition-colors",
+                                isSelected ? "bg-brand text-brand-foreground" : "bg-muted text-muted-foreground group-hover:bg-brand/10 group-hover:text-brand"
+                              )}>
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <span className="text-sm font-semibold text-foreground leading-snug">
+                                {template.title}
+                              </span>
                             </div>
-                            <Badge variant="secondary" className="font-mono text-[10px] px-1.5 py-0 shrink-0">
+                            <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground shrink-0 border border-border/40">
                               {template.name}
-                            </Badge>
+                            </span>
                           </div>
-                          <span className="block text-xs text-muted-foreground mt-1 leading-relaxed">
+                          <p className="text-xs text-muted-foreground leading-relaxed pl-9">
                             {template.desc}
-                          </span>
+                          </p>
                         </button>
                       );
                     })}
@@ -230,7 +238,7 @@ export function StepFormView({
                   onClick={onNext}
                   size="lg"
                   disabled={!canProceed()}
-                  className="gap-2 px-6 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20"
+                  className="gap-2 px-6 bg-brand hover:bg-brand/90 text-brand-foreground shadow-lg shadow-brand/20 font-semibold"
                 >
                   <Rocket className="h-4 w-4" />
                   Generate Project
@@ -240,7 +248,7 @@ export function StepFormView({
                   onClick={onNext}
                   size="lg"
                   disabled={!canProceed()}
-                  className="gap-2 px-6 bg-brand hover:bg-brand/90 text-brand-foreground"
+                  className="gap-2 px-6 bg-brand hover:bg-brand/90 text-brand-foreground font-semibold"
                 >
                   Continue
                   <ArrowRight className="h-4 w-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,20 +29,21 @@ export function FileTree({ files, projectName }: FileTreeProps) {
     );
   }, [files, searchTerm]);
 
-  useEffect(() => {
-    if (searchTerm) {
-      const pathsToExpand = new Set<string>();
-      filteredFiles.forEach((file) => {
-        const parts = file.path.split("/");
-        let currentPath = "";
-        for (let i = 0; i < parts.length - 1; i++) {
-          currentPath += (i > 0 ? "/" : "") + parts[i];
-          pathsToExpand.add(currentPath);
-        }
-      });
-      setExpandedPaths(pathsToExpand);
-    }
+  const searchExpandedPaths = useMemo(() => {
+    if (!searchTerm) return null;
+    const pathsToExpand = new Set<string>();
+    filteredFiles.forEach((file) => {
+      const parts = file.path.split("/");
+      let currentPath = "";
+      for (let i = 0; i < parts.length - 1; i++) {
+        currentPath += (i > 0 ? "/" : "") + parts[i];
+        pathsToExpand.add(currentPath);
+      }
+    });
+    return pathsToExpand;
   }, [searchTerm, filteredFiles]);
+
+  const effectiveExpandedPaths = searchExpandedPaths || expandedPaths;
 
   const handleCopyPath = async (path: string) => {
     try {
@@ -98,7 +99,7 @@ export function FileTree({ files, projectName }: FileTreeProps) {
             depth={0}
             onFileSelect={setSelectedFile}
             searchTerm={searchTerm}
-            expandedPaths={expandedPaths}
+            expandedPaths={effectiveExpandedPaths}
             setExpandedPaths={setExpandedPaths}
           />
         </div>

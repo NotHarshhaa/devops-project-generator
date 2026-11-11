@@ -50,19 +50,20 @@ export function validateProjectConfig(config: Partial<ProjectConfig>): Validatio
   for (const step of steps) {
     if (step.field === "projectName") continue;
 
-    let value = config[step.field];
-    if (value === undefined || (typeof value === "string" && !value.trim())) {
+    const rawValue = config[step.field];
+    if (rawValue === undefined || (typeof rawValue === "string" && !rawValue.trim())) {
       errors.push({ field: step.field, message: `${step.title} is required` });
       continue;
     }
 
-    if (typeof value === "string" && ALIAS_MAP[value]) {
-      value = ALIAS_MAP[value] as any;
-      (config as any)[step.field] = value;
+    const valueStr = String(rawValue);
+    const resolvedValue = ALIAS_MAP[valueStr] || valueStr;
+    if (ALIAS_MAP[valueStr]) {
+      (config as unknown as Record<string, unknown>)[step.field] = resolvedValue;
     }
 
     const options = getOptionsForStep(step.id);
-    if (options.length > 0 && !options.some((o) => o.value === value)) {
+    if (options.length > 0 && !options.some((o) => o.value === resolvedValue)) {
       errors.push({ field: step.field, message: `Invalid value for ${step.title}` });
     }
   }

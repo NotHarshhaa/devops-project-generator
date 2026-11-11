@@ -45,6 +45,7 @@ export function useAnalyticsData() {
   const [showDetailed, setShowDetailed] = useState(false);
 
   const analyticsData = useMemo(() => {
+    void refreshKey;
     const data = getAnalyticsData();
     const { generations } = data;
 

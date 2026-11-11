@@ -206,14 +206,30 @@ export const NEW_FEATURE_CARDS: NewFeatureCard[] = [
   {
     tab: "security",
     icon: ShieldCheck,
-    iconColor: "text-foreground",
-    iconBg: "bg-foreground/10",
-    hoverGradient: "from-foreground/10",
+    iconColor: "text-emerald-500",
+    iconBg: "bg-emerald-500/10",
+    hoverGradient: "from-emerald-500/10",
     title: "Compliance & Security Scorecard",
     description:
       "Audit your stack against CIS Benchmarks, SOC 2 Type II, NIST 800-53, HIPAA, and SLSA Level 3 with interactive supply-chain security controls.",
     bullets: ["Real-time governance gauge (A+ to D)", "Cosign, SBOM & Gitleaks toggles", "Downloadable COMPLIANCE-AUDIT.md"],
     cta: "Audit Security",
+  },
+  {
+    tab: "generator",
+    icon: Container,
+    iconColor: "text-cyan-500",
+    iconBg: "bg-cyan-500/10",
+    hoverGradient: "from-cyan-500/10",
+    title: "DevContainer & GitHub Scaffolder",
+    description:
+      "Directly scaffold GitHub repositories with fine-grained PAT tokens and generate reproducible Docker DevContainer environments.",
+    bullets: [
+      "Direct browser-to-GitHub repo creation",
+      "DevContainer configurations included",
+      "Git initialization with initial commit",
+    ],
+    cta: "Launch Scaffolder",
   },
 ];
 

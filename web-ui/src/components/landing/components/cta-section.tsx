@@ -5,42 +5,41 @@ import { GITHUB_REPO } from "../data/landing-content";
 export function CtaSection() {
   return (
     <section className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24">
-      <div className="relative border-2 sm:border-4 border-foreground bg-foreground text-background p-6 sm:p-12 lg:p-20 text-center overflow-hidden w-full max-w-full">
-        {/* Subtle radial white texture */}
-        <div className="absolute inset-0 pattern-radial-white pointer-events-none" />
+      <div className="relative rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950 text-white p-8 sm:p-14 lg:p-20 text-center overflow-hidden w-full shadow-2xl">
+        <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl mx-auto w-full">
-          <span className="font-mono text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest text-background/60 block mb-3 sm:mb-4">
-            [ INITIATE ARCHITECTURE GENERATION ]
+          <span className="font-mono text-xs uppercase tracking-widest text-cyan-400 font-semibold block mb-3">
+            START YOUR DEVOPS WORKSPACE
           </span>
 
-          <h2 className="font-display font-normal text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight text-background mb-4 sm:mb-6 break-words">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white mb-4 sm:mb-6">
             Scaffold Without Compromise.
           </h2>
 
-          <p className="font-serif text-sm sm:text-base lg:text-lg text-background/80 max-w-xl mx-auto mb-8 sm:mb-10 leading-relaxed">
+          <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-xl mx-auto mb-8 sm:mb-10 leading-relaxed">
             Specify your stack above or clone the repository to inspect the modular generator core.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full max-w-md mx-auto sm:max-w-none">
+          <div className="flex flex-col sm:flex-row gap-3.5 justify-center items-center w-full max-w-md mx-auto sm:max-w-none">
             <Button
               asChild
               size="lg"
-              className="gap-3 px-6 sm:px-8 h-11 sm:h-12 font-mono text-xs uppercase tracking-widest bg-background text-foreground border-2 border-background hover:bg-transparent hover:text-background transition-colors duration-100 w-full sm:w-auto"
+              className="gap-2.5 px-8 h-12 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold shadow-lg shadow-cyan-500/25 rounded-xl transition-all cursor-pointer w-full sm:w-auto"
             >
               <a href="#top">
                 Start Generating
-                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+                <ArrowRight className="h-4 w-4" />
               </a>
             </Button>
             <Button
               asChild
               variant="outline"
               size="lg"
-              className="gap-3 px-6 sm:px-8 h-11 sm:h-12 font-mono text-xs uppercase tracking-widest border-2 border-background text-background bg-transparent hover:bg-background hover:text-foreground transition-colors duration-100 w-full sm:w-auto"
+              className="gap-2.5 px-8 h-12 border-slate-700 text-white bg-slate-900/60 hover:bg-slate-800 rounded-xl transition-all cursor-pointer w-full sm:w-auto"
             >
               <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
-                <Github className="h-4 w-4" strokeWidth={1.5} />
+                <Github className="h-4 w-4" />
                 Star Repository
               </a>
             </Button>

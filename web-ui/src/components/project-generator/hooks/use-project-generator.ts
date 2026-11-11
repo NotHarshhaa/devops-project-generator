@@ -9,7 +9,6 @@ import { useConfig } from "@/lib/config-context";
 import { trackProjectGeneration, trackUserSession, trackInteraction } from "@/lib/analytics";
 import { canProceedToNextStep } from "@/lib/validation";
 import { DEFAULT_CONFIG } from "../constants";
-import { calculateComplexity } from "../utils";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 

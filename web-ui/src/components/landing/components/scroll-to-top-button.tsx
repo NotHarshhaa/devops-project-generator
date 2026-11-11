@@ -15,10 +15,10 @@ export function ScrollToTopButton({ visible, onClick }: ScrollToTopButtonProps) 
     <Button
       onClick={onClick}
       size="icon"
-      className="fixed bottom-6 right-6 h-10 w-10 rounded-none border-2 border-foreground bg-foreground text-background hover:bg-background hover:text-foreground transition-colors duration-100 z-50 shadow-none cursor-pointer"
+      className="fixed bottom-6 right-6 h-10 w-10 rounded-full border border-border/80 bg-card/95 text-foreground hover:bg-muted shadow-lg shadow-black/10 dark:shadow-black/30 transition-all z-50 cursor-pointer backdrop-blur-sm"
       aria-label="Scroll to top"
     >
-      <ChevronUp className="h-4 w-4" strokeWidth={1.5} />
+      <ChevronUp className="h-4 w-4" strokeWidth={2} />
     </Button>
   );
 }

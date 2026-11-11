@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, Download, Rocket, Network, Sparkles, FileText, Code2 } from "lucide-react";
+import { CheckCircle2, Rocket, Network, Sparkles, FileText, Code2 } from "lucide-react";
 import { saveAs } from "file-saver";
 import { AdvancedConfigBuilderProps } from "./types";
 import { ProjectConfig } from "@/lib/types";

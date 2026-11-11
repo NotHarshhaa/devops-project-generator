@@ -1,4 +1,4 @@
-import { ProjectConfig, GeneratedFile } from "@/lib/types";
+import { ProjectConfig } from "@/lib/types";
 import { generateEnhancedProject } from "./generate-project";
 
 export interface PreviewableFile {

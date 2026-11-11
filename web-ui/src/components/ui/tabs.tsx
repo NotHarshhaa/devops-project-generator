@@ -26,12 +26,12 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center rounded-none border border-foreground bg-background p-0 text-foreground group-data-[orientation=horizontal]/tabs:h-10 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+  "group/tabs-list inline-flex w-fit items-center justify-center rounded-xl bg-muted/80 p-1 text-muted-foreground group-data-[orientation=horizontal]/tabs:h-11 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col border border-border/60 backdrop-blur-xs",
   {
     variants: {
       variant: {
-        default: "border border-foreground bg-background",
-        line: "gap-1 bg-transparent border-0",
+        default: "bg-muted/70",
+        line: "gap-1 bg-transparent border-0 p-0",
       },
     },
     defaultVariants: {
@@ -64,7 +64,8 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex h-full flex-1 items-center justify-center gap-2 rounded-none border-r last:border-r-0 border-foreground/40 px-4 py-2 text-xs font-mono uppercase tracking-wider text-muted-foreground transition-colors duration-100 group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:border-r-0 group-data-[orientation=vertical]/tabs:border-b last:border-b-0 hover:text-foreground hover:bg-muted/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground disabled:pointer-events-none disabled:opacity-40 data-[state=active]:bg-foreground data-[state=active]:text-background font-medium cursor-pointer [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative inline-flex h-full items-center justify-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-medium whitespace-nowrap text-muted-foreground transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50",
+        "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:font-semibold cursor-pointer [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

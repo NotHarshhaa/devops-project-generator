@@ -1,6 +1,5 @@
 "use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, AlertCircle, Wrench, Lightbulb, Check } from "lucide-react";
 import { Dependency } from "../types";

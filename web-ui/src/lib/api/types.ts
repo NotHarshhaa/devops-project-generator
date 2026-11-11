@@ -11,7 +11,7 @@ export interface GenerateRequest {
   config: ProjectConfig;
 }
 
-export interface GenerateResponse extends GenerationResult {}
+export type GenerateResponse = GenerationResult;
 
 export interface HealthResponse {
   status: "ok";

@@ -33,25 +33,28 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
   return (
     <main id="generator-section" className="container mx-auto max-w-7xl px-4 sm:px-6 pb-16 sm:pb-24 scroll-mt-20">
       <div className="text-center mb-8 sm:mb-12">
-        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-2">
-          [ SYSTEM CONSOLE ]
-        </p>
-        <h2 className="font-display font-normal text-3xl sm:text-4xl md:text-5xl tracking-tight text-foreground">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border/80 bg-muted/60 text-xs font-mono text-muted-foreground mb-3">
+          <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+          SYSTEM CONSOLE
+        </div>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground">
           Interactive Architecture Suite
         </h2>
-        <div className="h-0.5 w-16 bg-foreground mx-auto mt-4" />
+        <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-2xl mx-auto">
+          Scaffold, inspect, analyze complexity, optimize cloud costs, and verify governance in real time.
+        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as WorkspaceTab)} className="w-full max-w-full overflow-hidden">
-        <div className="w-full overflow-x-auto pb-2 flex justify-start sm:justify-center mb-6 sm:mb-8">
-          <TabsList className="inline-flex shrink-0 h-auto p-0 border-2 border-foreground bg-background">
+      <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as WorkspaceTab)} className="w-full max-w-full">
+        <div className="w-full overflow-x-auto pb-3 flex justify-start lg:justify-center mb-6 sm:mb-8 scrollbar-none">
+          <TabsList className="inline-flex shrink-0 h-12 p-1.5 rounded-xl border border-border/80 bg-muted/60 backdrop-blur-md gap-1">
             {tabs.map(({ value, icon: Icon, label, shortLabel }) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="gap-1.5 sm:gap-2.5 py-2.5 sm:py-3 px-3 sm:px-6 text-[11px] sm:text-xs font-mono uppercase tracking-wider rounded-none border-r last:border-r-0 border-foreground/30 transition-colors duration-100 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=inactive]:text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                className="gap-2 px-3.5 sm:px-4 py-2 text-xs font-medium rounded-lg transition-all duration-150 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground hover:text-foreground whitespace-nowrap shrink-0 cursor-pointer"
               >
-                <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+                <Icon className="h-3.5 w-3.5 shrink-0 text-cyan-500" strokeWidth={1.8} />
                 <span className="hidden sm:inline">{label}</span>
                 <span className="sm:hidden">{shortLabel}</span>
               </TabsTrigger>
@@ -59,7 +62,7 @@ export function WorkspaceSection({ activeTab, onTabChange }: WorkspaceSectionPro
           </TabsList>
         </div>
 
-        <div className="border-2 border-foreground bg-card p-3 sm:p-6 lg:p-8 shadow-none w-full max-w-full overflow-hidden">
+        <div className="rounded-2xl border border-border/80 bg-card/95 p-4 sm:p-6 lg:p-8 shadow-xl shadow-black/5 dark:shadow-black/25 w-full max-w-full overflow-hidden transition-all">
           <TabsContent value="generator" className="mt-0 outline-none">
             <ProjectGenerator />
           </TabsContent>
