@@ -1,0 +1,21 @@
+{
+  "name": "DevOps Project Generator",
+  "short_name": "DevOps Architect",
+  "description": "Scaffold production-grade DevOps infrastructure in seconds with OpenTofu, Kubernetes, GitOps, and FinOps.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080c14",
+  "theme_color": "#080c14",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

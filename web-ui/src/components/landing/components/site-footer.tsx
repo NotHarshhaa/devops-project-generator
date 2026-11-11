@@ -1,4 +1,5 @@
-import { ExternalLink, Rocket } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { DevOpsLogo } from "@/components/brand/logo";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION, GITHUB_REPO } from "../data/landing-content";
 
@@ -8,14 +9,12 @@ export function SiteFooter() {
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-14 w-full pb-20 sm:pb-14">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-border/60">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 text-white shadow-sm">
-              <Rocket className="h-4 w-4" strokeWidth={2} />
-            </div>
+            <DevOpsLogo size={36} />
             <div>
               <p className="font-bold text-sm tracking-wide text-foreground">
                 DEVOPS PROJECT ARCHITECT
               </p>
-              <p className="font-mono text-[10px] text-muted-foreground tracking-wider uppercase mt-0.5">
+              <p className="font-mono text-[10px] text-cyan-600 dark:text-cyan-400 tracking-wider uppercase mt-0.5">
                 {APP_VERSION} · OPEN SOURCE / MIT LICENSE
               </p>
             </div>
