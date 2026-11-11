@@ -22,6 +22,7 @@ class CIOption(Enum):
     GITLAB_CI = "gitlab-ci"
     JENKINS = "jenkins"
     AZURE_PIPELINES = "azure-pipelines"
+    ARGO_WORKFLOWS = "argo-workflows"
     GITLAB_RUNNERS = "gitlab-runners"
     NONE = "none"
 
@@ -43,6 +44,8 @@ class InfraOption(Enum):
     AWS_VPC_EKS = "aws-vpc-eks"
     AZURE_VNET_AKS = "azure-vnet-aks"
     GCP_VPC_GKE = "gcp-vpc-gke"
+    OPENTOFU_AWS = "opentofu-aws"
+    CROSSPLANE_KUBERNETES = "crossplane-kubernetes"
     MULTICLOUD_TERRAFORM = "multicloud-terraform"
     KUBERNETES_ONPREM = "kubernetes-onprem"
     AWS_ECS_FARGATE = "aws-ecs-fargate"
@@ -63,6 +66,7 @@ class DeployOption(Enum):
 class ObservabilityOption(Enum):
     """Observability stack options"""
     PROMETHEUS_GRAFANA = "prometheus-grafana"
+    OPENTELEMETRY = "opentelemetry"
     ELK_STACK = "elk-stack"
     DATADOG = "datadog"
     JAEGER_PROMETHEUS = "jaeger-prometheus"

@@ -4,7 +4,9 @@ import { normalizeProjectName } from "../file-utils";
 export function generateRealisticSecurityAddonFiles(config: ProjectConfig): GeneratedFile[] {
   const files: GeneratedFile[] = [];
   const projectName = normalizeProjectName(config.projectName);
-  const addons = new Set(config.securityAddons || ["cosign", "sbom", "trivy", "gitleaks", "rbac"]);
+  const addons = new Set(
+    config.securityAddons || ["cosign", "sbom", "trivy", "gitleaks", "rbac", "infracost", "precommit", "dependabot"]
+  );
 
   // 1. Gitleaks Secret Scanner
   if (addons.has("gitleaks")) {
@@ -187,6 +189,194 @@ roleRef:
       type: "file",
     });
   }
+
+  // 5. Infracost FinOps Cloud Cost Estimation
+  if (addons.has("infracost")) {
+    files.push({
+      path: `${projectName}/infracost.yml`,
+      content: `version: 0.1
+
+projects:
+  - path: infra/terraform
+    name: terraform-production
+    terraform_var_files:
+      - terraform.tfvars
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/.github/workflows/infracost.yml`,
+      content: `name: "FinOps: Infrastructure Cost Estimation"
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'terraform/**'
+
+permissions:
+  contents: read
+  pull-requests: write # Required to comment cost diff on PR
+
+jobs:
+  infracost:
+    name: Infracost Diff & Guardrail
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: \${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate Infracost Cost Diff
+        run: |
+          infracost breakdown --path=infra --format=json --out-file=/tmp/infracost.json
+          infracost comment github --path=/tmp/infracost.json \\
+            --repo=\${{ github.repository }} \\
+            --pull-request=\${{ github.event.pull_request.number }} \\
+            --token=\${{ secrets.GITHUB_TOKEN }} \\
+            --behavior=update
+`,
+      type: "file",
+    });
+  }
+
+  // 6. Pre-Commit Hooks
+  if (addons.has("precommit")) {
+    files.push({
+      path: `${projectName}/.pre-commit-config.yaml`,
+      content: `# Production Pre-Commit Hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.89.1
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_docs
+`,
+      type: "file",
+    });
+  }
+
+  // 7. Dependabot Automated Dependency Security
+  if (addons.has("dependabot")) {
+    files.push({
+      path: `${projectName}/.github/dependabot.yml`,
+      content: `version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-ci)"
+
+  - package-ecosystem: "docker"
+    directory: "/deploy/docker"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-docker)"
+
+  - package-ecosystem: "terraform"
+    directory: "/infra/terraform"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-infra)"
+`,
+      type: "file",
+    });
+  }
+
+  // 8. OpenSSF Scorecard Supply Chain Security
+  if (addons.has("scorecard")) {
+    files.push({
+      path: `${projectName}/.github/workflows/scorecard.yml`,
+      content: `name: "OpenSSF Scorecard Supply Chain Security"
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '30 1 * * 1'
+  push:
+    branches: [ main ]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Run analysis"
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: "Upload SARIF results"
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+`,
+      type: "file",
+    });
+  }
+
+  // 9. KEDA Event-Driven Autoscaling (if applicable)
+  files.push({
+    path: `${projectName}/deploy/k8s/keda-scaledobject.yaml`,
+    content: `apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ${projectName}-keda-autoscaler
+  namespace: production
+spec:
+  scaleTargetRef:
+    name: ${projectName}
+  pollingInterval: 15
+  cooldownPeriod: 300
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-server.monitoring.svc.cluster.local:9090
+      metricName: http_requests_per_second
+      query: sum(rate(http_requests_total{app="${projectName}"}[2m]))
+      threshold: '100'
+`,
+    type: "file",
+  });
 
   return files;
 }

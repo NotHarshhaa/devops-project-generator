@@ -65,6 +65,42 @@ export const SECURITY_CONTROLS: SecurityControl[] = [
     frameworks: ["CIS", "SOC2", "HIPAA"],
     tool: "PodSecurityStandards",
   },
+  {
+    id: "infracost",
+    name: "FinOps Cloud Cost Guardrails",
+    description: "Automated Infracost budget and cost diff evaluation on pull requests preventing runaway cloud spend.",
+    category: "supply-chain",
+    weight: 10,
+    frameworks: ["SOC2", "NIST"],
+    tool: "Infracost / OpenCost",
+  },
+  {
+    id: "scorecard",
+    name: "OpenSSF Supply Chain Scorecard",
+    description: "Automated security health score evaluating branch protection, code review, and dependency risks.",
+    category: "supply-chain",
+    weight: 10,
+    frameworks: ["SLSA", "SOC2"],
+    tool: "OpenSSF Scorecard",
+  },
+  {
+    id: "precommit",
+    name: "Pre-Commit Code Guardrails",
+    description: "Git pre-commit hooks enforcing YAML linting, Terraform formatting, and token scanning prior to commit.",
+    category: "vulnerability",
+    weight: 10,
+    frameworks: ["CIS", "SOC2"],
+    tool: "pre-commit",
+  },
+  {
+    id: "dependabot",
+    name: "Automated Dependency Updates",
+    description: "Continuous automated security version bumps for GitHub Actions, Docker base images, and Terraform modules.",
+    category: "vulnerability",
+    weight: 10,
+    frameworks: ["SOC2", "NIST"],
+    tool: "Dependabot",
+  },
 ];
 
 export interface ComplianceScores {

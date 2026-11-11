@@ -248,6 +248,25 @@ spec:
         image: ${config.projectName}:latest
         ports:
         - containerPort: 8080
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
 `,
       type: "file",
     });
@@ -274,6 +293,148 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/deploy/argocd/applicationset.yaml`,
+      content: `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ${config.projectName}-appset
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - cluster: dev
+        url: https://kubernetes.default.svc
+        namespace: dev
+      - cluster: staging
+        url: https://kubernetes.default.svc
+        namespace: staging
+      - cluster: production
+        url: https://kubernetes.default.svc
+        namespace: production
+  template:
+    metadata:
+      name: '${config.projectName}-{{cluster}}'
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/example/${config.projectName}.git'
+        targetRevision: HEAD
+        path: 'deploy/k8s/overlays/{{cluster}}'
+      destination:
+        server: '{{url}}'
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/deploy/k8s/gateway.yaml`,
+      content: `apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: ${config.projectName}-gateway
+  namespace: default
+spec:
+  gatewayClassName: eg
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ${config.projectName}-route
+  namespace: default
+spec:
+  parentRefs:
+  - name: ${config.projectName}-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: ${config.projectName}-service
+      port: 8080
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/deploy/k8s/deployment.yaml`,
+      content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${config.projectName}
+  namespace: default
+  labels:
+    app: ${config.projectName}
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ${config.projectName}
+  template:
+    metadata:
+      labels:
+        app: ${config.projectName}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+      - name: app
+        image: ${config.projectName}:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/deploy/k8s/service.yaml`,
+      content: `apiVersion: v1
+kind: Service
+metadata:
+  name: ${config.projectName}-service
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: ${config.projectName}
 `,
       type: "file",
     });

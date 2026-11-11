@@ -473,5 +473,104 @@ main "\$@"`,
     type: "file"
   });
 
+  // Local emulation cluster bootstrapper (Kind / K3d)
+  files.push({
+    path: `${projectName}/scripts/bootstrap-local.sh`,
+    content: `#!/usr/bin/env bash
+# Bootstrap local testing cluster with Kind
+set -euo pipefail
+
+CLUSTER_NAME="${config.projectName}-local"
+
+echo "=== Provisioning local test cluster: $CLUSTER_NAME ==="
+
+if ! command -v kind &>/dev/null; then
+  echo "Error: 'kind' is not installed. Install via: brew install kind (or choco install kind)"
+  exit 1
+fi
+
+if kind get clusters | grep -q "^$CLUSTER_NAME$"; then
+  echo "Cluster '$CLUSTER_NAME' already exists. Reusing it."
+else
+  echo "Creating Kind multi-node cluster..."
+  cat <<EOF | kind create cluster --name "$CLUSTER_NAME" --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 8080
+    protocol: TCP
+- role: worker
+EOF
+fi
+
+echo "Building local Docker container..."
+docker build -t ${config.projectName}:latest -f deploy/docker/Dockerfile .
+
+echo "Loading image into Kind cluster..."
+kind load docker-image ${config.projectName}:latest --name "$CLUSTER_NAME"
+
+echo "Applying manifests..."
+if [ -d "deploy/k8s" ]; then
+  kubectl apply -f deploy/k8s/
+fi
+
+echo "Local environment is ready! Access app on http://localhost:8080"
+`,
+    type: "file"
+  });
+
+  // Teardown script
+  files.push({
+    path: `${projectName}/scripts/teardown.sh`,
+    content: `#!/usr/bin/env bash
+# Teardown local cluster and docker resources
+set -euo pipefail
+
+CLUSTER_NAME="${config.projectName}-local"
+
+echo "Tearing down local environment..."
+if command -v kind &>/dev/null; then
+  if kind get clusters | grep -q "^$CLUSTER_NAME$"; then
+    kind delete cluster --name "$CLUSTER_NAME"
+    echo "Deleted Kind cluster $CLUSTER_NAME"
+  fi
+fi
+
+if [ -f "deploy/docker/docker-compose.yml" ]; then
+  docker-compose -f deploy/docker/docker-compose.yml down -v --remove-orphans || true
+fi
+
+echo "Teardown complete."
+`,
+    type: "file"
+  });
+
+  // Cost estimation script
+  files.push({
+    path: `${projectName}/scripts/cost-estimate.sh`,
+    content: `#!/usr/bin/env bash
+# Infracost FinOps local breakdown
+set -euo pipefail
+
+if ! command -v infracost &>/dev/null; then
+  echo "Infracost CLI is required. Install from: https://www.infracost.io/docs/#quick-start"
+  exit 1
+fi
+
+echo "Calculating cloud infrastructure monthly costs..."
+if [ -d "infra/terraform" ]; then
+  infracost breakdown --path=infra/terraform
+elif [ -d "infra/opentofu" ]; then
+  infracost breakdown --path=infra/opentofu
+else
+  infracost breakdown --path=infra
+fi
+`,
+    type: "file"
+  });
+
   return files;
 }

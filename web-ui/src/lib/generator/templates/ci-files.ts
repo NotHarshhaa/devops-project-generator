@@ -222,5 +222,71 @@ jobs:
     type: "file"
   });
 
+  if (config.ci === "argo-workflows") {
+    files.push({
+      path: `${projectName}/ci/argo/workflow-pipeline.yaml`,
+      content: `apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: ${projectName}-ci-pipeline-
+  namespace: argo
+spec:
+  entrypoint: build-and-test
+  volumeClaimTemplates:
+  - metadata:
+      name: workdir
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
+  templates:
+  - name: build-and-test
+    dag:
+      tasks:
+      - name: clone
+        template: git-clone
+      - name: test
+        dependencies: [clone]
+        template: run-unit-tests
+      - name: build-image
+        dependencies: [test]
+        template: kaniko-build
+
+  - name: git-clone
+    container:
+      image: alpine/git:latest
+      command: [sh, -c]
+      args: ["git clone --depth 1 https://github.com/example/${projectName}.git /workdir"]
+      volumeMounts:
+      - name: workdir
+        mountPath: /workdir
+
+  - name: run-unit-tests
+    container:
+      image: node:20-alpine
+      workingDir: /workdir
+      command: [sh, -c]
+      args: ["npm ci && npm test"]
+      volumeMounts:
+      - name: workdir
+        mountPath: /workdir
+
+  - name: kaniko-build
+    container:
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+      - "--context=dir:///workdir"
+      - "--dockerfile=/workdir/deploy/docker/Dockerfile"
+      - "--destination=ghcr.io/example/${projectName}:latest"
+      - "--cache=true"
+      volumeMounts:
+      - name: workdir
+        mountPath: /workdir
+`,
+      type: "file"
+    });
+  }
+
   return files;
 }

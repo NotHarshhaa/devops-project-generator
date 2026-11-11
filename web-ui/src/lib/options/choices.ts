@@ -12,10 +12,11 @@ export const pipelineOptions: OptionCard[] = [
 ];
 
 export const ciOptions: OptionCard[] = [
-  { value: "github-actions", label: "GitHub Actions", description: "Native CI/CD for GitHub repositories with YAML workflows", icon: "github", recommended: true },
-  { value: "gitlab-ci", label: "GitLab CI", description: "Integrated CI/CD pipelines within GitLab", icon: "gitlab" },
-  { value: "jenkins", label: "Jenkins", description: "Self-hosted automation server with extensible plugins", icon: "server" },
+  { value: "github-actions", label: "GitHub Actions", description: "Native CI/CD for GitHub repositories with YAML workflows and OIDC", icon: "github", recommended: true },
+  { value: "gitlab-ci", label: "GitLab CI", description: "Integrated CI/CD pipelines within GitLab with shared runners", icon: "gitlab" },
+  { value: "jenkins", label: "Jenkins", description: "Self-hosted automation server with Jenkinsfile declarative pipelines", icon: "server" },
   { value: "azure-pipelines", label: "Azure Pipelines", description: "Cloud-native CI/CD with Azure DevOps integration", icon: "cloud" },
+  { value: "argo-workflows", label: "Argo Workflows", description: "Container-native workflow engine orchestrating parallel steps on Kubernetes", icon: "git-merge" },
   { value: "circleci", label: "CircleCI", description: "Fast, configurable CI/CD with Docker support", icon: "circle" },
   { value: "bitrise", label: "Bitrise", description: "Mobile-first CI/CD for iOS, Android, and web apps", icon: "smartphone" },
   { value: "none", label: "None", description: "Skip CI/CD setup for now", icon: "x" },
@@ -25,8 +26,10 @@ export const infraOptions: OptionCard[] = [
   { value: "aws-vpc-eks", label: "AWS VPC + EKS", description: "Production-ready VPC with EKS cluster and managed node groups", icon: "cloud", recommended: true },
   { value: "azure-vnet-aks", label: "Azure VNet + AKS", description: "Enterprise VNet with AKS cluster and Azure DevOps integration", icon: "database" },
   { value: "gcp-vpc-gke", label: "GCP VPC + GKE", description: "Secure VPC with GKE cluster and Cloud Build integration", icon: "cpu" },
-  { value: "multicloud-terraform", label: "Multi-Cloud Terraform", description: "Multi-cloud infrastructure with Terraform modules and state management", icon: "layers" },
-  { value: "kubernetes-onprem", label: "Kubernetes On-Prem", description: "On-premises Kubernetes with metalLB and external storage", icon: "server" },
+  { value: "opentofu-aws", label: "OpenTofu AWS + EKS", description: "Open-source Terraform successor with native PBKDF2 state encryption", icon: "shield-check" },
+  { value: "crossplane-kubernetes", label: "Crossplane K8s Control Plane", description: "Kubernetes-native cloud infrastructure using custom CRDs without state lock", icon: "layers" },
+  { value: "multicloud-terraform", label: "Multi-Cloud Terraform", description: "Multi-cloud infrastructure with Terraform modules and remote state", icon: "layers" },
+  { value: "kubernetes-onprem", label: "Kubernetes On-Prem", description: "On-premises Kubernetes with MetalLB and local persistent storage", icon: "server" },
   { value: "aws-ecs-fargate", label: "AWS ECS Fargate", description: "Serverless container orchestration with AWS Fargate", icon: "container" },
   { value: "ansible-automation", label: "Ansible Automation", description: "Configuration management and automation with Ansible playbooks", icon: "terminal" },
 ];
@@ -35,9 +38,9 @@ export const deployOptions: OptionCard[] = [
   { value: "blue-green", label: "Blue-Green Deployment", description: "Zero-downtime deployments with blue-green infrastructure switching", icon: "git-branch", recommended: true },
   { value: "canary", label: "Canary Deployment", description: "Gradual rollout with traffic splitting and automated monitoring", icon: "bird" },
   { value: "rolling", label: "Rolling Update", description: "Incremental updates with health checks and rollback capabilities", icon: "refresh-cw" },
-  { value: "gitops-argocd", label: "GitOps with ArgoCD", description: "Declarative GitOps deployments with ArgoCD and automated sync", icon: "git-merge" },
+  { value: "gitops-argocd", label: "GitOps with ArgoCD", description: "Declarative GitOps deployments with ArgoCD ApplicationSets", icon: "git-merge" },
   { value: "helm-charts", label: "Helm Charts", description: "Package and deploy applications with Helm charts and values", icon: "package" },
-  { value: "kustomize", label: "Kustomize", description: "Template-free Kubernetes configuration management", icon: "layers-2" },
+  { value: "kustomize", label: "Kustomize", description: "Template-free Kubernetes configuration management with overlays", icon: "layers-2" },
   { value: "serverless-lambda", label: "Serverless Lambda", description: "Function-based deployments with API Gateway and Lambda", icon: "cloud-off" },
 ];
 
@@ -50,6 +53,7 @@ export const envOptions: OptionCard[] = [
 
 export const observabilityOptions: OptionCard[] = [
   { value: "prometheus-grafana", label: "Prometheus + Grafana", description: "Open-source monitoring with Prometheus metrics and Grafana dashboards", icon: "bar-chart", recommended: true },
+  { value: "opentelemetry", label: "OpenTelemetry (OTel)", description: "Vendor-neutral OTel Collector with OTLP, Jaeger tracing, & Prometheus", icon: "activity", recommended: true },
   { value: "elk-stack", label: "ELK Stack", description: "Comprehensive logging with Elasticsearch, Logstash, and Kibana", icon: "search" },
   { value: "datadog", label: "DataDog", description: "Full-stack observability with APM, logs, and synthetic monitoring", icon: "radar" },
   { value: "jaeger-prometheus", label: "Jaeger + Prometheus", description: "Distributed tracing with Jaeger and metrics with Prometheus", icon: "activity" },
@@ -71,4 +75,3 @@ export const devcontainerOptions: OptionCard[] = [
   { value: "minimal", label: "Minimal Runtime Sandbox", description: "Language runtime + git & zsh terminal, without heavy cloud provider CLIs", icon: "box" },
   { value: "none", label: "None / Manual Setup", description: "Do not generate DevContainer configuration files", icon: "x" },
 ];
-

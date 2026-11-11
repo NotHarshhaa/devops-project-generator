@@ -445,6 +445,146 @@ metadata:
 `,
       type: "file",
     });
+  } else if (infra === "opentofu-aws") {
+    files.push({
+      path: `${projectName}/infra/opentofu/main.tofu`,
+      content: `terraform {
+  required_version = ">= 1.8.0"
+
+  # Native OpenTofu State Encryption Feature
+  encryption {
+    key_provider "pbkdf2" "passphrase" {
+      passphrase = var.tofu_encryption_passphrase
+    }
+
+    method "aes_gcm" "default" {
+      keys = key_provider.pbkdf2.passphrase
+    }
+
+    state {
+      method   = method.aes_gcm.default
+      enforced = true
+    }
+  }
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.50"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+  default_tags {
+    tags = {
+      Project   = "${config.projectName}"
+      Engine    = "OpenTofu"
+      ManagedBy = "OpenTofu-CLI"
+    }
+  }
+}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+  name    = "${config.projectName}-tofu-vpc"
+  cidr    = "10.0.0.0/16"
+  azs     = ["\${var.aws_region}a", "\${var.aws_region}b"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+  enable_nat_gateway = true
+}
+
+module "eks" {
+  source          = "terraform-aws-modules/eks/aws"
+  version         = "~> 20.0"
+  cluster_name    = "${config.projectName}-cluster"
+  cluster_version = "1.30"
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.private_subnets
+  cluster_endpoint_public_access = true
+}
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/infra/opentofu/variables.tofu`,
+      content: `variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "tofu_encryption_passphrase" {
+  type        = string
+  description = "Encryption passphrase for OpenTofu state file"
+  sensitive   = true
+  default     = "change-me-to-a-secure-passphrase-32bytes"
+}
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/infra/opentofu/outputs.tofu`,
+      content: `output "eks_cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+`,
+      type: "file",
+    });
+  } else if (infra === "crossplane-kubernetes") {
+    files.push({
+      path: `${projectName}/infra/crossplane/xrd-infrastructure.yaml`,
+      content: `apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xclusters.infrastructure.crossplane.io
+spec:
+  group: infrastructure.crossplane.io
+  names:
+    kind: XCluster
+    plural: xclusters
+  claimNames:
+    kind: ClusterClaim
+    plural: clusterclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              nodeSize:
+                type: string
+                enum: [small, medium, large]
+            required: [nodeSize]
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/infra/crossplane/claim-production.yaml`,
+      content: `apiVersion: infrastructure.crossplane.io/v1alpha1
+kind: ClusterClaim
+metadata:
+  name: ${config.projectName}-k8s-platform
+  namespace: crossplane-system
+spec:
+  nodeSize: medium
+`,
+      type: "file",
+    });
   } else {
     // multicloud-terraform or fallback
     files.push({

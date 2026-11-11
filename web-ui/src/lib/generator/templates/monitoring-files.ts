@@ -189,8 +189,77 @@ process_config:
       ),
       type: "file",
     });
+  } else if (obs === "opentelemetry" || obs === "jaeger-prometheus") {
+    files.push({
+      path: `${projectName}/monitoring/otel/otel-collector-config.yaml`,
+      content: `receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 256
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "${config.projectName}"
+  otlp/jaeger:
+    endpoint: "jaeger-collector:4317"
+    tls:
+      insecure: true
+  logging:
+    loglevel: info
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/jaeger, logging]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging]
+`,
+      type: "file",
+    });
+
+    files.push({
+      path: `${projectName}/monitoring/otel/instrumentation.yaml`,
+      content: `apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: ${config.projectName}-instrumentation
+  namespace: default
+spec:
+  exporter:
+    endpoint: http://otel-collector:4317
+  propagators:
+    - tracecontext
+    - baggage
+    - b3
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1.0"
+`,
+      type: "file",
+    });
   } else {
-    // jaeger-prometheus or fallback
+    // fallback otel collector
     files.push({
       path: `${projectName}/monitoring/otel/otel-collector.yaml`,
       content: `receivers:

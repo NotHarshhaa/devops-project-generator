@@ -39,6 +39,10 @@ const ALIAS_MAP: Record<string, string> = {
   "soc2-compliance": "soc2",
   "gdpr-compliance": "gdpr",
   "hipaa-compliance": "hipaa",
+  "opentofu": "opentofu-aws",
+  "crossplane": "crossplane-kubernetes",
+  "otel": "opentelemetry",
+  "argo": "argo-workflows",
 };
 
 export function validateProjectConfig(config: Partial<ProjectConfig>): ValidationResult {

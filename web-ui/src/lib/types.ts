@@ -12,13 +12,71 @@ export interface ProjectConfig {
 }
 
 export type DevContainerOption = "full" | "minimal" | "none";
-export type PipelineOption = "nodejs-typescript" | "python" | "java-maven" | "go" | "docker-multistage" | "docker-multi-stage" | "terraform-module" | "kubernetes-operator" | "microservice";
-export type CIOption = "github-actions" | "gitlab-ci" | "jenkins" | "azure-pipelines" | "circleci" | "bitrise" | "none";
-export type InfraOption = "aws-vpc-eks" | "azure-vnet-aks" | "gcp-vpc-gke" | "multicloud-terraform" | "terraform-multi-cloud" | "kubernetes-onprem" | "kubernetes-on-prem" | "aws-ecs-fargate" | "ecs-fargate" | "ansible-automation";
-export type DeployOption = "blue-green" | "canary" | "rolling" | "gitops-argocd" | "helm-charts" | "kustomize" | "serverless-lambda";
+export type PipelineOption =
+  | "nodejs-typescript"
+  | "python"
+  | "java-maven"
+  | "go"
+  | "docker-multistage"
+  | "docker-multi-stage"
+  | "terraform-module"
+  | "kubernetes-operator"
+  | "microservice";
+
+export type CIOption =
+  | "github-actions"
+  | "gitlab-ci"
+  | "jenkins"
+  | "azure-pipelines"
+  | "argo-workflows"
+  | "circleci"
+  | "bitrise"
+  | "none";
+
+export type InfraOption =
+  | "aws-vpc-eks"
+  | "azure-vnet-aks"
+  | "gcp-vpc-gke"
+  | "multicloud-terraform"
+  | "terraform-multi-cloud"
+  | "opentofu-aws"
+  | "crossplane-kubernetes"
+  | "kubernetes-onprem"
+  | "kubernetes-on-prem"
+  | "aws-ecs-fargate"
+  | "ecs-fargate"
+  | "ansible-automation";
+
+export type DeployOption =
+  | "blue-green"
+  | "canary"
+  | "rolling"
+  | "gitops-argocd"
+  | "helm-charts"
+  | "kustomize"
+  | "serverless-lambda";
+
 export type EnvOption = "single" | "dev,stage,prod" | "dev,qa,stage,prod" | "dev,prod";
-export type ObservabilityOption = "prometheus-grafana" | "elk-stack" | "datadog" | "jaeger-prometheus" | "cloudwatch" | "new-relic";
-export type SecurityOption = "nist-csf" | "cis-benchmarks" | "zero-trust" | "soc2" | "soc2-compliance" | "gdpr" | "gdpr-compliance" | "hipaa" | "hipaa-compliance";
+
+export type ObservabilityOption =
+  | "prometheus-grafana"
+  | "opentelemetry"
+  | "elk-stack"
+  | "datadog"
+  | "jaeger-prometheus"
+  | "cloudwatch"
+  | "new-relic";
+
+export type SecurityOption =
+  | "nist-csf"
+  | "cis-benchmarks"
+  | "zero-trust"
+  | "soc2"
+  | "soc2-compliance"
+  | "gdpr"
+  | "gdpr-compliance"
+  | "hipaa"
+  | "hipaa-compliance";
 
 export interface OptionCard {
   value: string;
@@ -41,13 +99,44 @@ export interface GeneratedFile {
   type: "file" | "directory";
 }
 
+export interface ValidationCheck {
+  id: string;
+  name: string;
+  category: "kubernetes" | "docker" | "terraform" | "security" | "finops" | "ci";
+  status: "pass" | "warn";
+  description: string;
+}
+
+export interface ValidationReport {
+  score: number;
+  grade: "A+" | "A" | "B" | "C";
+  checksPassed: number;
+  totalChecks: number;
+  checks: ValidationCheck[];
+}
+
+export interface FileBreakdown {
+  yaml: number;
+  terraform: number;
+  scripts: number;
+  docker: number;
+  documentation: number;
+  configs: number;
+}
+
+export interface GenerationSummary {
+  totalFiles: number;
+  totalDirs: number;
+  components: string[];
+  complexityScore?: number;
+  estimatedSetupTimeMinutes?: number;
+  fileBreakdown?: FileBreakdown;
+  validationReport?: ValidationReport;
+}
+
 export interface GenerationResult {
   success: boolean;
   projectName: string;
   files: GeneratedFile[];
-  summary: {
-    totalFiles: number;
-    totalDirs: number;
-    components: string[];
-  };
+  summary: GenerationSummary;
 }
